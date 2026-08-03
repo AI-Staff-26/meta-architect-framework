@@ -1,362 +1,110 @@
 ---
 name: workflow-ai-session
 description: |
-  AI session management and recovery protocol. Context degradation detection, 
-  Context.md creation, session restart. Loaded when >10 turns, repetition 
-  appears, or quality drops. Prevents AI loops. Use WITHIN other workflows 
-  for agent session health.
+  Recover a session whose context has degraded — repetition, forgotten
+  constraints, hallucinated APIs, questions already answered coming back.
+  Covers the signals, what survives a restart, and the restart prompt itself.
+  Use mid-task when quality drops rather than at the end, when a long session
+  starts contradicting its own earlier decisions, or when the user says
+  "ты забыл", "мы это уже обсуждали", "ходим по кругу", "начни заново".
+  For an agent whose fixes keep breaking things, use forensic-investigation.
 ---
 
-# 🤖 AI Session Workflow — Управление Сессиями с AI-Агентами
+# Session Recovery
 
-<purpose>
-Протокол эффективного управления сессиями с `code` и другими AI-агентами.
-Предотвращение деградации, зацикливания, потери контекста.
-</purpose>
+A context window is not a filing cabinet. Everything in it competes for attention, and the strongest voice is the transcript itself — **the transcript becomes the specification**. A wrong turn taken twenty turns ago stays in the window and keeps voting, right alongside the instruction that was supposed to prevent it.
 
----
+That is why a degraded session cannot be repaired by adding a correction. The correction joins the noise it was meant to overrule. What works is carrying forward what is true and leaving the rest behind.
 
-## Когда Использовать
+## Read the signals
 
-**Триггеры:**
+| Signal | What it says about the window |
+|---|---|
+| The same question asked twice | The answer is in the window and no longer reachable |
+| A constraint stated early, violated now | Early instructions have been diluted by everything since |
+| An API or file invented | Pattern-matching has replaced reading; verification stopped |
+| A rejected approach proposed again | The rejection survived; the reason for it did not |
+| Workarounds accumulating around one place | Each patch is reasoning from the previous patch rather than from the goal |
+| Answers growing longer while progress stalls | Attention is on the conversation instead of the task |
 
-- Начало новой сессии с `code`
-- `code` зацикливается (>2 итерации без прогресса)
-- Сессия >15 шагов
-- `code` игнорирует ограничения
-- Накопление костылей/workarounds
-- Потеря контекста (забывает требования)
+One signal warrants attention. Two together mean the window is spending more than it returns, and the work goes faster after a restart than through it.
 
-**Связь с другими workflows:**
+Turn count is a weak proxy — a long mechanical session can stay sharp while a short tangled one degrades quickly. Read the signals, not the counter.
 
-- Применяется ВНУТРИ любого workflow при работе с агентами
-- Особенно критично для 🔴 Complex задач
+## Route
 
----
+| Situation | Move |
+|---|---|
+| Progress steady, constraints holding | Continue |
+| Signals firing, but the task itself is understood | Restart clean — this skill |
+| Fixes keep producing new breakage across iterations | `forensic-investigation` first |
 
-## Принцип: Сессия как Ресурс
+That last row matters. Restarting a session whose *prompt* was the problem reproduces the same failure with a fresh window — faster, and no closer. Diagnose the input, then restart with it repaired.
 
-> **Контекст AI — ограниченный ресурс. Деградирует со временем.**
+## Prevent
 
-```
-Шаги 1-5:   ████████████ Высокое качество
-Шаги 6-10:  ████████░░░░ Среднее качество  
-Шаги 11-15: ████░░░░░░░░ Деградация
-Шаги 16+:   ██░░░░░░░░░░ Высокий риск ошибок
-```
+**Load for the next decision, not for the task.** Files opened "for context" are read by the model in full and dilute everything else in the window.
 
-**Правило:** Лучше 3 чистых сессии по 5 шагов, чем 1 грязная на 15 шагов.
+**Restate the live constraint.** "As agreed above" points into the part of the window that fades first. Naming the constraint again costs a line and survives.
 
----
+**Put what must hold at the edges.** Goal first, constraints and acceptance criteria last; the middle is where instructions go to die. `architectural-planning` holds the prompt anatomy this comes from.
 
-## Фаза 1: Подготовка Сессии
+**Close each slice.** Work landed and verified can leave the window; work half-done cannot. Finishing a slice is what makes a clean restart cheap.
 
-### Шаг 1.1: Минимальный Контекст
+## Restart
 
-**Правило 40-50%:** Не загружать контекст больше чем на 40-50%.
+**1. Stop.** No further attempts at the current step — each one adds to what the restart must sort through.
 
-**Что загружать:**
+**2. Update `memory/CONTEXT.md`** to the state a fresh session would need. The schema and the ~200-word ceiling are in `memory-keeping`. Anything larger belongs in `FACTS.md`, `DECISIONS.md`, or the chronicle, which is where a fresh session would look for it anyway.
 
-- [ ] Только файлы, нужные для ЭТОГО шага
-- [ ] `memory/CONTEXT.md` — сжатый snapshot
-- [ ] `rules/meta-architect-framework.md` — ограничения фреймворка
-- [ ] План текущего шага
+**3. Decide what crosses over.** This is the whole skill in one step:
 
-**Что НЕ загружать:**
+| Carries over | Stays behind |
+|---|---|
+| The goal, in one sentence | The narrative of how it was arrived at |
+| Decisions, each with the reason it was made | The alternatives already eliminated |
+| What is built and verified, by path | Failed attempts, retold |
+| Constraints still live, including any that were violated | File contents that can be read again on demand |
+| The single next step | Everything after it |
 
-- ❌ "На всякий случай"
-- ❌ Вся история проекта
-- ❌ Несвязанные модули
+A decision without its reason is re-litigated. A reason without its decision is a discussion. Both travel together or neither is worth the line.
 
-### Шаг 1.2: Структура Промпта
-
-> **Lost in the Middle:** LLM лучше помнит начало и конец.
-
-```
-┌─────────────────────────────┐
-│ 🔴 КРИТИЧНОЕ (начало)       │  ← Цель, главные ограничения
-├─────────────────────────────┤
-│ 🟡 Детали (середина)        │  ← Контекст, примеры
-├─────────────────────────────┤
-│ 🔴 КРИТИЧНОЕ (конец)        │  ← Acceptance Criteria, ❌ запреты
-└─────────────────────────────┘
-```
-
-**Практика:**
-
-- Главное ограничение → в начале И в конце
-- Секция ❌ (запреты) → ВСЕГДА в конце промпта
-- Acceptance Criteria → последний блок перед "Output Format"
-
-### Шаг 1.3: Чеклист Перед Запуском
-
-Перед каждым промптом для `code`:
-
-- [ ] Контекст < 50% заполнен?
-- [ ] Загружены только необходимые файлы?
-- [ ] Критичное в начале И конце промпта?
-- [ ] Есть секция ❌ с запретами?
-- [ ] Acceptance Criteria измеримы?
-- [ ] Сессия < 10 шагов?
-
----
-
-## Фаза 2: Мониторинг Сессии
-
-### Признаки Здоровой Сессии
-
-| Индикатор | Здорово | Проблема |
-|-----------|---------|----------|
-| Прогресс | Каждый шаг приближает к цели | Топтание на месте |
-| Ограничения | Соблюдаются | Нарушаются |
-| Код | Чистый, по framework rules | Костыли, обходы |
-| Ответы | По делу | Повторения, галлюцинации |
-
-### Признаки Деградации
-
-```
-⚠️ Yellow Flags (предупреждение):
-- Шаг >10
-- Повторяет одни и те же действия
-- Забывает ограничение из начала
-
-🔴 Red Flags (критично):
-- Шаг >15
-- Фикс создаёт новый баг (>2 раза)
-- Нарушает архитектуру
-- Галлюцинации (выдумывает API/функции)
-- Игнорирует ❌ секции
-```
-
-### Счётчик Шагов
-
-Веди явный счётчик в голове или в заметках:
-
-```
-Session: Feature X
-Step 1: ✅ Created base structure
-Step 2: ✅ Added validation
-Step 3: ⚠️ Minor fix needed → triggered Step 4
-Step 4: ✅ Fixed
-Step 5: ❌ Test failed → regression
-Step 6: ⚠️ Approaching limit...
-```
-
----
-
-## Фаза 3: Интервенции
-
-### 3.1: Two Steps Back Protocol
-
-> **Триггер:** Фикс создаёт новые баги >2 раз ИЛИ >15 шагов без прогресса.
-
-**Протокол:**
-
-```
-1. STOP — немедленно остановить `code`
-         ↓
-2. Обновить Context.md (snapshot текущего состояния)
-         ↓
-3. Вызвать `debug` для анализа:
-   - Что пошло не так?
-   - Где root cause?
-   - Как исправить подход?
-         ↓
-4. Пересмотреть Plan.md на основе анализа
-         ↓
-5. Начать ЧИСТУЮ сессию:
-   - Загрузить только Context.md + обновлённый Plan
-   - Не ссылаться на предыдущую сессию
-         ↓
-6. Продолжить с `code` по новому плану
-         ↓
-7. `review` после завершения
-```
-
-### 3.2: Context Snapshot (Restart)
-
-> **Триггер:** Сессия >10 шагов ИЛИ confusion/repetition.
-
-**Протокол:**
-
-```
-1. STOP текущую работу
-         ↓
-2. Создать/обновить memory/CONTEXT.md:
-
-   # Context Snapshot
-   *Updated: YYYY-MM-DD HH:MM*
-   
-   ## Текущая Цель
-   [1-2 предложения]
-   
-   ## Принятые Решения
-   - [Решение 1]: [почему]
-   - [Решение 2]: [почему]
-   
-   ## Ключевые Файлы
-   - `path/file` — [зачем важен]
-   
-   ## Активные Ограничения
-   - ❌ [запрет 1]
-   - ❌ [запрет 2]
-   
-   ## Следующий Шаг
-   [Конкретное действие]
-         ↓
-3. Начать новую сессию:
-   - "Начинаем с чистого листа"
-   - Загрузить Context.md первым
-   - Не упоминать предыдущую сессию
-```
-
-### 3.3: Constraint Reinforcement
-
-> **Триггер:** `code` нарушает ограничения.
-
-**Протокол:**
-
-```
-1. Определить какое ограничение нарушено
-
-2. Добавить/усилить в следующем промпте:
-
-   ## Constraints (CRITICAL)
-   ❌ [Нарушенное ограничение] — БЫЛО НАРУШЕНО, ИСПРАВИТЬ
-   ❌ [Другие ограничения]
-   
-   ⚠️ Previous attempt violated: [что именно]
-   This MUST NOT happen again.
-
-3. Продублировать в конце промпта:
-   
-   ## Final Reminder
-   🔴 DO NOT: [нарушенное ограничение]
-```
-
-### 3.4: Complexity Re-evaluation
-
-> **Триггер:** Задача оказалась сложнее чем оценено.
-
-**Признаки:**
-
-- 🟢 превращается в много шагов
-- Появляются неожиданные зависимости
-- Нужны изменения в нескольких модулях
-
-**Протокол:**
-
-```
-1. STOP текущую работу
-
-2. Пересмотреть оценку:
-   🟢 → 🟡: Создать Plan.md, запросить утверждение
-   🟡 → 🔴: Добавить Research.md, возможно ADR
-
-3. Начать по новому протоколу
-```
-
----
-
-## Фаза 4: Типы Сбоев и Ремонт
-
-| Сбой | Симптомы | Ремонт |
-|------|----------|--------|
-| **Context Overload** | Повторяется, забывает ограничения | → Context.md snapshot → restart |
-| **Weak Constraints** | Делает "своё", нарушает архитектуру | → Усилить ❌ секцию, дублировать в конце |
-| **Complexity Underestimation** | Фиксы создают новые баги | → Пересмотреть 🟢→🟡 или 🟡→🔴 |
-| **Lost in the Middle** | Игнорирует требования из середины промпта | → Критичное в начало/конец |
-| **Hallucination** | Выдумывает API/функции | → Явный список доступных методов в промпте |
-| **Regression Loop** | >2 фикса создают баги | → Two Steps Back protocol |
-| **Scope Creep** | Делает больше чем просили | → Жёстче Scope секция, явные границы |
-
----
-
-## Чеклисты
-
-### Перед Сессией
-
-- [ ] Plan.md готов (для 🟡/🔴)
-- [ ] Контекст минимальный
-- [ ] Промпт структурирован (критичное в начале/конце)
-- [ ] Есть ❌ секция
-
-### Во Время Сессии
-
-- [ ] Считаю шаги (цель: <10)
-- [ ] Мониторю прогресс
-- [ ] Слежу за соблюдением ограничений
-- [ ] Готов к STOP при деградации
-
-### После Сессии
-
-- [ ] `review` вызван
-- [ ] Context.md обновлён (если длинная сессия)
-- [ ] Выводы из проблем (если были)
-
----
-
-## Шаблон Промпта для Чистого Restart
+**4. Open the new session with a prompt that stands alone:**
 
 ```markdown
-# Fresh Start: [Название задачи]
+# [Task] — продолжение с чистым контекстом
 
-## Previous Context
-[Кратко: что было сделано, какие решения приняты]
-See: memory/CONTEXT.md
+## Цель
+[one sentence: what works when this is done]
 
-## Current State
-[Где остановились, что работает, что нет]
+## Что уже готово
+- `path/file.ts` — [what it does, verified how]
 
-## This Session Goal
-[Конкретная измеримая цель ЭТОЙ сессии]
+## Принятые решения
+- [decision] — [why]
 
-## Constraints
-❌ [Список ограничений]
-❌ Lessons from previous: [что пошло не так раньше]
+## Ограничения
+- [constraint]
+- [constraint that was violated earlier, restated]
 
-## Scope
-[Точно что делать — не больше, не меньше]
+## Следующий шаг
+[one concrete action]
 
-## Acceptance Criteria
-✅ [Измеримые критерии]
-
-## Files
-- [Только нужные файлы]
-
-## Final Reminder
-🔴 Focus only on stated goal
-🔴 Do not: [главные запреты]
+## Критерии приёмки
+- [ ] [checked by running: …]
 ```
 
----
+It refers to no earlier session. If the new agent would have to ask "what happened before?", a line above is missing.
 
-## Quick Reference
+**5. Record what caused it.** A degradation pattern that recurs — the same kind of task always running long, the same constraint always slipping — goes to `memory/INSIGHTS.md`. That is what stops the next one instead of recovering from it.
 
-```
-Сессия с `code`
-      ↓
-Подготовка: минимум контекста, структура промпта
-      ↓
-Мониторинг: шаги <10, прогресс, ограничения
-      ↓
-Yellow flag (>10 шагов, повторения)?
-      → Context Snapshot → Restart
-      ↓
-Red flag (>15 шагов, regression loop)?
-      → STOP → `debug` → Two Steps Back
-      ↓
-`review` → DONE
-```
+## Completion criterion
 
----
+Recovered when: `CONTEXT.md` reflects the current state within its ceiling; the restart prompt carries goal, verified state, decisions with reasons, live constraints, and one next step; nothing in it points back at the old session; and work resumes from the next step rather than from re-establishing where things stand.
 
-**Связанные файлы:**
+## Related
 
-- `forensic-investigation/references/ai-failure-modes.md` — детальный справочник сбоев
-- `architectural-planning/references/guide-context-management.md` — теория управления контекстом
-- `architectural-planning/references/guide-prompts-engineering.md` — как писать сильные промпты
-
----
-
-**END OF WORKFLOW**
+- `forensic-investigation` — fixes keep breaking things; diagnose the input before restarting
+- `memory-keeping` — the `CONTEXT.md` schema and the rest of `memory/`
+- `architectural-planning` — prompt anatomy and the context a delegation must carry
+- `forensic-investigation/references/ai-failure-modes.md` — the failure-mode taxonomy

@@ -81,6 +81,6 @@ Done when: every iteration is in the record with what broke; the accumulating qu
 ## Related
 
 - `workflow-debugging` — when the code, not the process, is the thing failing
-- `workflow-ai-session` — session restart, context snapshot, intervention protocols
+- `workflow-ai-session` — the clean restart: what carries over, and the prompt that opens it
 - `references/ai-failure-modes.md` — the failure-mode taxonomy with repairs
 - `references/research-template.md` — template for a written research document
