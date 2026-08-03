@@ -1,320 +1,164 @@
 ---
 name: architectural-planning
 description: |
-  Методологический инструментарий для архитектурного планирования и делегирования.
-  Содержит: протоколы передачи задач между агентами (handoff), шаблоны промптов 
-  для `code`/`review`/`debug`, гайды по prompt engineering, декомпозиции задач,
-  управлению контекстом и контролю скоупа. Используется преимущественно режимом 
-  `architect`, но доступен любому режиму при необходимости.
-  Triggers: планирование задачи, создание промпта для агента, декомпозиция, 
-  оценка сложности, формирование /docs/Plan.md, передача задачи между режимами.
+  Turn an approved decision into work another agent can execute — decomposition
+  into vertical slices, an explicit scope boundary, the prompt itself, and the
+  handoff that carries context to an agent starting cold. Use when writing a
+  prompt for `code`, `review`, `debug`, or `devops`, splitting a feature into
+  tasks, drafting `/docs/Plan.md`, re-delegating after a FAIL, or deciding what
+  a delegation must carry. The architect's toolkit; any agent may load it.
 ---
 
-<purpose>
-This skill provides the **methodological toolkit** for architectural planning and agent delegation.
-It does NOT define a role or identity — those are defined by the active mode (e.g., `architect`).
-This skill is a **library of protocols, templates, and guides** that any mode can load when needed.
-</purpose>
+# Delegation
 
----
+A delegated agent starts **cold** — empty context, no memory of the conversation that produced the decision. Everything it needs travels in the prompt, or it does not arrive.
 
-<handoff_protocol>
+That one fact drives everything here: decompose so a cold agent can hold the task, bound the scope so it knows where to stop, write the prompt so nothing it needs stays implicit, and carry the history forward on every re-delegation.
 
-## Handoff Protocol — Передача Задач Между Режимами
+Complexity levels, STOP gates, and FAIL routing live in `CLAUDE.md`. This skill holds the mechanics they invoke.
 
-### To `code` (code mode)
+## Decompose
+
+**Cut vertically.** One behaviour, complete through every layer it touches — rather than every model, then every service, then every controller. A vertical slice can be verified end-to-end, reverted on its own, and gives the implementing agent the whole feature in view. Layer-wise cutting produces tasks that nobody can check until the last one lands.
+
+**Atomicity is the test of a task.** A task is atomic when, after it: the project builds, the change can be tested in isolation, reverting it leaves the tree consistent, and one sentence describes it. Failing any of the four means it is two tasks.
+
+**Order by dependency.** Build the graph before the list — for each piece, what must exist before it, and what depends on it. No task may reference something a later task creates. A cycle showing up here is a design problem surfacing at the cheapest moment; break it with an interface before delegating either side.
+
+**Delegate a task, not an epic.** "Add JWT auth with roles and OAuth" returns a different system every run. "Add `POST /auth/login` issuing a JWT, given the existing `User` model" returns the same one.
+
+## Bound the scope
+
+Three lists, always — **IN**, **OUT**, **FUTURE**. What is not written down is out. What is written as OUT is a decision rather than an oversight, and the entries that read as too obvious to write are exactly the ones an agent adds uninvited.
+
+Scope firms as the work moves: open while requirements are still forming, clarification-only once the plan is approved, closed during implementation — where only what blocks an acceptance criterion gets in. Reopening it is a decision with a cost, made out loud.
+
+**Creep announces itself** before it lands: «а может заодно», «раз уж мы здесь», «это же быстро». And after it lands: files in the diff that were not in the plan, `code` asking about functionality the spec never mentioned, a small task running for days. On any of these — stop, classify the addition as IN, OUT, or FUTURE, update the list, then continue.
+
+## Write the prompt
+
+| Section | What it carries |
+|---|---|
+| **Task** | One line naming the change |
+| **Context** | Why it matters and where it fits — enough for a cold reader |
+| **Scope** | The exact steps, numbered |
+| **Requirements** | What must be true when it works |
+| **Constraints** | The boundary of allowed change |
+| **Acceptance criteria** | How each one is checked, by running something |
+| **Files** | Concrete paths with the action on each |
+| **Output** | What comes back — code, a report, a decision |
+
+**The middle is where instructions go to die.** Models recall the start and the end of a prompt most reliably. Goal at the top, constraints and acceptance criteria at the bottom, reference material in between. A constraint that must hold appears in both positions.
+
+**Make criteria checkable by running something.** "Works correctly" is unverifiable and gets self-certified. "`npm test` passes, and `POST /auth/login` with a wrong password returns 401" gets verified.
+
+**State constraints as the bounded behaviour**, so the unwanted action is never named: "Implement the design as specified; architectural changes come back here" beats "don't change the architecture". Keep a bare prohibition only where you cannot phrase it positively — and pair it with what to do instead. `authoring-skills` holds the reasoning.
+
+**Show, where style matters.** Point at a file in this repo that already does the thing — "follow the shape of `UserService`" — instead of describing conventions in prose. One existing example transfers more than three paragraphs.
+
+**Revise by adding.** When a result misses, add the constraint or example that was missing; rewriting the prompt from scratch drops the constraints that were already doing their job.
+
+## The handoff
+
+To `code`:
 
 ```markdown
-## ✅ План готов — Делегирование к Реализации
+## ✅ План готов — делегирую реализацию
 
-### Промпт для выполнения:
-
-# Task: [Title]
+# Task: [title]
 
 ## Context
-[Why this matters]
+[why this matters, how it fits the system]
 
 ## Scope
-1. [Step 1]
-2. [Step 2]
+1. [step]
+2. [step]
 
 ## Requirements
-1. [Measurable req]
+1. [measurable]
 
 ## Constraints
-❌ [Forbidden 1]
-❌ [Forbidden 2]
+- [bounded behaviour]
 
 ## Acceptance Criteria
-✅ [Verifiable criterion]
-
-## Files
-- `file.ts` — [action]
-
-## Reference
-- `rules/meta-architect-framework.md`
-- `memory/repo-wiki/overview.md`
-
-## Output Format
-Code + brief report
-```
-
-### To `debug` (debug mode)
-
-```markdown
-## 🔍 Требуется Расследование
-
-**Проблема:** [Description]
-**Симптомы:** [What's happening]
-**Что проверено:** [What we know]
-**Ожидаемый результат:** /docs/Research.md with root cause + recommendations
-```
-
-### To `review` (review mode)
-
-```markdown
-### Проверка Качества
-
-**Проверить:** Specification compliance, security, architecture, rules/meta-architect-framework.md
-**Scope реализации:** [What was implemented]
-**Spec reference:** [/docs/Plan.md / prompt that was given to `code`]
-```
-
-</handoff_protocol>
-
----
-
-<prompt_templates>
-
-## Agent Prompt Templates
-
-### Standard Implementation Prompt
-
-```markdown
-# Task: [Specific title]
-
-## Context
-[Why this matters, how it fits system]
-
-## Scope
-1. [Exact step]
-2. [Exact step]
-
-## Requirements
-1. [Measurable]
-
-## Constraints
-❌ No scope creep
-❌ No dependency changes
-❌ No debug logs/secrets
-
-## Acceptance Criteria
-✅ [Tests pass]
-✅ [Build clean]
+- [ ] [verified by running: …]
 
 ## Files
 - `path/file.ts` — [action]
 
 ## Reference
-- `rules/meta-architect-framework.md`
-- `memory/repo-wiki/overview.md`
+- `/docs/Plan.md` — the approved plan
+- `memory/repo-wiki/[entry].md` — how this area works
 
-## Output Format
-Code + brief report
+## Output
+Code + report against the acceptance criteria.
 ```
 
-### Bug Fix Prompt
+To `debug` — the symptom and the evidence already gathered, so the investigation starts where yours stopped:
 
 ```markdown
-# Task: Fix Bug — [Short description]
+## 🔍 Требуется расследование
 
-## Bug Description
-**Actual:** [What happens]
-**Expected:** [What should happen]
-
-## Root Cause
-[Hypothesis or "requires investigation"]
-
-## Scope
-1. [Minimal fix step]
-2. [Add regression test]
-
-## Constraints
-❌ Fix ONLY this bug
-❌ No refactoring
-❌ Minimal changes
-
-## Acceptance Criteria
-✅ Bug no longer reproduces
-✅ Regression test added
-✅ Existing tests pass
+**Симптом:** [what is observed, and where]
+**Воспроизведение:** [steps, or what is known about when it fires]
+**Уже проверено:** [hypotheses eliminated, and by what evidence]
+**Ожидаю:** Research.md — root cause with evidence + recommendation
 ```
 
-### Refactoring Prompt
+To `review` — the fixed point it reviews against:
 
 ```markdown
-# Task: Refactor — [What exactly]
+## 🔍 Ревью
 
-## Context
-**Current state:** [What's wrong]
-**Target state:** [What we want]
-
-## Scope
-1. [Refactoring step]
-
-## Constraints
-⚠️ BEHAVIOR MUST NOT CHANGE
-❌ No public API changes
-❌ No new features
-❌ No feature removal
-
-## Acceptance Criteria
-✅ All existing tests pass WITHOUT logic changes
-✅ Build clean
-✅ [Specific metric: fewer lines / classes / duplication]
+**Что реализовано:** [scope]
+**Спека:** `/docs/Plan.md` — [section] / the prompt given to `code`
+**Особое внимание:** [area, if any — auth boundary, migration, external input]
 ```
 
-**Quality checklist for any prompt:**
+To `devops` — the target state and what must keep working:
 
-- [ ] Scope 100% clear
-- [ ] All constraints stated
-- [ ] Acceptance criteria measurable
-- [ ] Files list complete
-- [ ] No implicit expectations
-</prompt_templates>
+```markdown
+## 🛠️ Инфраструктура
 
----
-
-<complexity_assessment>
-
-## Complexity Assessment Framework
-
-### 🟢 Simple (Direct Execution)
-
-- **Criteria:** Single file, <50 lines, no DB/API, clear requirement
-- **Flow:** Assess → prompt → `code` → `review` → Done
-- **Plan required:** No (quick assessment + delegation)
-- **Examples:** Fix typo, add validation, update constant
-
-### 🟡 Medium (Planned Execution)
-
-- **Criteria:** Multiple files, DB/API changes, new module, some ambiguity
-- **Flow:** /docs/Plan.md → STOP (approval) → prompt → `code` → `review` → Done
-- **Plan required:** Yes (in /docs/Plan.md)
-- **Examples:** New API endpoint, service class, 3rd party integration
-
-### 🔴 Complex (Research + Planned Execution)
-
-- **Criteria:** Architecture change, auth/tenancy, scaling, migrations, high risk
-- **Flow:** (maybe `debug`) → /docs/Research.md → /docs/Plan.md + ADR → STOP (approval) → Phased `code` → `review` per phase → Done
-- **Plan required:** Yes + /docs/Research.md + ADR
-- **Examples:** Multi-tenancy, database migration, auth redesign
-
-</complexity_assessment>
-
----
-
-<stop_semantics>
-
-## STOP Gates
-
-**STOP gates are mandatory checkpoints, not suggestions.**
-
-At STOP gates:
-
-- ✅ Output required artifact (/docs/Plan.md, /docs/Research.md, prompt)
-- ✅ Explicitly state: **"🛑 STOP — Awaiting approval to proceed"**
-- ✅ Wait for user's explicit "approved" / "proceed" / "continue"
-- ❌ Do NOT continue automatically
-- ❌ Do NOT assume approval from silence
-- ❌ Do NOT proceed if user asks questions (answer first, then re-STOP)
-
-**When to STOP:**
-
-- After /docs/Plan.md creation for 🟡 tasks
-- After /docs/Research.md + /docs/Plan.md + ADR for 🔴 tasks
-- When encountering blocker during execution
-- When scope unclear or requirements conflict
-- When user approval explicitly required by workflow
-
-</stop_semantics>
-
----
-
-<fail_protocol>
-
-## Review FAIL Protocol
-
-When `review` returns **FAIL**:
-
-### FORBIDDEN
-
-- Immediately re-running `code` with same prompt
-- Asking `code` to "try again" without analysis
-- Making cosmetic prompt changes and retrying
-
-### REQUIRED
-
-1. **Analyze FAIL report**
-2. **Categorize issues:**
-   - 🔴 Critical (security, constraint violation) → Revise /docs/Plan.md
-   - 🟠 Blocker (missing logic, bad implementation) → Revise coder prompt
-   - 🟡 Warning (style, minor) → Targeted fixes only
-3. **IF >2 CRITICAL failures** → Invoke `debug` (root cause)
-4. **Update /docs/Plan.md / prompt** with findings
-5. **THEN re-delegate** to `code`
-
-**Two Steps Back rule applies if looping:**
-
-```
-STOP all implementation
-→ `debug` investigates
-→ /docs/Research.md created
-→ /docs/Plan.md revised
-→ Clean context restart
-→ `code` with improved prompt
-→ `review` verification
+**Задача:** [target state]
+**Текущее состояние:** [what runs now]
+**Должно продолжать работать:** [what a rollback protects]
+**Ожидаю:** working config + verification steps + rollback
 ```
 
-</fail_protocol>
+### Context passthrough
 
----
+Re-delegation is where context is lost most often — the agent that failed is gone, and its replacement knows nothing about the attempt. Every re-delegation carries five things:
 
-<forbidden_actions>
+```markdown
+# Task: [title] — iteration N
 
-## Forbidden by Default
+## Спека
+`/docs/Plan.md` — [section]
 
-Unless **explicitly requested** by user or specified in /docs/Plan.md:
+## Что уже работает
+[what landed and is verified — do not rebuild it]
 
-| Action | Why Forbidden | How to Request |
-|--------|---------------|----------------|
-| **Dependency upgrades** | Breaking changes, compatibility risks | Separate task with version compatibility check |
-| **DB schema changes / migrations** | Data loss potential, migration complexity | Explicit migration plan with rollback strategy |
-| **Infra / CI-CD changes** | Environment impact, deployment risks | ADR + staged rollout plan |
-| **Breaking API changes** | Client compatibility broken | Versioned API (v2) or migration guide |
+## Почему эта итерация
+[the FAIL findings, or what changed — classified, not pasted]
 
-**When spotted outside scope:**
+## Что изменить
+1. [numbered, specific]
 
-- `code`: Mention at end of report but do NOT implement
-- `architect`: Create separate task in /docs/Tasks.md
+## Ограничения, выясненные до сих пор
+- [constraint discovered in the previous attempt]
+```
 
-</forbidden_actions>
+Without *what already works*, the next agent rebuilds it. Without *why this iteration exists*, it repeats the failure. Without the *discovered constraints*, it rediscovers them at the same cost.
 
----
+## Completion criterion
 
-**Связанные файлы:**
+A delegation is ready when: an agent with no other context could execute it; every acceptance criterion names how it is checked; scope states what is out as explicitly as what is in; the files listed exist, or are marked CREATE; and, for a re-delegation, all five passthrough sections are filled.
 
-- `references/plan-template.md` — шаблон /docs/Plan.md
-- `references/guide-context-management.md` — управление контекстом
-- `references/guide-prompts-engineering.md` — prompt engineering
-- `references/guide-decomposition.md` — декомпозиция задач
-- `references/guide-scope-control.md` — контроль scope
-- `references/guide-mermaid-diagrams.md` — использование Mermaid
-- `references/legacy-rules-template.md` — шаблон правил проекта (legacy reference)
-- `references/legacy_prompts/implement.md` — промпт для реализации
-- `references/legacy_prompts/fix-bug.md` — промпт для багфиксов
-- `references/legacy_prompts/refactor.md` — промпт для рефакторинга
+## Related
 
----
-
-**END OF architectural-planning SKILL**
+- `references/plan-template.md` — the `/docs/Plan.md` template
+- `authoring-skills` — the discipline these prompt rules come from
+- `codebase-design` — where the seam goes, when decomposition needs one
+- `workflow-ai-session` — context degraded mid-task: snapshot and clean restart
+- `forensic-investigation` — the prompt keeps producing the same failure

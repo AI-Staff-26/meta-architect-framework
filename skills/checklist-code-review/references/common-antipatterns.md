@@ -443,8 +443,7 @@ Red Flags (немедленный STOP):
 
 **Связанные файлы:**
 - `../../forensic-investigation/references/ai-failure-modes.md` — диагностика AI-сбоев
-- `../../architectural-planning/references/guide-scope-control.md` — контроль scope
-- `../../architectural-planning/references/guide-decomposition.md` — декомпозиция задач
+- `../../architectural-planning/SKILL.md` — скоуп, декомпозиция, делегирование
 - `../SKILL.md` — чеклист ревью
 
 ---

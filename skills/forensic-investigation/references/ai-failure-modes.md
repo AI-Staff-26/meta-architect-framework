@@ -294,8 +294,7 @@ Golden Rule:
 ---
 
 **Связанные файлы:**
-- `../../architectural-planning/references/guide-context-management.md` — управление контекстом
-- `../../architectural-planning/references/guide-prompts-engineering.md` — написание промптов
+- `../../architectural-planning/SKILL.md` — промпты, декомпозиция, передача контекста
 - `../../workflow-ai-session/SKILL.md` — протокол AI-сессии
 - `../SKILL.md` — антипаттерны разработки
 
