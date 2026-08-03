@@ -1,200 +1,94 @@
 ---
 name: checklist-ux-design
 description: |
-  6-pass UX DESIGN methodology for UI-heavy features. Mental model, information 
-  architecture, affordances, feedback, edge states, microinteractions. Used by 
-  `architect` BEFORE implementation to prevent "vanilla UI".
+  Six design decisions to settle before a UI is implemented — mental model,
+  information architecture, affordance, feedback, edge states, and motion.
+  Use before delegating any UI-heavy feature, when a screen is being designed
+  rather than verified, or when previous UI came back generic and stateless.
+  Produces the UX section a plan and a prompt are written from. For build
+  sequencing use `workflow-ui-build-order`, for verification `checklist-ux-review`.
 ---
 
-<purpose>
-Pre-implementation UX design checklist. Ensures all UX aspects are considered
-BEFORE coding begins. Prevents "vanilla UI" syndrome.
-</purpose>
+# UX Design Passes
 
----
+**Vanilla UI is what deferral looks like.** Every decision left unmade before implementation gets made anyway — at speed, by whoever is writing the component, in favour of the default. A generic screen with three states and no empty message is not a failure of taste; it is a record of which decisions were never made.
 
-<when_to_use>
+So each pass below ends in a decision written down. "We will see how it looks" is the absence of a decision, and it is the thing this skill exists to catch.
 
-## Activation
+Run this for 🟡🔴 features with real interface surface, before the plan is finished.
 
-**Load for:**
+## Pass 1 — Mental model
 
-- 🟡 Medium or 🔴 Complex features with significant UI
-- New user-facing workflows
-- Design spec creation
+What does the user believe is happening, before being told anything?
 
-**Before:**
+Name the thing this resembles — the app or pattern they already know — and then name **where the resemblance breaks**. That break is where every misconception will live, and it is the only part that needs explaining in the interface.
 
-- `code` starts UI implementation
-- Feature spec finalized
+*Settled when:* the expectation is written in one sentence, the closest familiar pattern is named, and every point where this behaves differently is listed with what the UI does about it.
 
-</when_to_use>
+## Pass 2 — Information architecture
 
----
+What things exist, what they are called, and how they nest.
 
-## Pass 1: Mental Model Alignment
+The name the user reads is the deliverable here, not a label chosen later: it should be the same word in the interface, the API, and the conversation with the user. Two names for one thing is a bug that ships in every layer at once.
 
-> What does the user THINK is happening?
+Settle grouping and default order too — most lists have an order that is right for the task and an order that is merely easy to implement.
 
-- [ ] User expectations documented
-- [ ] Familiar patterns identified (what apps/UX user knows)
-- [ ] Potential misconceptions listed
-- [ ] Entry points and first impressions defined
-- [ ] Progressive disclosure strategy (if complex)
+*Settled when:* every entity has one name, the containment is drawn, and each list has a stated default order with the reason.
 
-**Key question:** "What will the user expect when they first see this?"
+## Pass 3 — Affordance
 
----
+How does the user know what can be done?
 
-## Pass 2: Information Architecture
+**Exactly one primary action per screen.** Two primaries is none — the eye has nowhere to land. Secondary actions stay reachable without competing; destructive ones are separated from routine ones by more than colour.
 
-> What exists in the app and how is it organized?
+Disabled controls carry the reason: a control that cannot be used and does not say why sends the user looking for the fault in themselves.
 
-- [ ] All entities/concepts named
-- [ ] Hierarchy structure defined
-- [ ] Relationships between entities documented
-- [ ] Grouping and ordering logic established
-- [ ] Navigation paths mapped
+*Settled when:* the primary action is named for each screen, editable and draggable things are distinguishable from static ones, and every disabled state has the sentence it shows.
 
-**Key question:** "What are the 'things' the user will interact with?"
+## Pass 4 — Feedback
 
----
+For every action, what the system says back.
 
-## Pass 3: Affordance & Action
+| State | The decision to make |
+|---|---|
+| **Empty** | What it says and what it invites the user to do — a blank region is an unanswered question |
+| **Loading** | Skeleton or spinner, and what happens when it runs long |
+| **Partial** | Whether progress is shown, and against what total |
+| **Success** | Whether it is confirmed at all, and what comes next |
+| **Error** | The specific reason and the recovery action — "Что-то пошло не так" is a decision not to explain |
+| **Conflict** | What the user sees when someone else changed it first, and what their options are |
 
-> What looks clickable/editable/draggable?
+*Settled when:* every action in scope maps to what appears afterwards, and no error message is generic.
 
-- [ ] Primary actions identified and prominent
-- [ ] Secondary actions accessible but not distracting
-- [ ] Editable fields distinguishable
-- [ ] Draggable elements have visual signals
-- [ ] Disabled states clearly indicate "not available"
+## Pass 5 — Edge states
 
-**Key question:** "How will user know what they can DO?"
+The scenarios that are rare per user and constant across users.
 
----
+First visit with nothing to show. Far more data than the layout was drawn for. A slow or absent connection. Permission denied. Two people editing the same thing. A destructive action and whether it can be undone — and if it cannot, what stands between the user and it.
 
-## Pass 4: System Feedback
+*Settled when:* each scenario has a described behaviour, or an explicit "not applicable, because …".
 
-> How does the system respond to user actions?
+## Pass 6 — Motion
 
-| State | Checklist |
-|-------|-----------|
-| **Empty** | [ ] Helpful message + CTA |
-| **Loading** | [ ] Skeleton or spinner + cancel option if long |
-| **Partial** | [ ] Progress indicator ("X of Y") |
-| **Error** | [ ] Clear reason + recovery action |
-| **Success** | [ ] Confirmation + next steps (if any) |
-| **Conflict** | [ ] Explanation + resolution options |
+What moves, for how long, and what the movement explains.
 
-**Key question:** "What feedback does user get for every action?"
+Motion earns its place by explaining a relationship — where a panel came from, what turned into what, that something arrived. Motion that decorates costs frames and attention and returns nothing. Timings come from tokens, and `prefers-reduced-motion` is honoured because for some users motion is not decoration but symptoms.
 
----
+*Settled when:* each transition is listed with its duration, its purpose, and its reduced-motion behaviour.
 
-## Pass 5: Edge States
+## What this produces
 
-> Unusual but important scenarios
+A UX section written into `/docs/Plan.md` — one heading per pass, decisions only, no intentions. From it, each `code` prompt can be written without a single new choice being made at implementation time.
 
-- [ ] **First visit** — onboarding, tooltips, empty guidance
-- [ ] **Empty state** — not just blank, but helpful
-- [ ] **Data overload** — pagination, filtering, search
-- [ ] **Slow connection** — optimistic UI, timeouts
-- [ ] **Offline mode** — cached data, sync status
-- [ ] **Validation errors** — inline, timely, actionable
-- [ ] **Concurrent edits** — conflict detection & resolution
-- [ ] **Undo capability** — reversible destructive actions
-- [ ] **Permission denied** — graceful handling
+`frontend-design` covers the aesthetic direction — what it should look like — which is a different question from the six above and worth running alongside them when the UI needs a point of view.
 
-**Key question:** "What happens when things aren't 'normal'?"
+## Completion criterion
 
----
+Done when: every pass has a written decision or an explicit exclusion with a reason; the primary action, the entity names, and every state's copy are specified rather than described; and someone implementing from this document would not need to invent anything visible to the user.
 
-## Pass 6: Microinteractions
+## Related
 
-> The details that make UI feel alive
-
-### Hover States
-
-- [ ] Buttons: subtle feedback (scale, color, shadow)
-- [ ] Cards: elevation change, border
-- [ ] Links: underline, color transition
-
-### Transitions
-
-- [ ] Page transitions: timing defined (200-300ms typical)
-- [ ] Modal/drawer: smooth open/close
-- [ ] List items: enter/exit animations
-
-### Progress & Confirmation
-
-- [ ] Upload: progress bar with percentage
-- [ ] Save: spinner → checkmark transition
-- [ ] Delete: confirmation → fade animation
-
-**Key question:** "Does the interface feel responsive and alive?"
-
----
-
-<quick_reference>
-
-## Quick Reference
-
-```text
-Before `code` starts UI work, verify:
-
-✅ Pass 1: User expectations documented
-✅ Pass 2: Entities & hierarchy defined  
-✅ Pass 3: Actions & affordances clear
-✅ Pass 4: All states have feedback
-✅ Pass 5: Edge cases handled
-✅ Pass 6: Microinteractions planned
-```
-
-</quick_reference>
-
----
-
-<anti_patterns>
-
-## Anti-Patterns
-
-| Anti-Pattern | Problem | Fix |
-|--------------|---------|-----|
-| Skip UX pass | AI makes decisions "at game time" | Complete checklist before coding |
-| Generic states | "Error occurred" with no action | Specific messages + recovery |
-| Missing loading | User thinks app is frozen | Always show progress |
-| No empty state | Blank screen confuses users | Helpful guidance + CTA |
-| Invisible actions | User doesn't know what's clickable | Clear affordance signals |
-
-</anti_patterns>
-
----
-
-<handoff_protocol>
-
-## Handoff Protocol
-
-### Input Required
-
-- Feature requirements / user story
-- Target user profile
-- Complexity assessment (🟡/🔴)
-
-### Output Produced
-
-- Completed 6-pass checklist
-- UX Design Pass section for feature-spec
-
-### Handoff To
-
-| Next Role | What They Receive |
-|-----------|-------------------|
-| `code` | Completed UX design ready for implementation |
-| `review` | Baseline expectations for `checklist-ux-review` |
-
-</handoff_protocol>
-
----
-
-**Used by:** `architect`  
-**Followed by:** checklist-ux-review (verification)
+- `workflow-ui-build-order` — the order it then gets built in
+- `checklist-ux-review` — verification after implementation
+- `frontend-design` — visual direction and typography
+- `grilling` — the user's expectations are guesses so far

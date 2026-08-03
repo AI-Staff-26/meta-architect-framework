@@ -1,285 +1,57 @@
 ---
 name: checklist-phase-completion
 description: |
-  Meta-Architect phase transition criteria. ANALYSIS→RESEARCH→PLANNING→
-  IMPLEMENTATION→REVIEW→COMPLETION gates. Exit criteria per complexity level 
-  (🟢🟡🔴). Required artifacts per phase. Anti-patterns detection.
+  Whether a phase is actually finished or only feels finished — the checkable
+  condition for each transition from understanding to planning to
+  implementation to review to closing. Use before moving a task forward, when
+  resuming work someone else left, when a review keeps finding things the
+  previous phase should have settled, or when asking "готово ли это".
+  Catches premature completion, the failure that gets more expensive with
+  every phase it survives.
 ---
 
-# ✔️ Phase Completion Checklist — Чеклист Завершения Фаз
+# Is This Phase Actually Done
 
-<purpose>
-Критерии завершения каждой фазы работы Meta-Architect.
-Используй для проверки готовности к переходу на следующую фазу.
-</purpose>
+Work rarely fails by doing the wrong thing. It fails by carrying an unfinished phase forward under the label *done* — attention slides to being finished while the thing itself is not, and every later phase then builds on the gap.
 
----
+The cost multiplies as it travels. A scope left vague costs a paragraph to fix during understanding, a re-plan during planning, a rewrite during implementation, and a FAIL cycle during review. Each transition below has a condition you can check by looking rather than by feeling.
 
-## Фазы Работы
+## The transitions
 
-```
-USER REQUEST
-     ↓
-[ANALYSIS] → Понимание задачи
-     ↓
-[RESEARCH] → Исследование (для 🟡🔴)
-     ↓
-[PLANNING] → План реализации
-     ↓
-[IMPLEMENTATION] → `code` работает
-     ↓
-[REVIEW] → `review` проверяет
-     ↓
-[COMPLETION] → Финализация
-```
+| Moving from → to | True before you move | What the unfinished version looks like |
+|---|---|---|
+| **Understanding → research or planning** | You can state what *done* looks like in one sentence the user would agree with, and the unknowns are named as unknowns | Scope described by the name of the feature; "выяснится по ходу" |
+| **Research → planning** | The cause or the mechanism is supported by evidence you can point at, and the alternatives considered are written down with why they lost | «Скорее всего из-за…» — a plausible theory that nothing was tested against |
+| **Planning → implementation** | Approved at a STOP; every acceptance criterion names how it gets checked; every file is listed or marked CREATE; the `vibe-mentor` checkpoint passed for 🟡🔴 | Criteria that read "работает корректно"; a file list that says "и связанные файлы" |
+| **Implementation → review** | Every criterion is checked off with how it was verified; the full suite and the linter were run, and you saw the output | "Должно работать"; the suite was run before the last three edits |
+| **Review → closing** | PASS; or findings classified by severity and routed — plan, prompt, or targeted fix | A FAIL retried with the same prompt because the findings looked minor |
+| **Closing → done** | The path works through the real interface, not only under test; `memory/` reflects what changed; the work report is written and referenced | The report describes what was intended rather than what landed |
 
----
+## Skipping is a decision, not a shortcut
 
-## 📊 ANALYSIS — Анализ
+🟢 work skips planning because the level says so — that is the framework working, not a phase left unfinished. The difference is whether the skip was decided out loud with a reason, or simply happened.
 
-### Критерии завершения
+The reverse case matters more: a phase that keeps producing questions belonging to the previous one means the previous one is not done. Going back costs one step now; going forward costs every step after.
 
-- [ ] Задача понята полностью (или уточняющие вопросы заданы)
-- [ ] Scope определён и ограничен
-- [ ] Сложность оценена: 🟢 Simple / 🟡 Medium / 🔴 Complex
-- [ ] Контекст загружен (memory/repo-wiki/, rules/ актуальны)
-- [ ] Unknowns идентифицированы
+## Tells of premature completion
 
-### Выходные артефакты
+- «Это потом починю» — the follow-up task does not exist, so *potom* is *never*
+- «Код выглядит правильно» — looking right and running right are separate claims; run it
+- The criteria are restated in the report instead of verified against
+- The report is written in the future tense — *будет*, *должно*
+- The phase ended exactly when it became tedious rather than when it became complete
+- The next phase opens by re-establishing what the previous one was supposed to have settled
 
-| Сложность | Требуемые артефакты |
-|-----------|---------------------|
-| 🟢 Simple | — (переход к IMPLEMENTATION) |
-| 🟡 Medium | Scope description → PLANNING |
-| 🔴 Complex | Scope + unknowns list → RESEARCH |
+Any of these is a signal to reopen the phase, not to argue it closed. Reopening while the context is still loaded costs a fraction of what rediscovering it later costs.
 
-### Критерии перехода
+## Completion criterion
 
-**→ RESEARCH** (если 🔴 или есть unknowns):
+A phase is done when its row above is true by inspection — you can name the artifact, the command, or the file that proves it — and nothing in the next phase depends on something you intend to settle later.
 
-- Unknowns требуют исследования
-- Архитектурные вопросы без ответа
-- Нужен `debug`
+## Related
 
-**→ PLANNING** (если 🟡):
-
-- Scope понятен
-- Нет критических unknowns
-- Решение очевидно
-
-**→ IMPLEMENTATION** (если 🟢):
-
-- Scope тривиален
-- Нет архитектурных решений
-- ≤2 файла
-
----
-
-## 🔍 RESEARCH — Исследование
-
-### Критерии завершения
-
-- [ ] Research.md создан
-- [ ] Текущая архитектура проанализирована
-- [ ] Зависимости и ограничения определены
-- [ ] Альтернативные подходы исследованы
-- [ ] Риски идентифицированы
-- [ ] Unknowns разрешены (или определены как acceptable)
-
-### Выходные артефакты
-
-```markdown
-/docs/Research.md
-- Current State Analysis
-- Dependencies Map
-- Constraints & Limitations
-- Alternative Approaches
-- Risks Assessment
-- Recommendations
-```
-
-### Критерии перехода → PLANNING
-
-- [ ] Research.md существует и полон
-- [ ] Рекомендуемый подход обоснован
-- [ ] Риски имеют митигации
-- [ ] `debug` завершил (если вызывался)
-
----
-
-## 📝 PLANNING — Планирование
-
-### Критерии завершения
-
-- [ ] Plan.md создан
-- [ ] Архитектурное решение описано
-- [ ] Альтернативы рассмотрены (для 🟡🔴)
-- [ ] Почему выбран этот подход — обосновано
-- [ ] Список файлов + изменения определён
-- [ ] Порядок выполнения установлен
-- [ ] Acceptance Criteria измеримы
-- [ ] Риски и митигации описаны
-- [ ] ADR создан (если архитектурное решение)
-
-### Выходные артефакты
-
-| Сложность | Артефакты |
-|-----------|-----------|
-| 🟢 Simple | — (нет плана) |
-| 🟡 Medium | Plan.md |
-| 🔴 Complex | Research.md + Plan.md + ADR (опционально) |
-
-### Критерии перехода → IMPLEMENTATION
-
-- [ ] 🛑 STOP gate пройден (user approval для 🟡🔴)
-- [ ] Plan.md утверждён
-- [ ] Промпт для `code` готов
-
----
-
-## ⚙️ IMPLEMENTATION — Реализация
-
-### Критерии завершения
-
-- [ ] `code` выполнил все шаги из плана
-- [ ] Код соответствует Requirements
-- [ ] Build проходит
-- [ ] Тесты написаны и проходят
-- [ ] Нет lint ошибок
-
-### Выходные артефакты
-
-- Рабочий код
-- Тесты
-- Обновлённые интерфейсы/типы (если применимо)
-
-### Критерии перехода → REVIEW
-
-- [ ] `code` завершил с отчётом
-- [ ] Build/tests проходят
-- [ ] Готов к передаче `review`
-
----
-
-## 🔎 REVIEW — Ревью
-
-### Критерии завершения
-
-- [ ] `review` выполнил проверку по `checklists/code-review.md`
-- [ ] Вердикт вынесен: PASS или FAIL
-- [ ] Комментарии задокументированы
-
-### Выходные артефакты
-
-```markdown
-## Review Result: PASS / FAIL
-
-**Checked:**
-- [x] Functionality
-- [x] Security
-- [x] Architecture
-- [x] Code Quality
-
-**Issues:** [если FAIL]
-**Comments:** [опционально]
-```
-
-### Критерии перехода
-
-**→ COMPLETION** (если PASS):
-
-- [ ] Все проверки пройдены
-- [ ] Нет блокирующих issues
-
-**→ IMPLEMENTATION** (если FAIL):
-
-- [ ] Issues понятны
-- [ ] План исправления есть
-- [ ] `code` промпт обновлён
-
-**→ PLANNING** (если FAIL критично):
-
-- [ ] Фундаментальная проблема в подходе
-- [ ] Нужен пересмотр плана
-- [ ] Возможно `debug`
-
----
-
-## ✅ COMPLETION — Завершение
-
-### Критерии завершения
-
-- [ ] `review` PASS получен
-- [ ] Документация обновлена:
-  - [ ] Architecture.md (если изменения)
-  - [ ] Requirements.md (если новые требования)
-  - [ ] Tasks.md (задача отмечена выполненной)
-- [ ] ADR создан (если было arch решение)
-- [ ] Пользователь уведомлён
-
-### Выходные артефакты
-
-- Обновлённые `/docs/*`
-- Финальный отчёт пользователю
-
-### Критерии завершения задачи
-
-- [ ] Все Acceptance Criteria выполнены
-- [ ] Код в production-ready состоянии
-- [ ] Документация актуальна
-- [ ] Нет открытых вопросов
-
----
-
-## Anti-Patterns
-
-| Anti-Pattern | Почему плохо | Как избежать |
-|--------------|--------------|--------------|
-| Skip RESEARCH для 🔴 | Незнание ведёт к переделкам | Всегда Research.md для Complex |
-| Skip STOP gate | User не согласен с планом | Обязательный STOP для 🟡🔴 |
-| Skip REVIEW | Баги попадают в production | ВСЕГДА `review` после `code` |
-| Unclear Acceptance | Непонятно когда "готово" | Измеримые критерии |
-| Skip docs update | Документация устаревает | Обновлять в COMPLETION |
-
----
-
-## Quick Reference
-
-```
-Phase Transitions:
-
-ANALYSIS:
-  🟢 → IMPLEMENTATION
-  🟡 → PLANNING
-  🔴 → RESEARCH
-
-RESEARCH:
-  → PLANNING (all unknowns resolved)
-
-PLANNING:
-  → 🛑 STOP (await approval)
-  → IMPLEMENTATION (after approval)
-
-IMPLEMENTATION:
-  → REVIEW (`code` done)
-
-REVIEW:
-  PASS → COMPLETION
-  FAIL → IMPLEMENTATION or PLANNING
-
-COMPLETION:
-  → Update docs → Report → DONE
-```
-
----
-
-**Связанные файлы:**
-
-- `workflow-feature/SKILL.md` — полный workflow
-- `checklist-code-review/SKILL.md` — чеклист для REVIEW фазы
-- `architectural-planning/references/plan-template.md` — шаблон Plan.md
-- `forensic-investigation/references/research-template.md` — шаблон Research.md
-
----
-
-**END OF CHECKLIST**
+- `architectural-planning/references/plan-template.md` — what an approved plan contains
+- `forensic-investigation/references/research-template.md` — what finished research contains
+- `checklist-code-review` — the review phase itself
+- `memory-keeping` — the work report that closes the task
+- `vibe-mentor` — the checkpoint before implementation, and phase readiness generally

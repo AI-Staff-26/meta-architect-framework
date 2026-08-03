@@ -1,387 +1,76 @@
 ---
 name: workflow-refactoring
 description: |
-  Code improvement protocol WITHOUT behavior change. Safety analysis, test 
-  coverage check, phased approach. For: cleanup, structure improvement, 
-  tech debt reduction. NOT for feature changes or architecture shifts 
-  (use workflow-architecture-change).
+  Changing structure while behaviour stays identical — the safety net that
+  proves it, the green-to-green loop, and the rule that tests do not change.
+  Use for duplication, unclear code, a module that resists testing, or
+  preparation before a feature lands; also when the user says "почисти",
+  "отрефактори", "надо упростить", "технический долг". For behaviour that is
+  wrong use `workflow-debugging`, for new behaviour `workflow-feature`, for a
+  change of layers or contracts `workflow-architecture-change`.
 ---
 
-# 🔧 Refactoring Workflow — Рефакторинг Кода
+# Refactoring
 
-<purpose>
-Протокол безопасного рефакторинга без изменения поведения.
-Улучшение структуры, читаемости, производительности при сохранении функциональности.
-</purpose>
+**Refactoring is defined by what stays the same.** Structure moves; observable behaviour does not.
 
----
+That definition is a safety property, not a purity rule. Work labelled *refactor* gets reviewed as a refactor — the reviewer checks that nothing changed, and does not look for the correctness of anything new. Behaviour that slips in under the label passes through the one gate that would have caught it.
 
-## Когда Использовать
+## Establish the safety net first
 
-**Триггеры:**
+Behaviour that is not covered is behaviour you are about to change without knowing.
 
-- Дублирование кода (DRY нарушения)
-- Сложный/нечитаемый код
-- Производительность (узкие места)
-- Подготовка к новой функциональности
-- Технический долг
+**No tests means tests come first.** Not a full suite — coverage of the code being touched, at the seam it is touched through. `tdd` holds where the seam belongs and what makes such a test worth keeping.
 
-**НЕ использовать для:**
+These are **characterization tests**: they describe what the code does today, not what it should do. If current behaviour is odd, the test records the oddity — that is correct, because preserving it is the whole contract of this task. A bug found this way gets written down and fixed in its own change, with its own review.
 
-- Новой функциональности → `feature.md`
-- Фикса багов → `debugging.md`
-- Архитектурных изменений (миграции, масштабирование) → `architecture-change.md`
-- Изменения поведения системы → это НЕ рефакторинг
+*Ready when:* the affected behaviour runs under test, the suite is green, and you have watched it go green rather than assumed it.
 
----
+## Name the improvement
 
-## Ключевой Принцип
+State what gets better in terms someone else can check: duplication between two named files removed; a module testable without a database; a function that fit on one screen. "Cleaner" and "better" have no end state, and refactoring without an end state does not have one either.
 
-> **Рефакторинг = изменение структуры БЕЗ изменения поведения.**
+Write down the starting state too — files in scope, the problem, the intended shape. It is what tells you, mid-change, whether you are still doing the thing you started.
 
-```
-Поведение ДО = Поведение ПОСЛЕ
-(все тесты проходят)
-```
+## The loop
 
-**Индикаторы правильного рефакторинга:**
+**Green → change → green.** Every step starts and ends with a passing suite.
 
-- ✅ Все тесты проходят без изменений
-- ✅ API контракты не изменились
-- ✅ Input/Output остаётся идентичным
+This is not the red → green of `tdd`. There is no red bar here: a red bar during a refactor means the last step was too large or changed behaviour, and the response is to revert it, not to debug it. Reverting one small step costs seconds. Debugging a large one costs the afternoon and often ends with a test edited to make it pass.
 
----
+Steps stay small enough that reverting one is never an expensive decision, and the suite runs after every one, not at the end.
 
-## Фаза 1: Оценка и Подготовка
+## Tests do not change
 
-### Шаг 1.1: Определение Scope
+A test edited to make it pass is behaviour change with the evidence removed. The suite is the invariant; if it fails, the code moved further than intended.
 
-**Действия:**
+One case is legitimate and is its own step: a test that asserts on an implementation detail being deliberately removed — an internal method name, a call count. Move that test to the behaviour it was really protecting, while everything is green, as a separate change, and say so. Never in the same step as the restructuring it would otherwise be evidence for.
 
-1. Определить что именно рефакторим:
-   - Какой модуль/файл/функция?
-   - Какую проблему решаем?
-   - Какой результат ожидаем?
+## Pick the transformation by blast radius
 
-2. Оценить масштаб:
+| Transformation | Reaches | Notes |
+|---|---|---|
+| Rename, extract function, inline | One file | Safest; let the tooling do it where it can |
+| Move between files or modules | Callers across the repo | Update every call site in the same step, so the suite stays honest |
+| Extract type or class, split a god object | The module's shape | Needs a plan for 🟡; the new boundary is a design decision — `codebase-design` |
+| Replace conditionals with polymorphism, decompose a module | Structure and its callers | 🔴 territory; phase it, review each phase |
 
-| Критерий | 🟢 Simple | 🟡 Medium | 🔴 Complex |
-|----------|-----------|-----------|------------|
-| Файлы | 1-2 файла | 3-5 файлов | >5 файлов |
-| Зависимости | Внутри модуля | Между модулями | Cross-cutting |
-| API | Нет изменений | Internal changes | Public contracts |
-| Тесты | Есть и проходят | Есть, но неполные | Нет/нужны новые |
-| Риск | Минимальный | Средний | Высокий |
+**Escalation signal:** the moment the change touches a public contract, a layer boundary, or a pattern the project follows elsewhere, this stopped being a refactor. It is an architecture change — `workflow-architecture-change`, with an ADR.
 
-### Шаг 1.2: Проверка Тестового Покрытия
+## Keep it separate
 
-> **Правило:** Нет тестов = нет рефакторинга (сначала тесты).
+One delegation does one kind of change. A refactor mixed with a feature or a bug fix produces a diff where the behaviour change is invisible among moved lines, and neither part can be reverted without the other.
 
-**Чеклист:**
+When something worth fixing turns up mid-refactor, note it and keep going. It becomes its own task, with its own test.
 
-- [ ] Тесты на рефакторируемый код существуют?
-- [ ] Тесты проходят сейчас?
-- [ ] Покрытие достаточное для безопасного изменения?
+## Completion criterion
 
-**Если тестов нет:**
+Done when: the whole suite passes with no test edited, except any test move that was made deliberately and stated; the named improvement is present and checkable; public contracts and observable behaviour are unchanged; no feature or fix rode along; and `review` confirmed all of it against the starting state.
 
-```
-1. STOP рефакторинг
-        ↓
-2. Сначала `code`: написать тесты на текущее поведение
-        ↓
-3. `review` проверить тесты
-        ↓
-4. Только потом рефакторинг
-```
+## Related
 
-### Шаг 1.3: Snapshot Текущего Состояния
-
-**Документировать:**
-
-```markdown
-## Pre-Refactoring State
-
-### Текущее Состояние
-- Файлы: [список затрагиваемых файлов]
-- Проблема: [что не так с текущим кодом]
-- Тесты: [какие тесты покрывают]
-
-### Цель Рефакторинга
-- [Конкретное улучшение]
-
-### Ожидаемый Результат
-- [Как будет выглядеть после]
-```
-
----
-
-## Фаза 2: Маршрутизация по Сложности
-
-### 🟢 Simple Path
-
-**Критерии:**
-
-- ≤2 файла
-- Внутри одного модуля
-- Тесты есть и проходят
-- Нет изменений API
-
-**Протокол:**
-
-```
-1. Snapshot текущего состояния
-        ↓
-2. Запустить тесты → GREEN
-        ↓
-3. Промпт для `code` (refactor)
-        ↓
-4. Тесты → GREEN
-        ↓
-5. `review`
-        ↓
-6. PASS → DONE
-```
-
-**Не требуется:** Plan.md, STOP-gate.
-
----
-
-### 🟡 Medium Path
-
-**Критерии:**
-
-- 3-5 файлов ИЛИ
-- Между модулями ИЛИ
-- Тесты неполные ИЛИ
-- Изменения internal API
-
-**Протокол:**
-
-```
-1. Snapshot текущего состояния
-        ↓
-2. [Если тесты неполные] Сначала `code`: добавить тесты
-        ↓
-3. Создать /docs/Plan.md:
-   - Что рефакторим
-   - Шаги трансформации
-   - Acceptance Criteria (тесты GREEN)
-        ↓
-4. 🛑 STOP — запросить утверждение
-        ↓
-5. Поэтапный рефакторинг (RED→GREEN→REFACTOR)
-        ↓
-6. `review` после каждого этапа
-        ↓
-7. PASS all → DONE
-```
-
----
-
-### 🔴 Complex Path
-
-**Критерии:**
->
-- >5 файлов ИЛИ
-- Cross-cutting concerns ИЛИ
-- Изменения public API (несовместимые) ИЛИ
-- Значительный технический долг
-
-**Протокол:**
-
-```
-1. Создать /docs/Research.md:
-   - Анализ текущей структуры
-   - Зависимости и риски
-   - Альтернативные подходы
-        ↓
-2. Создать /docs/Plan.md:
-   - Поэтапный план
-   - Промежуточные состояния
-   - Rollback strategy
-   - Критерии каждого этапа
-        ↓
-3. [Если breaking changes] ADR-NNN.md
-        ↓
-4. 🛑 STOP — запросить утверждение
-        ↓
-5. Поэтапная реализация:
-   Для каждого этапа:
-   - `code`
-   - Тесты GREEN
-   - `review`
-   - Commit/checkpoint
-        ↓
-6. PASS all phases → DONE
-```
-
----
-
-## Фаза 3: Техники Рефакторинга
-
-### Безопасный Рефакторинг
-
-> **RED → GREEN → REFACTOR**
-
-```
-1. RED:    Убедиться что тесты работают (запустить)
-2. GREEN:  Тесты проходят
-3. REFACTOR: Измернить код (тесты всё ещё GREEN)
-4. Повторить
-```
-
-### Типы Рефакторинга
-
-| Тип | Когда | Риск |
-|-----|-------|------|
-| **Extract Method** | Дублирование, длинные функции | Низкий |
-| **Rename** | Неясные имена | Низкий |
-| **Move** | Неправильное расположение | Средний |
-| **Inline** | Лишняя абстракция | Низкий |
-| **Extract Class** | God class | Средний |
-| **Replace Conditional with Polymorphism** | Сложные условия | Высокий |
-| **Decompose Module** | Monolith → parts | Высокий |
-
-### Промпт для `code`
-
-```markdown
-# Task: Refactor [что именно]
-
-## Context
-Текущая проблема: [дублирование/сложность/производительность]
-Цель: [улучшение структуры без изменения поведения]
-
-## Current State
-- Файл: [path/to/file]
-- Проблема: [конкретное описание]
-
-## Scope
-Применить рефакторинг: [тип рефакторинга]
-- [Конкретные шаги]
-
-## Requirements
-1. Поведение НЕ МЕНЯЕТСЯ
-2. Все существующие тесты проходят
-3. Код соответствует CLAUDE.md и конвенциям проекта
-
-## Constraints
-❌ НЕ менять поведение
-❌ НЕ менять публичные контракты
-❌ НЕ добавлять новую функциональность
-❌ НЕ фиксить баги (если не указано явно)
-
-## Acceptance Criteria
-✅ Все тесты проходят (без изменения тестов)
-✅ Код стал [читабельнее/проще/быстрее]
-✅ Нет изменений в поведении
-
-## Files to Work With
-- `path/to/file` — [что изменить]
-
-## Output Format
-Только рефакторинг. Минимальные изменения.
-```
-
----
-
-## Фаза 4: Верификация
-
-### Шаг 4.1: Тестовая Верификация
-
-**ОБЯЗАТЕЛЬНО после каждого изменения:**
-
-```
-1. Запустить ВСЕ тесты
-2. GREEN = продолжаем
-3. RED = немедленный откат, анализ
-```
-
-### Шаг 4.2: `review`
-
-```markdown
-## 🤖 Delegation
-**Agent:** `review`
-**Purpose:** Проверить рефакторинг [описание]
-**Focus:**
-- Поведение НЕ изменилось
-- Тесты не изменены (только код)
-- Улучшение достигнуто
-- Соответствует framework rules
-**Expected Output:** PASS / FAIL
-🛑 STOP after completion. Return control to `architect`.
-```
-
-### Шаг 4.3: Постверификация
-
-- [ ] Все тесты проходят
-- [ ] Поведение идентично
-- [ ] Улучшение достигнуто
-- [ ] `review` PASS
-
----
-
-## Антипаттерны Рефакторинга
-
-| Антипаттерн | Почему плохо | Как правильно |
-|-------------|--------------|---------------|
-| **Рефакторинг + фичи** | Смешивает изменения, невозможно отследить | Отдельные коммиты/PR |
-| **Без тестов** | Нет гарантии сохранения поведения | Сначала тесты |
-| **Большой bang** | Высокий риск, сложный откат | Мелкие шаги |
-| **Изменение тестов** | Скрывает изменение поведения | Тесты должны проходить AS IS |
-| **Преждевременный рефакторинг** | Нет понимания паттернов использования | Рефакторить после понимания |
-| **Перфекционизм** | Бесконечный рефакторинг | Конкретная цель и критерии |
-
----
-
-## Чеклист
-
-### Перед Рефакторингом
-
-- [ ] Тесты существуют и проходят
-- [ ] Scope определён
-- [ ] Цель конкретная и измеримая
-- [ ] Сложность оценена (🟢/🟡/🔴)
-
-### Во Время
-
-- [ ] Тесты запускаю после каждого изменения
-- [ ] Мелкие шаги
-- [ ] Не смешиваю с фичами/фиксами
-
-### После
-
-- [ ] Все тесты проходят
-- [ ] `review` PASS
-- [ ] Improvement достигнут
-
----
-
-## Quick Reference
-
-```
-Рефакторинг запрос
-      ↓
-Проверить тесты → есть? проходят?
-      ↓
-[Нет тестов] → сначала `code`: тесты → потом рефакторинг
-      ↓
-Оценка 🟢🟡🔴
-      ↓
-🟢 → snapshot → `code` (refactor) → tests GREEN → `review` → DONE
-🟡 → Plan.md → STOP → поэтапно → `review` per step → DONE
-🔴 → Research.md → Plan.md (+ADR) → STOP → поэтапно → `review` per step → DONE
-```
-
----
-
-**Связанные файлы:**
-
-- `.claude/skills/workflow-feature/SKILL.md` — если нужна новая функциональность
-- `.claude/skills/workflow-debugging/SKILL.md` — если нужно фиксить баги
-- `.claude/skills/checklist-code-review/SKILL.md` — чеклист ревью
-- `.claude/skills/forensic-investigation/references/ai-failure-modes.md` — если `code` ломает тесты
-
----
-
-**END OF WORKFLOW**
+- `tdd` — where the test goes, and what makes it worth keeping
+- `codebase-design` — depth, seams, and whether the new boundary earns its place
+- `checklist-code-review` — the gate afterwards
+- `workflow-architecture-change` — the change outgrew refactoring
+- `workflow-debugging` — the behaviour turns out to be wrong, not just ugly
