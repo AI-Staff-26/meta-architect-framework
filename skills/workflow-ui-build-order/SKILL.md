@@ -641,7 +641,7 @@ Each phase: Prompt → `code` → Verify completion → Next
 
 ---
 
-**Related:** `feature-spec-template.md`, `checklist-ux-completeness`, `/docs/Plan.md`  
+**Related:** `workflow-feature`, `checklist-ux-review`, `/docs/Plan.md`  
 **Loaded by:** architect  
 **Delegates to:** code (phase prompts)  
 **Verified by:** review

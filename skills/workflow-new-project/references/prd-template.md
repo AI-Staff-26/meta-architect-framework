@@ -242,9 +242,8 @@ Add priority levels to tasks so users can focus on what matters most.
 
 ## Связанные Файлы
 
-- `skills/workflow-feature/references/requirements-template.md` — общий шаблон требований
-- `skills/workflow-feature/references/feature-spec-template.md` — детальная спецификация
-- `skills/workflow-requirements-interview/SKILL.md` — протокол интервью
+- `skills/workflow-requirements-interview/SKILL.md` — территория требований и шаблон Requirements.md
+- `skills/workflow-feature/SKILL.md` — добавление фичи в существующую систему
 - `skills/workflow-architecture-change/references/adr-template.md` — шаблон ADR
 
 ---

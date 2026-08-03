@@ -1,369 +1,78 @@
 ---
 name: workflow-feature
 description: |
-  Protocol for adding new functionality. Requirement gathering, 🟢🟡🔴 
-  complexity assessment, edge case discovery, Plan.md creation. Loaded BY 
-  architect when user requests feature/capability. Use for: new 
-  modules, endpoints, UI features. NOT for bugs (workflow-debugging) or 
-  refactoring (workflow-refactoring).
+  Adding new functionality to a system that already exists — finding where the
+  feature attaches, discovering the edges the request never mentioned, and
+  sequencing the work so the first slice runs end to end. Use when the user
+  asks for a new module, endpoint, screen, integration, or capability, or says
+  "добавь", "нужна фича", "хочу чтобы можно было". For something broken use
+  `workflow-debugging`, for structure without behaviour change
+  `workflow-refactoring`, for a project from nothing `workflow-new-project`.
 ---
 
-# 🚀 Feature Workflow — Добавление Функциональности
+# Adding a Feature
 
-<purpose>
-Протокол добавления новой функциональности в существующий проект.
-Применяется для любой сложности: 🟢 🟡 🔴
-</purpose>
+The request states the happy path. Everything that makes the feature hard is what it left out — the rows that predate it, the second actor doing the same thing, the call that times out, the permission nobody named.
 
----
+A feature also lands in a system that already works. Most of the risk is in the fit, not in the new code.
 
-## Когда Использовать
+## 1. Read the request
 
-**Триггеры:**
+One plausible reading, or several? If you cannot state what *done* looks like in a sentence the user would agree with, the requirements are not there yet — run `grilling`, and `workflow-requirements-interview` for the territory it must cover.
 
-- Новая функция/модуль в существующем проекте
-- Расширение существующей функциональности
-- Интеграция с внешним сервисом
-- Добавление API endpoint
+Then find where the feature attaches: the `memory/repo-wiki/` entry for the area it touches, `FACTS.md` for the constraints already discovered, `DECISIONS.md` and `memory/adrs/` for what is already settled. A feature that contradicts an existing decision is a decision to reopen out loud, not a detail to code around.
 
-**НЕ использовать для:**
+**Done when:** you can name the modules it touches and the one sentence that says what works afterwards.
 
-- Нового проекта с нуля → `workflow-new-project`
-- Фикса багов → `debugging.md`
-- Рефакторинга без изменения поведения → `refactoring.md`
-- Архитектурных изменений (миграции, масштабирование) → `architecture-change.md`
+## 2. Find the edges
 
----
+The dimension nobody asks about is the one that returns as a bug three weeks later. Walk all of them:
 
-## Фаза 1: Анализ Требований
+| Dimension | The question to answer |
+|---|---|
+| **Existing data** | What happens to records created before this feature existed? |
+| **Boundaries** | Zero items, exactly one, far more than expected; the longest input someone actually sends |
+| **Permission** | Who reads it, who changes it, and what does the wrong actor get back? |
+| **Concurrency** | Two actors doing this at the same moment — what wins, and does the loser know? |
+| **Failure** | Its dependency times out or errors: what does the user see, and what state is left behind? |
+| **Lifecycle** | Delete, restore, archive — what happens to everything pointing at it? |
+| **Compatibility** | During rollout: old clients, running jobs, cached responses, in-flight requests |
 
-### Шаг 1.1: Сбор Информации
+Every answer becomes a requirement or an explicit OUT of scope. For UI work, `checklist-ux-design` covers the interface states — loading, empty, error, first visit — on the same principle.
 
-**Действия:**
+**Done when:** each dimension has an answer or an explicit "not applicable, because …".
 
-1. Уточни у пользователя:
-   - Что именно должна делать функция?
-   - Кто будет использовать? (роли, permissions)
-   - Какие входы/выходы?
-   - Есть ли edge cases?
+## 3. Assess and route
 
-2. Проверь существующий контекст:
-   - `memory/adrs/` — есть ли связанные архитектурные решения?
-   - `memory/repo-wiki/` — какие модули затронуты?
-   - `memory/FACTS.md` — какие технические ограничения?
-   - `memory/DECISIONS.md` — какие решения уже приняты?
-   - `memory/CONTEXT.md` — текущее состояние проекта
+Complexity levels and their required artifacts are in `CLAUDE.md`. Weigh the answers from step 2, not the size of the request as stated — a one-line ask that turns out to touch permissions is not 🟢.
 
-**Выход:** Понимание scope + список уточняющих вопросов (если есть).
+Escalate the moment the feature touches an auth boundary, changes the schema, alters a contract someone else depends on, or spreads across modules that were independent before.
 
-### Шаг 1.2: Оценка Сложности
-
-| Критерий | 🟢 Simple | 🟡 Medium | 🔴 Complex |
-|----------|-----------|-----------|------------|
-| Файлы | 1-2 файла | 3-5 файлов | >5 файлов |
-| Модули | Один модуль | Несколько модулей | Cross-cutting |
-| БД | Нет изменений | Новые поля | Новые таблицы / миграции |
-| API | Нет / Minor | Новый endpoint | Публичный API / Breaking |
-| Auth | Нет | Новые права | Новые роли / RBAC изменения |
-| Зависимости | Нет | Новый пакет | Новый сервис / интеграция |
-| Риск | Минимальный | Средний | Высокий / необратимый |
-
-**Правило:** При сомнении выбирай более высокий уровень сложности.
-
----
-
-## Фаза 2: Маршрутизация по Сложности
-
-### 🟢 Simple Path
-
-**Критерии:**
-
-- ≤2 файла
-- Один модуль
-- Нет изменений БД
-- Нет архитектурных решений
-
-**Протокол:**
-
-```
-1. Анализ → понял scope, нет неясностей
-         ↓
-2. Сформировать промпт для `code` (см. Фаза 4: шаблон промпта)
-         ↓
-3. Делегировать `code`
-         ↓
-4. Делегировать `review`
-         ↓
-5. PASS → обновить memory/* если нужно → DONE
-   FAIL → анализ → исправление
-```
-
-**Не требуется:** Plan.md, Research.md, STOP-gate.
-
----
-
-### 🟡 Medium Path
-
-**Критерии:**
-
-- 3-5 файлов ИЛИ
-- Несколько модулей ИЛИ
-- Изменения БД (новые поля) ИЛИ
-- Новый API endpoint
-
-**Протокол:**
-
-```
-1. Анализ → понял scope
-         ↓
-2. Создать /docs/prompt-[feature-name].md
-   - Архитектурное решение
-   - Список файлов + изменения
-   - Порядок выполнения
-   - Acceptance Criteria
-         ↓
-3. 🛑 STOP — запросить утверждение плана
-         ↓
-4. [После утверждения] Сформировать промпт для `code`
-         ↓
-5. Делегировать `code`
-         ↓
-6. Делегировать `review`
-         ↓
-7. PASS → обновить memory/* → DONE
-   FAIL → анализ → исправление
-```
-
-**Требуется:** Plan.md + STOP-gate перед реализацией.
-
----
-
-### 🔴 Complex Path
-
-**Критерии:**
->
-- >5 файлов ИЛИ
-- Cross-cutting concerns ИЛИ
-- Новые таблицы / сложные миграции ИЛИ
-- Изменения auth/authz ИЛИ
-- Публичный API / breaking changes ИЛИ
-- Интеграция с новым сервисом
-
-**Протокол:**
-
-```
-1. Анализ → понял scope, выявил unknowns
-         ↓
-2. [Если unknowns] Вызвать `debug` для исследования
-         ↓
-3. Создать /docs/Research.md
-   - Анализ текущей архитектуры
-   - Зависимости и ограничения
-   - Риски
-         ↓
-4. Создать /docs/Plan.md
-   - Архитектурное решение + альтернативы
-   - Почему выбран этот подход
-   - Поэтапный план
-   - Rollback strategy
-   - Acceptance Criteria
-         ↓
-5. [Если арх. решение] Создать memory/adrs/ADR-NNN.md
-         ↓
-6. 🛑 STOP — запросить утверждение плана
-         ↓
-7. [После утверждения] Поэтапная реализация:
-   Для каждой фазы:
-   - Промпт для `code`
-   - `review` после каждой фазы
-         ↓
-8. PASS all phases → обновить memory/* → DONE
-   FAIL → анализ → возможно `debug` → исправление
-```
-
-**Требуется:** Research.md + Plan.md + ADR (если арх. решение) + STOP-gate.
-
----
-
-## Фаза 3: Создание Плана
-
-### Структура prompt-файла
-
-```markdown
-# Plan: [Название фичи]
-*Created: YYYY-MM-DD*
-
-## Цель
-[Что делаем и зачем]
-
-## Архитектурное Решение
-
-### Подход
-[Описание выбранного решения]
-
-### Альтернативы (🟡🔴)
-| Вариант | Pros | Cons |
-|---------|------|------|
-| A | ... | ... |
-| B | ... | ... |
-
-**Выбор:** Вариант A, потому что [обоснование]
-
-## Изменения
-
-### Файлы
-| Файл | Действие | Описание |
-|------|----------|----------|
-| `path/to/file.ts` | CREATE/MODIFY | Что делаем |
-
-### База Данных (если применимо)
-- Миграция: [описание]
-- Rollback: [как откатить]
-
-## Порядок Выполнения
-1. [Шаг 1]
-2. [Шаг 2]
-3. ...
-
-## Acceptance Criteria
-- [ ] [Критерий 1 — измеримый]
-- [ ] [Критерий 2 — измеримый]
-- [ ] Тесты проходят
-- [ ] `review` PASS
-
-## Риски и Ограничения
-| Риск | Митигация |
-|------|-----------|
-| ... | ... |
-
----
-🛑 **STOP: Требуется утверждение плана перед реализацией**
-```
-
----
-
-## Фаза 4: Делегирование
-
-### Промпт для `code`
-
-Используй шаблон:
-
-```markdown
-# Task: [Конкретное название]
-
-## Context
-[Почему важно, как вписывается в систему]
-
-## Scope
-[Точные шаги. Никакой лишней работы.]
-
-## Requirements
-1. [Измеримое требование]
-2. [Измеримое требование]
-
-## Constraints (Что НЕ делать)
-❌ Не расширять scope
-❌ Не менять контракты/зависимости без явного указания
-❌ Не оставлять console.log/debug код
-
-## Acceptance Criteria
-✅ [Тесты проходят]
-✅ [Build/Lint чистые]
-✅ [Конкретный результат]
-
-## Files to Work With
-- `path/to/file` — [что изменить]
-
-## Output Format
-Только код. Объяснения не нужны.
-```
-
-### После `code`
-
-**ОБЯЗАТЕЛЬНО:** Вызвать `review`.
-
-```markdown
-## 🤖 Delegation
-**Agent:** `review`
-**Purpose:** Проверить качество реализации [название фичи]
-**Expected Output:** PASS / FAIL с комментариями
-**Input Documents:** /docs/prompt-*.md, rules/meta-architect-framework.md
-🛑 STOP after completion. Return control to `architect`.
-```
-
----
-
-## Фаза 5: Обработка Результатов
-
-### `review` PASS
-
-1. Обновить `memory/*`:
-   - `memory/repo-wiki/` — если добавлены модули/компоненты (обновить wiki + meta.json)
-   - `memory/FACTS.md` — если обнаружены новые технические факты
-   - `memory/CONTEXT.md` — обновить текущее состояние
-   - `memory/DECISIONS.md` — если приняты решения
-   - CHRONICLE.md — добавить [milestone] entry
-
-2. Сообщить пользователю о завершении
-
-### `review` FAIL
-
-1. Проанализировать причину:
-   - Ошибка в плане → исправить Plan.md
-   - Ошибка `code` → уточнить промпт, повторить
-   - Сложнее чем ожидалось → пересмотреть 🟢→🟡 или 🟡→🔴
-
-2. Если >2 итерации без прогресса:
-   - STOP → Two Steps Back
-   - Вызвать `debug`
-   - Пересмотреть подход
-
----
-
-## Чеклист Feature Workflow
-
-### Перед Началом
-
-- [ ] Scope понятен (нет неясностей)
-- [ ] Сложность оценена (🟢/🟡/🔴)
-- [ ] Контекст загружен (memory/repo-wiki/, memory/adrs/)
-
-### Для 🟡/🔴
-
-- [ ] prompt-*.md создан
-- [ ] Альтернативы рассмотрены
-- [ ] STOP-gate пройден (утверждение получено)
-
-### После Реализации
-
-- [ ] `review` вызван
-- [ ] PASS получен
-- [ ] `memory/*` обновлены (repo-wiki, FACTS, CONTEXT, CHRONICLE)
-
----
-
-## Quick Reference
-
-```
-Feature Request
-      ↓
-Анализ scope → Оценка 🟢🟡🔴
-      ↓
-🟢 → `code` → `review` → docs → DONE
-🟡 → Plan.md → STOP → `code` → `review` → docs → DONE  
-🔴 → Research.md → Plan.md (+ADR) → STOP → phased `code` → `review` per phase → docs → DONE
-```
-
----
-
-**Связанные навыки:**
-
-- `references/feature-spec-template.md` — шаблон спецификации фичи
-- `references/feature-context-snapshot.md` — шаблон контекстного снапшота
-- `references/requirements-template.md` — шаблон требований
-- `skills/checklist-code-review/SKILL.md` — чеклист ревью
-- `skills/forensic-investigation/SKILL.md` — если `code` зацикливается
-
----
-
-**END OF WORKFLOW**
+## 4. Plan (🟡🔴)
+
+`architectural-planning` holds decomposition, scope, and the prompt; `references/plan-template.md` holds the document. Reach for `codebase-design` when the feature needs a new module or a seam, and the matching `pattern-*` skill when it needs an architecture that already has a name.
+
+**Sequence the slices so the first one runs end to end.** The thinnest possible path through every layer the feature touches — one field, one route, one screen — proves the attachment before any breadth is built on top of it. Widen from there. Slices cut per layer hide the integration risk until the last one lands, which is exactly when it is most expensive.
+
+Then STOP for approval, and pass the plan through the `vibe-mentor` checkpoint before it reaches `code`.
+
+## 5. Build
+
+One slice per delegation, `review` after each phase. Tests are `tdd`: red before green, at the seam the slice actually crosses. A FAIL gets classified before it is retried — `CLAUDE.md` law 5 — and a second failed cycle on the same slice routes to `debug` rather than a third attempt.
+
+## 6. Close
+
+Record what the work discovered: new constraints to `FACTS.md`, choices with rationale to `DECISIONS.md`, a `[milestone]` entry in the chronicle. A new module or a significantly changed one earns a `repo-wiki` entry and its tags in `meta.json`. Then the work report, and the completion message referencing it.
+
+## Completion criterion
+
+Shipped when: every acceptance criterion is verified by running something; every edge dimension is answered or explicitly out of scope; `review` returned PASS on each phase; the feature works end to end through the real interface, not only in tests; and `memory/` reflects what changed.
+
+## Related
+
+- `workflow-requirements-interview` + `grilling` — the request has more than one reading
+- `architectural-planning` — decomposition, scope, prompts, handoff
+- `checklist-ux-design` — UI features, before implementation
+- `tdd` — the red → green loop per slice
+- `checklist-code-review` — the gate after each phase
+- `workflow-architecture-change` — the feature turns out to require a different architecture
