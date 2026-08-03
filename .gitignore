@@ -1,0 +1,18 @@
+# Claude Code system files (NOT part of the framework)
+.credentials.json
+settings.json
+cache/
+sessions/
+history.jsonl
+file-history/
+session-env/
+shell-snapshots/
+mcp-needs-auth-cache.json
+.last-cleanup
+projects/
+plugins/
+backups/
+
+# OS files
+.DS_Store
+Thumbs.db
