@@ -1,381 +1,135 @@
 ---
 name: workflow-debugging
 description: |
-  Bug fix and regression protocol. Reproduction steps, hypothesis testing, 
-  fix verification. Loaded by role-meta-architect for bug reports, regressions, 
-  unexpected behavior. Use for: defects, broken functionality. NOT for 
-  unknown root cause (→ role-coder-expert) or new features (workflow-feature).
+  Diagnosis loop for bugs, regressions, and performance problems — builds a
+  tight feedback loop first, then reproduces, hypothesises, instruments, fixes,
+  and locks the fix down with a regression test. Use when something is broken,
+  throwing, failing, flaky, or slow; when a fix keeps not working; or when the
+  user says "баг", "не работает", "сломалось", "почему падает", "тормозит",
+  "debug this", "diagnose". For an unfamiliar system with no specific symptom,
+  use workflow-legacy-analysis instead.
 ---
 
-# 🐛 Debugging Workflow — Отладка и Фикс Багов
+# Diagnosing Bugs
 
-<purpose>
-Протокол диагностики и устранения багов.
-Цель: устранить причину, не симптом. Предотвратить повторение.
-</purpose>
+A discipline for bugs that resist a first glance. Work the phases in order; skip one only with a stated reason.
 
----
+Load `memory/FACTS.md` and the project glossary before exploring — a bug in a concept you have mis-named is a bug you will not find.
 
-## Когда Использовать
+## Phase 1 — Build a feedback loop
 
-**Триггеры:**
+**This is the skill.** Everything after it is mechanical. With a **tight** pass/fail signal that goes **red** on *this* bug, you will find the cause — bisection, hypothesis testing, and instrumentation all just consume that signal. Without one, no amount of reading code will save you.
 
-- Баг в продакшене/стейджинге
-- Регрессия после изменений
-- Неожиданное поведение системы
-- Падающие тесты
-- Пользовательские жалобы
+Spend disproportionate effort here. Be aggressive, be creative, and keep going after the first three ideas fail.
 
-**НЕ использовать для:**
+### Ways to build one — roughly in this order
 
-- Новой функциональности → `feature.md`
-- Улучшения производительности → `refactoring.md` или `feature.md`
-- Архитектурных проблем → `architecture-change.md`
+1. **Failing test** at whatever seam reaches the bug — unit, integration, e2e.
+2. **Curl / HTTP script** against a running dev server.
+3. **CLI invocation** with a fixture input, diffing stdout against known-good output.
+4. **Headless browser script** (Playwright/Puppeteer) that drives the UI and asserts on DOM, console, or network.
+5. **Replay a captured trace.** Save a real request, payload, or event log to disk; replay it through the code path in isolation.
+6. **Throwaway harness.** A minimal subset of the system — one service, mocked dependencies — that reaches the bug in a single function call.
+7. **Property / fuzz loop.** For "sometimes wrong output": run a thousand random inputs and look for the failure.
+8. **Bisection harness.** When the bug appeared between two known states, automate "boot at state X, check, repeat" so `git bisect run` can drive it.
+9. **Differential loop.** Same input through old version vs new, or two configs, diffing the outputs.
+10. **Human-in-the-loop script.** Last resort, when a person must click: hand them a scripted sequence that captures its output back to you, so the loop stays structured.
 
----
+### Tighten it
 
-## Фаза 1: Стабилизация
+Treat the loop as the product. Once you have *a* loop, make it **tight**:
 
-### Шаг 1.1: Репродукция
+- **Faster** — cache setup, skip unrelated init, narrow the scope.
+- **Sharper** — assert the specific symptom, not "did not crash".
+- **More deterministic** — pin time, seed randomness, isolate the filesystem, freeze the network.
 
-> **Правило:** Нет стабильной репродукции = нельзя начинать фикс.
+A thirty-second flaky loop is barely better than none. A two-second deterministic one is a superpower.
 
-**Действия:**
+### Flaky bugs
 
-1. Получить точные шаги воспроизведения:
-   - Какие действия?
-   - Какие данные/входы?
-   - Какое окружение (dev/staging/prod)?
+The goal is not a clean reproduction but a **higher reproduction rate**. Loop the trigger a hundred times, parallelise, add load, narrow timing windows, inject sleeps. A bug that reproduces half the time is debuggable; one percent is not — raise the rate until it is.
 
-2. Воспроизвести локально или на стейджинге
+### When you genuinely cannot build one
 
-3. Документировать:
+Stop and say so. List what you tried, then ask for exactly one of: access to an environment that reproduces it, a captured artifact (HAR, log dump, core dump, screen recording with timestamps), or permission to add temporary production instrumentation.
 
-   ```
-   Шаги репродукции:
-   1. [Действие 1]
-   2. [Действие 2]
-   
-   Ожидаемое: [что должно быть]
-   Фактическое: [что происходит]
-   
-   Стабильность: 100% / ~80% / Спорадический
-   ```
+**Completion criterion:** you can name **one command** — a script path, a test invocation, a curl — that you have **already run at least once**, pasting the invocation and its output, and that is:
 
-**Если не удаётся репродуцировать:**
+- **Red-capable** — it drives the real code path and asserts the user's exact symptom, so it can go red on this bug and green once fixed. "Runs without erroring" does not qualify.
+- **Deterministic** — same verdict every run, or a pinned high reproduction rate for a flaky bug.
+- **Fast** — seconds.
+- **Runnable unattended.**
 
-- Запросить больше данных (логи, скриншоты)
-- Проверить различия окружений
-- Рассмотреть race conditions, timing issues
+Reading code to build a theory before this command exists is the exact failure this phase prevents. No red-capable command, no Phase 2.
 
-### Шаг 1.2: Оценка Критичности
+## Phase 2 — Reproduce and minimise
 
-| Уровень | Критерии | Реакция |
-|---------|----------|---------|
-| 🔴 Critical | Блокирует работу, потеря данных, безопасность | Немедленно. Hotfix. |
-| 🟡 Major | Важная функция сломана, есть workaround | В течение дня |
-| 🟢 Minor | Cosmetic, редкий case | Планируем в sprint |
+Run the loop. Watch it go red.
 
----
+Confirm the failure is the one the **user** described, not a different one nearby — a wrong bug gets a wrong fix. Capture the exact symptom so later phases can verify the fix addresses it.
 
-## Фаза 2: Диагностика
+Then **minimise**: shrink to the smallest scenario that still goes red. Cut inputs, callers, config, data, and steps one at a time, re-running after each cut. A minimal reproduction shrinks the hypothesis space in Phase 3 and becomes the regression test in Phase 5.
 
-### Шаг 2.1: Сбор Фактов
+**Completion criterion:** every remaining element is load-bearing — removing any one of them turns the loop green.
 
-**Собрать:**
+## Phase 3 — Hypothesise
 
-- [ ] Логи (ошибки, stack traces)
-- [ ] Состояние БД (если релевантно)
-- [ ] Входные данные, вызвавшие баг
-- [ ] Последние изменения в коде (git log)
-- [ ] Окружение (версии, конфигурация)
+Generate **three to five ranked hypotheses before testing any of them**. Generating one at a time anchors you on the first plausible idea.
 
-**Формат записи:**
+Each must be **falsifiable** — state the prediction it makes:
 
-```markdown
-## Факты
-- Ошибка: [точный текст/код ошибки]
-- Stack trace: [где падает]
-- Последний рабочий commit: [hash]
-- Первый сломанный commit: [hash или "неизвестно"]
-- Затронутые файлы: [список]
-```
+> If `<X>` is the cause, then `<changing Y>` makes the bug disappear, and `<changing Z>` makes it worse.
 
-### Шаг 2.2: Построение Гипотез
+A hypothesis with no stated prediction is a vibe: sharpen it or drop it.
 
-> **Правило:** Минимум 2 гипотезы перед фиксом. Одна гипотеза = угадывание.
+Show the ranked list to the user before testing. They often re-rank it instantly — "we deployed a change to number three yesterday" — or name ones they have already ruled out. Proceed with your own ranking if they are away.
 
-**Структура:**
+## Phase 4 — Instrument
 
-```markdown
-## Гипотезы
+Each probe maps to a specific prediction from Phase 3. **Change one variable at a time.**
 
-### H1: [Описание]
-- Вероятность: Высокая / Средняя / Низкая
-- Как проверить: [конкретный эксперимент]
-- Затронутый код: [файл:строка]
+Prefer a debugger or REPL where the environment supports it — one breakpoint beats ten log lines. Otherwise place targeted logs at the boundaries that distinguish the hypotheses. Logging everything and grepping is how you drown.
 
-### H2: [Описание]
-- Вероятность: ...
-- Как проверить: ...
-- Затронутый код: ...
-```
+**Tag every debug log** with a unique prefix such as `[DEBUG-a4f2]`, so cleanup in Phase 6 is one grep. Untagged instrumentation survives into production.
 
-**Типичные причины:**
+For performance work, logs usually mislead. Establish a baseline measurement — timing harness, profiler, query plan — then bisect against it. Measure first, fix second.
 
-| Категория | Примеры |
-|-----------|---------|
-| Логика | Неправильное условие, off-by-one, null check |
-| Данные | Невалидный вход, edge case, миграция |
-| Состояние | Race condition, stale cache, session |
-| Интеграция | API изменился, timeout, формат ответа |
-| Конфигурация | Env variable, feature flag, permissions |
+## Phase 5 — Fix and lock it down
 
-### Шаг 2.3: Проверка Гипотез
+Write the regression test **before the fix** — when a correct seam exists for it.
 
-**Для каждой гипотезы:**
+A correct seam exercises the **real bug pattern as it occurs at the call site**. When the only reachable seam is too shallow — a single-caller test for a bug that needs several, a unit test that cannot replicate the chain that triggered it — a test there buys false confidence.
 
-1. Определить минимальный эксперимент
-2. Выполнить проверку
-3. Зафиксировать результат: ✅ Подтверждено / ❌ Опровергнуто
+**No correct seam is itself the finding.** Record it: the architecture is preventing this bug from being locked down. Carry it into Phase 6.
 
-**Если ни одна не подтвердилась:**
+With a correct seam: turn the minimised reproduction into a failing test, watch it fail, apply the fix, watch it pass, then re-run the Phase 1 loop against the original un-minimised scenario.
 
-- Вернуться к сбору фактов
-- Расширить область поиска
-- Рассмотреть вызов @coder-expert
+Keep the fix minimal. Refactoring discovered along the way is a separate task with its own review.
 
-### Шаг 2.4: Вызов @coder-expert (если нужно)
+## Phase 6 — Clean up and learn
 
-**Когда вызывать:**
+Done means all of:
 
-- [ ] Причина неясна после 2+ гипотез
-- [ ] Сложное взаимодействие компонентов
-- [ ] Legacy код без документации
-- [ ] Race conditions, concurrency issues
-
-```markdown
-## 🤖 Delegation
-**Agent:** @coder-expert
-**Purpose:** Найти root cause бага [описание]
-**Expected Output:** Research.md с анализом + рекомендации
-**Input Documents:** Шаги репродукции, собранные факты, гипотезы
-
-🛑 STOP after completion. Return control to @meta-architect.
-```
-
----
-
-## Фаза 3: Планирование Фикса
-
-### Шаг 3.1: Определение Root Cause
-
-```markdown
-## Root Cause Analysis
-
-### Причина
-[Конкретное описание: что именно и почему ломается]
-
-### Цепочка событий
-1. [Триггер]
-2. [Что происходит]
-3. [Почему это приводит к багу]
-
-### Подтверждение
-[Какой эксперимент подтвердил причину]
-```
-
-### Шаг 3.2: Планирование Решения
-
-**Для простых багов (🟢):**
-
-- Сразу к промпту для @coder
-
-**Для сложных (🟡/🔴):**
-
-- Создать мини-Plan:
-
-```markdown
-## Fix Plan
-
-### Решение
-[Что именно исправить]
-
-### Изменения
-| Файл | Изменение |
-|------|-----------|
-| ... | ... |
-
-### Тесты
-- [ ] Тест на исправленный случай
-- [ ] Регрессионные тесты проходят
-
-### Риски
-- [Что может пойти не так]
-- Rollback: [как откатить]
-```
-
----
-
-## Фаза 4: Реализация Фикса
-
-### Промпт для @coder
-
-```markdown
-# Task: Fix [краткое описание бага]
-
-## Context
-Баг: [описание]
-Root Cause: [причина]
-Репродукция: [шаги]
-
-## Scope
-Исправить [конкретное место] в [файлы]
-
-## Requirements
-1. Исправить баг (репродукция больше не работает)
-2. Добавить тест на этот case
-3. Не сломать существующие тесты
-
-## Constraints
-❌ Не менять поведение других функций
-❌ Не рефакторить вокруг — только фикс
-❌ Только минимальные изменения
-
-## Acceptance Criteria
-✅ Баг не воспроизводится
-✅ Новый тест проходит
-✅ Существующие тесты проходят
-✅ Изменения минимальны
-
-## Files to Work With
-- `path/to/file` — [где фиксить]
-- `path/to/test` — [добавить тест]
-
-## Output Format
-Только код. Минимальные изменения.
-```
-
-### После @coder → @reviewer
-
-**ОБЯЗАТЕЛЬНО:**
-
-```markdown
-## 🤖 Delegation
-**Agent:** @reviewer
-**Purpose:** Проверить фикс [бага]
-**Focus:** Минимальность изменений, нет регрессий, тест покрывает case
-**Expected Output:** PASS / FAIL
-🛑 STOP after completion. Return control to @meta-architect.
-```
-
----
-
-## Фаза 5: Верификация и Закрытие
-
-### Шаг 5.1: Проверка Фикса
-
-- [ ] Баг не воспроизводится (те же шаги)
-- [ ] Тест на этот case добавлен и проходит
-- [ ] Регрессионные тесты проходят
-- [ ] @reviewer PASS
-
-### Шаг 5.2: Превентивные Меры
-
-> **Правило:** Каждый баг — возможность улучшить систему.
-
-**Вопросы:**
-
-1. Почему баг появился? (process issue?)
-2. Почему не поймали раньше? (coverage gap?)
-3. Как предотвратить похожие? (pattern to avoid?)
-
-**Действия:**
-
-- [ ] Добавить тест (уже сделано в фиксе)
-- [ ] Обновить memory/FACTS.md если выявлен antipattern
-- [ ] Документировать в memory/CONTEXT.md если важно для контекста
-- [ ] Обновить чеклисты если пропустили очевидное
-
-### Шаг 5.3: Закрытие
-
-1. Обновить `/docs/*` если нужно
-2. Сообщить пользователю о фиксе
-3. Мониторить после деплоя (если prod)
-
----
-
-## Антипаттерны Отладки
-
-| Антипаттерн | Почему плохо | Как правильно |
-|-------------|--------------|---------------|
-| **Симптоматический фикс** | Маскирует проблему, вернётся | Найти root cause |
-| **Одна гипотеза** | Угадывание, не анализ | Минимум 2 гипотезы |
-| **Фикс без теста** | Регрессия вернётся | Всегда добавлять тест |
-| **Большой рефакторинг** | Scope creep, новые баги | Только минимальный фикс |
-| **Фикс в проде напрямую** | Нет истории, нет review | Через PR + review |
-| **Игнор превенции** | Повторится в другом месте | Анализ + системный фикс |
-
----
-
-## Когда Эскалировать
-
-**Вызвать @coder-expert:**
-
-- [ ] Причина неясна после 2+ гипотез
-- [ ] Сложные race conditions
-- [ ] Нужен deep dive в legacy
-
-**Пересмотреть как 🔴 Complex:**
-
-- [ ] Баг указывает на архитектурную проблему
-- [ ] Фикс требует изменения контрактов
-- [ ] Много связанных компонентов
-
-**STOP и обсудить с пользователем:**
-
-- [ ] Данные повреждены (возможно нужен restore)
-- [ ] Security incident
-- [ ] Неясно, какое поведение правильное
-
----
-
-## Quick Reference
-
-```
-Баг репорт
-    ↓
-Репродуцировать (стабильно)
-    ↓
-Собрать факты (логи, состояние, изменения)
-    ↓
-Построить гипотезы (минимум 2)
-    ↓
-Проверить гипотезы → найти root cause
-    ↓
-[Сложно?] → @coder-expert
-    ↓
-Спланировать минимальный фикс
-    ↓
-@coder (фикс + тест)
-    ↓
-@reviewer
-    ↓
-Верификация (баг не воспроизводится)
-    ↓
-Превентивные меры (почему появился, как предотвратить)
-    ↓
-DONE
-```
-
----
-
-**Связанные файлы:**
-
-- `.claude/skills/role-coder-expert/references/ai-failure-modes.md` — если @coder зацикливается на фиксе
-- `.claude/skills/checklist-code-review/SKILL.md` — что проверить в ревью
-- `.claude/skills/role-meta-architect/references/guide-context-management.md` — если контекст переполняется при отладке
-
----
-
-**END OF WORKFLOW**
+- The original reproduction no longer reproduces — re-run the Phase 1 loop.
+- The regression test passes, or the absence of a correct seam is written down.
+- All `[DEBUG-…]` instrumentation is removed — grep the prefix.
+- Throwaway harnesses are deleted or moved somewhere clearly marked.
+- The hypothesis that turned out correct is stated in the commit message, so the next person learns from it.
+- Root cause recorded in `memory/FACTS.md`; a recurring pattern recorded in `memory/INSIGHTS.md`.
+
+**Then ask what would have prevented this bug.** Answer it *after* the fix is in, when you know the most. When the answer is architectural — no good seam, tangled callers, hidden coupling — hand off with the specifics to `workflow-refactoring` or `workflow-architecture-change`.
+
+## Escalation
+
+| Situation | Route |
+|---|---|
+| Two full loop-and-hypothesis cycles produced no cause | Delegate to `debug` with the loop, the ruled-out hypotheses, and the evidence |
+| The bug is a symptom of an architectural problem | `workflow-architecture-change` |
+| Data is corrupted, or it is a security incident | Stop and raise with the user before touching anything |
+| Which behaviour is *correct* is unclear | Invoke `grilling` — this is a requirements question wearing a bug costume |
+
+## Related
+
+- `tdd` — the red-green loop the regression test is written in
+- `forensic-investigation` — when the agent, not the code, is the thing looping
+- `codebase-design` — vocabulary for a "no correct seam" finding
