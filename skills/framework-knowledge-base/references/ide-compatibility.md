@@ -132,7 +132,7 @@ project/.claude/
 project/.cursor/
 
 # 3. May need explicit invocation
-User: @role-meta-architect
+User: `architect`
 ```
 
 ---
@@ -160,8 +160,8 @@ project/.windsurf/
       "name": "meta-architect",
       "params": {
         "files": [
-          ".claude/rules/meta-architect-framework.md",
-          ".claude/skills/role-meta-architect/SKILL.md"
+          ".claude/CLAUDE.md",
+          ".claude/rules/memory-protocol.md"
         ]
       }
     }
@@ -169,7 +169,7 @@ project/.windsurf/
 }
 
 # Manual role selection in chat
-User: @role-meta-architect
+User: `architect`
 ```
 
 ---

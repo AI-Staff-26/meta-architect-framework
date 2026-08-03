@@ -1,7 +1,7 @@
-# 🐛 @coder Prompt — Fix Bug
+# 🐛 `code` Prompt — Fix Bug
 
 <purpose>
-Шаблон промпта для делегирования исправления бага агенту @coder.
+Шаблон промпта для делегирования исправления бага агенту `code`.
 Баг = код делает НЕ то, что должен (отклонение от спецификации).
 </purpose>
 
@@ -231,7 +231,7 @@ Stack trace: `NullPointerException at UserService.getProfile:45`
 - `../../workflow-debugging/SKILL.md` — диагностика сложных багов
 - `../SKILL.md` — для новой функциональности
 - `./refactor.md` — для рефакторинга
-- `../../../forensic-investigation/references/ai-failure-modes.md` — если @coder не может найти баг
+- `../../../forensic-investigation/references/ai-failure-modes.md` — если `code` не может найти баг
 
 ---
 

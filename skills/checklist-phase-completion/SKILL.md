@@ -26,9 +26,9 @@ USER REQUEST
      ↓
 [PLANNING] → План реализации
      ↓
-[IMPLEMENTATION] → @coder работает
+[IMPLEMENTATION] → `code` работает
      ↓
-[REVIEW] → @reviewer проверяет
+[REVIEW] → `review` проверяет
      ↓
 [COMPLETION] → Финализация
 ```
@@ -59,7 +59,7 @@ USER REQUEST
 
 - Unknowns требуют исследования
 - Архитектурные вопросы без ответа
-- Нужен @coder-expert
+- Нужен `debug`
 
 **→ PLANNING** (если 🟡):
 
@@ -103,7 +103,7 @@ USER REQUEST
 - [ ] Research.md существует и полон
 - [ ] Рекомендуемый подход обоснован
 - [ ] Риски имеют митигации
-- [ ] @coder-expert завершил (если вызывался)
+- [ ] `debug` завершил (если вызывался)
 
 ---
 
@@ -133,7 +133,7 @@ USER REQUEST
 
 - [ ] 🛑 STOP gate пройден (user approval для 🟡🔴)
 - [ ] Plan.md утверждён
-- [ ] Промпт для @coder готов
+- [ ] Промпт для `code` готов
 
 ---
 
@@ -141,7 +141,7 @@ USER REQUEST
 
 ### Критерии завершения
 
-- [ ] @coder выполнил все шаги из плана
+- [ ] `code` выполнил все шаги из плана
 - [ ] Код соответствует Requirements
 - [ ] Build проходит
 - [ ] Тесты написаны и проходят
@@ -155,9 +155,9 @@ USER REQUEST
 
 ### Критерии перехода → REVIEW
 
-- [ ] @coder завершил с отчётом
+- [ ] `code` завершил с отчётом
 - [ ] Build/tests проходят
-- [ ] Готов к передаче @reviewer
+- [ ] Готов к передаче `review`
 
 ---
 
@@ -165,7 +165,7 @@ USER REQUEST
 
 ### Критерии завершения
 
-- [ ] @reviewer выполнил проверку по `checklists/code-review.md`
+- [ ] `review` выполнил проверку по `checklists/code-review.md`
 - [ ] Вердикт вынесен: PASS или FAIL
 - [ ] Комментарии задокументированы
 
@@ -195,13 +195,13 @@ USER REQUEST
 
 - [ ] Issues понятны
 - [ ] План исправления есть
-- [ ] @coder промпт обновлён
+- [ ] `code` промпт обновлён
 
 **→ PLANNING** (если FAIL критично):
 
 - [ ] Фундаментальная проблема в подходе
 - [ ] Нужен пересмотр плана
-- [ ] Возможно @coder-expert
+- [ ] Возможно `debug`
 
 ---
 
@@ -209,7 +209,7 @@ USER REQUEST
 
 ### Критерии завершения
 
-- [ ] @reviewer PASS получен
+- [ ] `review` PASS получен
 - [ ] Документация обновлена:
   - [ ] Architecture.md (если изменения)
   - [ ] Requirements.md (если новые требования)
@@ -237,7 +237,7 @@ USER REQUEST
 |--------------|--------------|--------------|
 | Skip RESEARCH для 🔴 | Незнание ведёт к переделкам | Всегда Research.md для Complex |
 | Skip STOP gate | User не согласен с планом | Обязательный STOP для 🟡🔴 |
-| Skip REVIEW | Баги попадают в production | ВСЕГДА @reviewer после @coder |
+| Skip REVIEW | Баги попадают в production | ВСЕГДА `review` после `code` |
 | Unclear Acceptance | Непонятно когда "готово" | Измеримые критерии |
 | Skip docs update | Документация устаревает | Обновлять в COMPLETION |
 
@@ -261,7 +261,7 @@ PLANNING:
   → IMPLEMENTATION (after approval)
 
 IMPLEMENTATION:
-  → REVIEW (@coder done)
+  → REVIEW (`code` done)
 
 REVIEW:
   PASS → COMPLETION

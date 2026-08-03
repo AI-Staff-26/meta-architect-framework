@@ -27,7 +27,7 @@
 - Clear requirement
 - Low risk
 
-**Process:** Assess → @coder → @reviewer → Done  
+**Process:** Assess → `code` → `review` → Done  
 **Plan.md:** Not required
 
 ---
@@ -47,7 +47,7 @@
 - Some edge cases to clarify
 - Medium risk
 
-**Process:** Assess → Plan.md → 🛑 Approval → @coder → @reviewer → Done  
+**Process:** Assess → Plan.md → 🛑 Approval → `code` → `review` → Done  
 **Plan.md:** Required
 
 ---
@@ -69,7 +69,7 @@
 - High risk (data loss, security)
 - Migration required
 
-**Process:** Assess → (maybe @expert) → Research.md → Plan.md + ADR → 🛑 Approval → Phased @coder → @reviewer per phase → Done  
+**Process:** Assess → (maybe `debug`) → Research.md → Plan.md + ADR → 🛑 Approval → Phased `code` → `review` per phase → Done  
 **Plan.md + ADR:** Required
 
 ---
@@ -89,7 +89,7 @@
 - Data migration needed
 - Breaking changes required
 
-### Any → @coder-expert if
+### Any → `debug` if
 
 - Root cause unclear after investigation
 - >2 failed fix attempts

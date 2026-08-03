@@ -2,13 +2,13 @@
 name: workflow-ui-build-order
 description: |
   UI IMPLEMENTATION SEQUENCING protocol. 9-phase workflow with ready prompts 
-  for @coder. Design tokens → layout → components → states → polish. Use for: 
+  for `code`. Design tokens → layout → components → states → polish. Use for: 
   frontend features, design systems. NOT for: backend only, minor tweaks.
 ---
 
 <identity>
 Systematic UI build protocol: foundation (tokens) → specifics (features).
-Provides phase-specific prompts for @coder delegation.
+Provides phase-specific prompts for `code` delegation.
 </identity>
 
 ---
@@ -69,7 +69,7 @@ Provides phase-specific prompts for @coder delegation.
 - [ ] File importable in project
 - [ ] No hardcoded values remain
 
-**Prompt for @coder:**
+**Prompt for `code`:**
 
 ```markdown
 # Task: Setup Design Tokens
@@ -432,14 +432,14 @@ Fields: [List with types and validation]
 - Build foundation before specifics (follow phase order)
 - Use component checklist for every component
 - Test each phase before moving to next
-- Generate phase-specific prompts for @coder
+- Generate phase-specific prompts for `code`
 - Document deviations from standard flow
 - Verify token usage (no hardcoded values)
 
 ## DON'T ❌
 
 - Skip phases without documenting why
-- Mix multiple phases in one @coder prompt
+- Mix multiple phases in one `code` prompt
 - Move to next phase with incomplete previous
 - Hardcode values when tokens exist
 - Ignore mobile/tablet breakpoints
@@ -557,7 +557,7 @@ Fields: [List with types and validation]
 - [ ] Accessibility audit passed (WCAG AA minimum)
 - [ ] All breakpoints tested (mobile/tablet/desktop)
 - [ ] Build clean (no errors/warnings)
-- [ ] Code reviewed by @reviewer
+- [ ] Code reviewed by `review`
 - [ ] feature-spec.md requirements met
 
 **Output Artifacts:**
@@ -574,7 +574,7 @@ Fields: [List with types and validation]
 
 <output_format>
 
-## Expected Output from role-meta-architect
+## Expected Output from architect
 
 ```markdown
 # 🎨 UI Implementation Plan: [Feature Name]
@@ -582,14 +582,14 @@ Fields: [List with types and validation]
 ## Phases Breakdown
 
 **Phase 1: Design Tokens** → Status: Ready
-- Delegation: @coder
+- Delegation: `code`
 - Prompt: [Copy from workflow Phase 1]
-- Review: @reviewer (verify token completeness)
+- Review: `review` (verify token completeness)
 
 **Phase 2: Layout Shell** → Status: Waiting Phase 1
-- Delegation: @coder
+- Delegation: `code`
 - Prompt: [Copy from workflow Phase 2]
-- Review: @reviewer (verify responsive)
+- Review: `review` (verify responsive)
 
 [Continue for all 9 phases...]
 
@@ -597,8 +597,8 @@ Fields: [List with types and validation]
 - Skipping Phase 6 (Forms) — read-only dashboard
 
 ## Delegation Sequence
-1. Phase 1 → @coder → @reviewer ✅
-2. Phase 2 → @coder → @reviewer ⏳
+1. Phase 1 → `code` → `review` ✅
+2. Phase 2 → `code` → `review` ⏳
 3. [...]
 
 ## Estimated Timeline
@@ -612,7 +612,7 @@ Fields: [List with types and validation]
 
 ***
 
-🛑 STOP — Ready to delegate Phase 1 to @coder
+🛑 STOP — Ready to delegate Phase 1 to `code`
 ```
 
 </output_format>
@@ -634,7 +634,7 @@ Fields: [List with types and validation]
 8. Micro      → Polish
 9. Review     → Consistency
 
-Each phase: Prompt → @coder → Verify completion → Next
+Each phase: Prompt → `code` → Verify completion → Next
 ```
 
 </quick_reference>
@@ -642,8 +642,8 @@ Each phase: Prompt → @coder → Verify completion → Next
 ---
 
 **Related:** `feature-spec-template.md`, `checklist-ux-completeness`, `/docs/Plan.md`  
-**Loaded by:** role-meta-architect  
-**Delegates to:** role-coder (phase prompts)  
-**Verified by:** role-reviewer
+**Loaded by:** architect  
+**Delegates to:** code (phase prompts)  
+**Verified by:** review
 
 ---

@@ -129,7 +129,7 @@
 
 ## Применение в Промптах
 
-### Для @coder
+### Для `code`
 
 ```markdown
 ## Design Tokens Setup
@@ -147,7 +147,7 @@ Create `src/styles/tokens.css` with:
 Use CSS custom properties. Reference tokens in ALL component styles.
 ```
 
-### Checklist для @meta-architect
+### Checklist для `architect`
 
 - [ ] Токены определены до создания компонентов
 - [ ] Цвета имеют семантические названия

@@ -5,7 +5,7 @@ description: |
   framework integration rules, and consulting mode details (STRATEG, NEGOTIATOR, 
   PSYCHE, CRISIS, MENTOR). Reference files include 5 mode definitions and 7 
   strategic frameworks (OODA, Voss Protocol, Taleb, Dalio, Power, Psychology, 
-  Stratagems). Used primarily by @consilium mode for structured advisory output.
+  Stratagems). Used primarily by `consilium` mode for structured advisory output.
 ---
 
 <output_format>

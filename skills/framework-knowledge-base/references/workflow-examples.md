@@ -9,7 +9,7 @@
 ```
 User: "Email validation не работает на форме регистрации"
 
-→ role-meta-architect:
+→ architect:
   - Классифицирует: 🟢 Simple
   - Assessment: Single file, clear issue, no DB changes
   - Scope: Fix validation regex in registration.form.ts
@@ -18,7 +18,7 @@ User: "Email validation не работает на форме регистрац
 Meta-architect: 
 "## Делегирование к Реализации
 
-Следующая роль: role-coder
+Следующая роль: code
 
 Скажите: 'Выполни реализацию'
 
@@ -30,7 +30,7 @@ Acceptance: All existing tests pass + add negative test case"
 
 User: "Выполни реализацию"
 
-→ role-coder:
+→ code:
   - Updates registration.form.ts
   - Fixes regex
   - Adds test
@@ -39,7 +39,7 @@ Coder: "✅ Реализация завершена. Скажите: 'Прове
 
 User: "Проверь код"
 
-→ role-reviewer:
+→ review:
   - Checks spec compliance
   - Validates regex pattern
   - Verifies test coverage
@@ -62,7 +62,7 @@ Reviewer: "✅ PASS — bug fix ready for merge"
 ```
 User: "Добавь страницу профиля пользователя с возможностью загрузки аватара"
 
-→ role-meta-architect:
+→ architect:
   - Классифицирует: 🟡 Medium
   - Loads: workflow-feature
   - Reasons: Multiple files, DB schema change, file upload, UI component
@@ -112,13 +112,13 @@ Meta-architect: "Скажите: 'Выполни реализацию'"
 
 User: "Выполни реализацию"
 
-→ role-coder: Implements all files
+→ code: Implements all files
 
 Coder: "✅ Реализация завершена. Скажите: 'Проверь код'"
 
 User: "Проверь код"
 
-→ role-reviewer:
+→ review:
   - Loads: checklist-security (file upload)
   - Loads: checklist-ux-completeness (UI states)
   - Verifies all criteria
@@ -143,9 +143,9 @@ Meta-architect updates: memory/repo-wiki/overview.md, marks task done
 ```
 User: "После деплоя вчера API стал медленный, но не понятно почему"
 
-→ role-meta-architect:
+→ architect:
   - Анализирует: Причина неясна, нужно расследование
-  - Решение: Делегировать @coder-expert
+  - Решение: Делегировать `debug`
 
 Meta-architect: 
 "## 🔍 Требуется Расследование
@@ -158,7 +158,7 @@ Meta-architect:
 
 User: "Начни расследование"
 
-→ role-coder-expert:
+→ debug:
   - Checks recent commits
   - Analyzes DB query logs
   - Profiles slow endpoints
@@ -186,12 +186,12 @@ Change: commit abc123 added eager loading without join
 
 User: "Создай план на основе расследования"
 
-→ role-meta-architect:
+→ architect:
   - Reads Research.md
   - Creates Plan.md with fix + prevention
   - Классифицирует: 🟡 Medium
 
-Meta-architect: Plan готов, approval → delegate @coder → @reviewer → Done
+Meta-architect: Plan готов, approval → delegate `code` → `review` → Done
 ```
 
 **Duration:** 1-3 hours  
@@ -209,7 +209,7 @@ Meta-architect: Plan готов, approval → delegate @coder → @reviewer → 
 ```
 User: "Нужно сделать приложение multi-tenant с изоляцией данных"
 
-→ role-meta-architect:
+→ architect:
   - Классифицирует: 🔴 Complex
   - Loads: workflow-architecture-change, pattern-multi-tenant
   - Creates: Research.md (tenant isolation strategies)
@@ -221,16 +221,16 @@ Meta: 🛑 STOP — approval required
 User: "approved"
 
 → Phase 1: Schema changes
-   @coder → @reviewer → PASS
+   `code` → `review` → PASS
 
 → Phase 2: Update queries with tenant filter
-   @coder → @reviewer → PASS
+   `code` → `review` → PASS
 
 → Phase 3: Add tenant middleware
-   @coder → @reviewer → PASS
+   `code` → `review` → PASS
 
 → Phase 4: Migration script
-   @coder → @reviewer → PASS
+   `code` → `review` → PASS
 
 Meta-architect: Updates Architecture.md, closes task
 ```

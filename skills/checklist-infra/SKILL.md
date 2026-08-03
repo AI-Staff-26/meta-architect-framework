@@ -3,7 +3,7 @@ name: checklist-infra
 description: |
   Pre-deployment and post-implementation verification checklist for infrastructure work. 
   Covers Docker containers, CI/CD pipelines, secrets management, system hardening, 
-  and observability. Used by @devops for self-check and @reviewer for infra reviews.
+  and observability. Used by `devops` for self-check and `review` for infra reviews.
 tags:
   - devops
   - checklist
@@ -18,13 +18,13 @@ tags:
 
 ## Purpose
 
-Pre-deployment and post-implementation verification checklist for infrastructure work. Loaded by **@devops** before marking work complete, and by **@reviewer** when reviewing infrastructure changes (Dockerfiles, CI/CD yaml, compose files, scripts).
+Pre-deployment and post-implementation verification checklist for infrastructure work. Loaded by **`devops`** before marking work complete, and by **`review`** when reviewing infrastructure changes (Dockerfiles, CI/CD yaml, compose files, scripts).
 
 ## When to Load
 
 - Before any infrastructure change reaches staging or production
-- When @reviewer is asked to review infrastructure-as-code
-- When @devops completes a task and runs self-check
+- When `review` is asked to review infrastructure-as-code
+- When `devops` completes a task and runs self-check
 - After major system configuration changes
 
 ---

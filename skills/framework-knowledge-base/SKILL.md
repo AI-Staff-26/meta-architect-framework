@@ -4,7 +4,7 @@ description: |
   Comprehensive documentation for Meta-Architect Framework. Contains all reference
   materials about framework architecture, roles, workflows, skills catalog, complexity
   classification, delegation patterns, best practices, troubleshooting, and IDE 
-  compatibility. Used primarily by @guide mode for answering framework questions.
+  compatibility. Answers questions about the framework itself — roles, workflows, delegation, troubleshooting.
   Available to any mode needing framework documentation reference.
 ---
 

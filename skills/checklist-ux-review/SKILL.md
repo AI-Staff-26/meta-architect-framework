@@ -2,7 +2,7 @@
 name: checklist-ux-review
 description: |
   UI/UX IMPLEMENTATION verification. All states (loading, error, empty), accessibility, 
-  responsive design. Loaded by role-reviewer for frontend code. Use for: UI features, 
+  responsive design. Loaded by review for frontend code. Use for: UI features, 
   component reviews, design system updates.
 ---
 
@@ -220,5 +220,5 @@ states, accessibility, and responsive behavior.
 
 ---
 
-**Loaded by:** role-reviewer  
+**Loaded by:** review  
 **Used with:** checklist-code-review, workflow-ui-build-order

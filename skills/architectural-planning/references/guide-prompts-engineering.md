@@ -135,7 +135,7 @@ export class UserService {
 ❌ НЕ коммить .env или секреты"
 ```
 
-**Правило:** Минимум 3-5 явных ❌ в каждом промпте для @coder.
+**Правило:** Минимум 3-5 явных ❌ в каждом промпте для `code`.
 
 ---
 
@@ -292,7 +292,7 @@ export class UserService {
 Только код. Без комментариев вне кода.
 
 ## 🛑 STOP
-После завершения вернуть контроль @meta-architect.
+После завершения вернуть контроль `architect`.
 ```
 
 ---
@@ -429,7 +429,7 @@ async findById(id: string): Promise<User> {
 **Связанные файлы:**
 
 - `templates/plan.md` — шаблон плана с acceptance criteria
-- `prompts/coder/implement.md` — готовый промпт для @coder
+- `prompts/coder/implement.md` — готовый промпт для `code`
 - `guides/decomposition.md` — как разбивать на атомарные задачи
 - `diagnostics/ai-failure-modes.md` — ремонт при слабых промптах
 

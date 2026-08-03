@@ -88,9 +88,9 @@ description: |
 ```
 1. STOP рефакторинг
         ↓
-2. Сначала @coder: написать тесты на текущее поведение
+2. Сначала `code`: написать тесты на текущее поведение
         ↓
-3. @reviewer проверить тесты
+3. `review` проверить тесты
         ↓
 4. Только потом рефакторинг
 ```
@@ -134,11 +134,11 @@ description: |
         ↓
 2. Запустить тесты → GREEN
         ↓
-3. Промпт для @coder (refactor)
+3. Промпт для `code` (refactor)
         ↓
 4. Тесты → GREEN
         ↓
-5. @reviewer
+5. `review`
         ↓
 6. PASS → DONE
 ```
@@ -161,7 +161,7 @@ description: |
 ```
 1. Snapshot текущего состояния
         ↓
-2. [Если тесты неполные] Сначала @coder: добавить тесты
+2. [Если тесты неполные] Сначала `code`: добавить тесты
         ↓
 3. Создать /docs/Plan.md:
    - Что рефакторим
@@ -172,7 +172,7 @@ description: |
         ↓
 5. Поэтапный рефакторинг (RED→GREEN→REFACTOR)
         ↓
-6. @reviewer после каждого этапа
+6. `review` после каждого этапа
         ↓
 7. PASS all → DONE
 ```
@@ -208,9 +208,9 @@ description: |
         ↓
 5. Поэтапная реализация:
    Для каждого этапа:
-   - @coder
+   - `code`
    - Тесты GREEN
-   - @reviewer
+   - `review`
    - Commit/checkpoint
         ↓
 6. PASS all phases → DONE
@@ -243,7 +243,7 @@ description: |
 | **Replace Conditional with Polymorphism** | Сложные условия | Высокий |
 | **Decompose Module** | Monolith → parts | Высокий |
 
-### Промпт для @coder
+### Промпт для `code`
 
 ```markdown
 # Task: Refactor [что именно]
@@ -297,11 +297,11 @@ description: |
 3. RED = немедленный откат, анализ
 ```
 
-### Шаг 4.2: @reviewer
+### Шаг 4.2: `review`
 
 ```markdown
 ## 🤖 Delegation
-**Agent:** @reviewer
+**Agent:** `review`
 **Purpose:** Проверить рефакторинг [описание]
 **Focus:**
 - Поведение НЕ изменилось
@@ -309,7 +309,7 @@ description: |
 - Улучшение достигнуто
 - Соответствует framework rules
 **Expected Output:** PASS / FAIL
-🛑 STOP after completion. Return control to @meta-architect.
+🛑 STOP after completion. Return control to `architect`.
 ```
 
 ### Шаг 4.3: Постверификация
@@ -317,7 +317,7 @@ description: |
 - [ ] Все тесты проходят
 - [ ] Поведение идентично
 - [ ] Улучшение достигнуто
-- [ ] @reviewer PASS
+- [ ] `review` PASS
 
 ---
 
@@ -352,7 +352,7 @@ description: |
 ### После
 
 - [ ] Все тесты проходят
-- [ ] @reviewer PASS
+- [ ] `review` PASS
 - [ ] Improvement достигнут
 
 ---
@@ -364,13 +364,13 @@ description: |
       ↓
 Проверить тесты → есть? проходят?
       ↓
-[Нет тестов] → сначала @coder: тесты → потом рефакторинг
+[Нет тестов] → сначала `code`: тесты → потом рефакторинг
       ↓
 Оценка 🟢🟡🔴
       ↓
-🟢 → snapshot → @coder (refactor) → tests GREEN → @reviewer → DONE
-🟡 → Plan.md → STOP → поэтапно → @reviewer per step → DONE
-🔴 → Research.md → Plan.md (+ADR) → STOP → поэтапно → @reviewer per step → DONE
+🟢 → snapshot → `code` (refactor) → tests GREEN → `review` → DONE
+🟡 → Plan.md → STOP → поэтапно → `review` per step → DONE
+🔴 → Research.md → Plan.md (+ADR) → STOP → поэтапно → `review` per step → DONE
 ```
 
 ---
@@ -380,7 +380,7 @@ description: |
 - `.claude/skills/workflow-feature/SKILL.md` — если нужна новая функциональность
 - `.claude/skills/workflow-debugging/SKILL.md` — если нужно фиксить баги
 - `.claude/skills/checklist-code-review/SKILL.md` — чеклист ревью
-- `.claude/skills/role-coder-expert/references/ai-failure-modes.md` — если @coder ломает тесты
+- `.claude/skills/forensic-investigation/references/ai-failure-modes.md` — если `code` ломает тесты
 
 ---
 

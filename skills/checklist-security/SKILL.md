@@ -2,7 +2,7 @@
 name: checklist-security
 description: |
   Security verification checklist. Authentication, authorization, input validation, 
-  API security, secrets management, data protection. Loaded by role-reviewer for 
+  API security, secrets management, data protection. Loaded by review for 
   security-critical changes. 9 categories, severity classification.
 ---
 

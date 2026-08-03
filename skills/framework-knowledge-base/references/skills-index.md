@@ -2,7 +2,7 @@
 
 ## Role Skills (5)
 
-### role-meta-architect
+### architect
 
 **Purpose:** Core orchestrator for all development tasks  
 **Triggers:** New feature, bug, refactoring, "добавь", "исправь"  
@@ -12,7 +12,7 @@
 
 ---
 
-### role-coder
+### code
 
 **Purpose:** Precision implementer from approved specs  
 **Triggers:** "Выполни реализацию", "implement", "execute plan"  
@@ -22,7 +22,7 @@
 
 ---
 
-### role-reviewer
+### review
 
 **Purpose:** Quality gate after implementation  
 **Triggers:** "Проверь код", "review", "verify"  
@@ -32,7 +32,7 @@
 
 ---
 
-### role-coder-expert
+### debug
 
 **Purpose:** Forensic investigator for complex issues  
 **Triggers:** "Начни расследование", "investigate"  
@@ -95,27 +95,27 @@
 ## Skill Relationships
 
 ```
-role-meta-architect (CORE)
+architect (CORE)
     ├─ Loads: workflow-* (for protocols)
     ├─ Loads: pattern-* (for architecture)
-    ├─ Delegates to: role-coder
-    ├─ Delegates to: role-coder-expert
-    └─ Activates: role-reviewer (via user command)
+    ├─ Delegates to: code
+    ├─ Delegates to: debug
+    └─ Activates: review (via user command)
 
-role-coder
-    └─ Hands off to: role-reviewer
+code
+    └─ Hands off to: review
 
-role-reviewer
+review
     ├─ Loads: checklist-security
     ├─ Loads: checklist-code-review
     ├─ Loads: checklist-ux-completeness
-    └─ Returns to: role-meta-architect (on FAIL)
+    └─ Returns to: architect (on FAIL)
 
-role-coder-expert
-    └─ Returns to: role-meta-architect (with Research.md)
+debug
+    └─ Returns to: architect (with Research.md)
 
 role-guide
-    └─ Redirects to: role-meta-architect (when action needed)
+    └─ Redirects to: architect (when action needed)
 ```
 
 ---

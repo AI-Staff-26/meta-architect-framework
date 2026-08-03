@@ -79,7 +79,7 @@ patterns, checklists)
 
 ## Role System
 
-### role-meta-architect (Orchestrator)
+### architect (Orchestrator)
 
 **Responsibility:** Strategy, planning, agent coordination
 
@@ -96,7 +96,7 @@ patterns, checklists)
 2. Routes to appropriate workflow-* skill
 3. Creates /docs/* specifications
 4. Generates prompts for other roles
-5. Delegates to @coder/@reviewer/@expert
+5. Delegates to `code`/`review`/`debug`
 6. Verifies completion
 7. Updates project memory
 
@@ -104,7 +104,7 @@ patterns, checklists)
 
 ---
 
-### role-coder (Implementer)
+### code (Implementer)
 
 **Responsibility:** Precise code execution from specs
 
@@ -125,14 +125,14 @@ patterns, checklists)
 
 ---
 
-### role-reviewer (Quality Gate)
+### review (Quality Gate)
 
 **Responsibility:** Code verification against specs + security
 
 **When Active:**
 
 - User says "Проверь код" / "Review code"
-- After @coder completes implementation
+- After `code` completes implementation
 
 **What It Does:**
 
@@ -146,7 +146,7 @@ patterns, checklists)
 
 ---
 
-### role-coder-expert (Forensic Investigator)
+### debug (Forensic Investigator)
 
 **Responsibility:** Root cause analysis for complex issues
 
@@ -193,7 +193,7 @@ patterns, checklists)
 
 Workflows = step-by-step protocols for specific scenarios.
 
-**Loaded BY role-meta-architect** when planning tasks.
+**Loaded BY architect** when planning tasks.
 
 ### Available Workflows
 
@@ -215,7 +215,7 @@ Workflows = step-by-step protocols for specific scenarios.
 
 Patterns = architectural guidance for specific design problems.
 
-**Loaded when role-meta-architect or role-coder needs architectural knowledge.**
+**Loaded when architect or code needs architectural knowledge.**
 
 ### Available Patterns
 
@@ -231,7 +231,7 @@ Patterns = architectural guidance for specific design problems.
 
 Checklists = verification frameworks for quality gates.
 
-**Loaded by role-reviewer when performing reviews.**
+**Loaded by review when performing reviews.**
 
 ### Available Checklists
 
@@ -261,7 +261,7 @@ Checklists = verification frameworks for quality gates.
    ```
    User: "Добавь аутентификацию"
    → IDE matches "добавь" + "аутентификацию"
-   → Activates: role-meta-architect
+   → Activates: architect
    → Meta-architect loads: workflow-feature, pattern-rbac
    ```
 
@@ -273,7 +273,7 @@ Checklists = verification frameworks for quality gates.
    
    User: "Выполни реализацию"
    → IDE matches command
-   → Activates: role-coder
+   → Activates: code
    ```
 
 5. **Context switches:**
@@ -283,7 +283,7 @@ Checklists = verification frameworks for quality gates.
    → Outputs: "Скажите: 'Проверь код'"
    
    User: "Проверь код"
-   → IDE: Unloads role-coder, Loads role-reviewer
+   → IDE: Unloads code, Loads review
    → Reviewer loads: checklist-security (if auth-related)
    ```
 
@@ -303,7 +303,7 @@ Checklists = verification frameworks for quality gates.
 **Flow:**
 
 ```
-Assess → Quick scope → @coder → @reviewer → Done
+Assess → Quick scope → `code` → `review` → Done
 ```
 
 **Plan required:** No (brief assessment only)
@@ -322,7 +322,7 @@ Assess → Quick scope → @coder → @reviewer → Done
 **Flow:**
 
 ```
-Assess → Plan.md → STOP (approval) → @coder → @reviewer → Done
+Assess → Plan.md → STOP (approval) → `code` → `review` → Done
 ```
 
 **Plan required:** Yes (in /docs/Plan.md)
@@ -342,8 +342,8 @@ Assess → Plan.md → STOP (approval) → @coder → @reviewer → Done
 **Flow:**
 
 ```
-Assess → (maybe @expert) → Research.md → Plan.md + ADR → 
-STOP (approval) → Phased @coder → @reviewer per phase → Done
+Assess → (maybe `debug`) → Research.md → Plan.md + ADR → 
+STOP (approval) → Phased `code` → `review` per phase → Done
 ```
 
 **Plan required:** Yes + Research.md + ADR
@@ -359,11 +359,11 @@ STOP (approval) → Phased @coder → @reviewer per phase → Done
          │
          ▼
 ┌──────────────────────────────────┐
-│ role-meta-architect              │
+│ architect              │
 │ ├─ Classify 🟢🟡🔴              │
 │ ├─ Load workflow-* if needed     │
 │ ├─ Create Plan.md (🟡🔴)         │
-│ └─ Generate prompt for @coder    │
+│ └─ Generate prompt for `code`    │
 └────────┬─────────────────────────┘
          │
          │ STOP (for 🟡🔴 approval)
@@ -387,7 +387,7 @@ STOP (approval) → Phased @coder → @reviewer per phase → Done
          │
          ▼
 ┌──────────────────────────────────┐
-│ role-coder                       │
+│ code                       │
 │ ├─ Validate Plan.md exists       │
 │ ├─ Implement per prompt          │
 │ └─ Output: "Проверь код"         │
@@ -401,7 +401,7 @@ STOP (approval) → Phased @coder → @reviewer per phase → Done
          │
          ▼
 ┌──────────────────────────────────┐
-│ role-reviewer                    │
+│ review                    │
 │ ├─ Load checklist-* as needed    │
 │ ├─ Verify against spec           │
 │ └─ Return PASS/FAIL              │
@@ -429,28 +429,28 @@ STOP (approval) → Phased @coder → @reviewer per phase → Done
 
 ### 5 Non-Negotiable Rules
 
-1. **No Plan, No @coder (🟡🔴)**
+1. **No Plan, No `code` (🟡🔴)**
    - Plan.md must exist before delegation
    - Exception: 🟢 Simple with clear scope
 
-2. **Unknown Cause → @coder-expert**
+2. **Unknown Cause → `debug`**
    - If can't explain "why" → investigate first
    - Then plan based on findings
 
-3. **Every Implementation → @reviewer**
+3. **Every Implementation → `review`**
    - No merging without review
    - Exception: trivial changes (justified)
 
 4. **Anti-Loop (Two Steps Back)**
    - >2 failures → STOP all implementation
-   - Invoke @expert for root cause
+   - Invoke `debug` for root cause
    - Revise plan with lessons learned
 
 5. **FAIL ≠ Blind Retry**
    - Analyze FAIL report
    - Update Plan.md if architectural issue
    - Revise prompt if implementation issue
-   - >2 CRITICAL failures → invoke @expert
+   - >2 CRITICAL failures → invoke `debug`
 
 ---
 
@@ -491,7 +491,7 @@ Framework uses `/docs/` folder as **single source of truth**.
 
 **Research.md**
 
-- Investigation findings (from @expert)
+- Investigation findings (from `debug`)
 - Root cause analysis
 - Alternatives considered
 - Recommendations
@@ -562,7 +562,7 @@ Framework uses `/docs/` folder as **single source of truth**.
 
 ```
 User: "Добавь поиск по категориям"
-→ role-meta-architect activates
+→ architect activates
 
 Meta: Классифицирует 🟡
       Загружает workflow-feature
@@ -571,17 +571,17 @@ Meta: Классифицирует 🟡
 
 User: "approved"
 
-Meta: Генерирует промпт для @coder
+Meta: Генерирует промпт для `code`
       Выдает: "Скажите: 'Выполни реализацию'"
 
 User: "Выполни реализацию"
-→ role-coder activates
+→ code activates
 
 Coder: Имплементирует
        Выдает: "Скажите: 'Проверь код'"
 
 User: "Проверь код"
-→ role-reviewer activates
+→ review activates
 
 Reviewer: PASS → Done
 ```
@@ -590,36 +590,36 @@ Reviewer: PASS → Done
 
 ```
 User: "Исправь validation ошибку в email"
-→ role-meta-architect activates
+→ architect activates
 
 Meta: Классифицирует 🟢
       Быстрый assessment (без Plan.md)
-      Сразу делегирует @coder
+      Сразу делегирует `code`
 
 User: "Выполни реализацию"
-→ role-coder fixes
+→ code fixes
 
 User: "Проверь код"
-→ role-reviewer PASS → Done
+→ review PASS → Done
 ```
 
 ### Pattern: Mystery Bug (→ Expert)
 
 ```
 User: "После обновления пользователи иногда разлогиниваются"
-→ role-meta-architect activates
+→ architect activates
 
 Meta: Причина неясна
-      Делегирует @coder-expert
+      Делегирует `debug`
 
 User: "Начни расследование"
-→ role-coder-expert investigates
+→ debug investigates
 
 Expert: Создает Research.md
         Выдает: "Создай план на основе расследования"
 
 User: "Создай план на основе расследования"
-→ role-meta-architect creates Plan.md
+→ architect creates Plan.md
 
-Meta: План готов → @coder → @reviewer → Done
+Meta: План готов → `code` → `review` → Done
 ```

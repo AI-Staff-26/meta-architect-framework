@@ -16,7 +16,7 @@
 | Игнорирует требования | Prompt Overload | → Сократить промпт |
 | Добавляет лишнее | Scope Drift | → Явные ❌ запреты |
 | Галлюцинирует API/функции | Knowledge Cutoff | → Явный контекст |
-| Зацикливается на патчах | Patch Loop | → @coder-expert + Restart |
+| Зацикливается на патчах | Patch Loop | → `debug` + Restart |
 
 ---
 
@@ -94,18 +94,18 @@
 **Решение:**
 ```
 1. STOP — прекратить патчи
-2. Вызвать @coder-expert для root cause analysis
+2. Вызвать `debug` для root cause analysis
 3. Создать Research.md с findings
 4. Пересмотреть Plan.md на основе findings
 5. Restart чистая сессия
-6. @coder с новым пониманием
-7. @reviewer для верификации
+6. `code` с новым пониманием
+7. `review` для верификации
 ```
 
 **Профилактика:**
 - [ ] Понять "почему" перед "как"
 - [ ] Не более 2 попыток исправления
-- [ ] При неясной причине → @coder-expert
+- [ ] При неясной причине → `debug`
 
 ---
 
@@ -256,7 +256,7 @@ Knowledge cutoff, отсутствие актуального контекста
     │   └→ Реструктурировать промпт
     │
     ├─ Патч→регрессия→патч → Patch Loop
-    │   └→ @coder-expert + Research.md
+    │   └→ `debug` + Research.md
     │
     ├─ Делает лишнее → Scope Drift
     │   └→ Явные ❌ запреты

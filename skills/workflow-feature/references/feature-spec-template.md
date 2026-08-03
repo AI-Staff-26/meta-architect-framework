@@ -23,7 +23,7 @@ Bridges requirements and implementation with complete feature definition.
 | **Complexity** | 🟢 Simple / 🟡 Medium / 🔴 Complex |
 | **Status** | Draft / Review / Approved / In Progress / Done |
 | **Created** | YYYY-MM-DD |
-| **Author** | @meta-architect |
+| **Author** | `architect` |
 | **Stakeholders** | [Product, Engineering, Design, etc.] |
 
 ---
@@ -458,10 +458,10 @@ ALTER TABLE [table] DROP COLUMN [column];
 
 | Phase | Duration | Start | End | Owner |
 |-------|----------|-------|-----|-------|
-| Design | X days | YYYY-MM-DD | YYYY-MM-DD | @architect |
-| Development | X days | YYYY-MM-DD | YYYY-MM-DD | @coder |
+| Design | X days | YYYY-MM-DD | YYYY-MM-DD | `architect` |
+| Development | X days | YYYY-MM-DD | YYYY-MM-DD | `code` |
 | Testing | X days | YYYY-MM-DD | YYYY-MM-DD | @qa |
-| Rollout | X days | YYYY-MM-DD | YYYY-MM-DD | @devops |
+| Rollout | X days | YYYY-MM-DD | YYYY-MM-DD | `devops` |
 
 ---
 

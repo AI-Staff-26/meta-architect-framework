@@ -22,10 +22,10 @@ mkdir -p .claude/skills
 ├── rules/
 │   └── meta-architect-framework.md  # Always-On Rules
 └── skills/
-    ├── role-meta-architect/SKILL.md
-    ├── role-coder/SKILL.md
-    ├── role-reviewer/SKILL.md
-    ├── role-coder-expert/SKILL.md
+    ├── architect/SKILL.md
+    ├── code/SKILL.md
+    ├── review/SKILL.md
+    ├── debug/SKILL.md
     ├── role-guide/SKILL.md
     ├── workflow-*/SKILL.md (10 workflows)
     ├── pattern-*/SKILL.md (5 patterns)
@@ -44,7 +44,7 @@ mkdir -p docs/adr
 
 ```
 You: "Добавь регистрацию пользователей"
-→ role-meta-architect activates automatically
+→ architect activates automatically
 ```
 
 **Option B: Ask for help**
@@ -79,14 +79,14 @@ You: "Помощь"
 Expected: role-guide activates and explains framework
 
 You: "Добавь простую функцию для проверки"
-Expected: role-meta-architect activates, classifies 🟢, creates quick plan
+Expected: architect activates, classifies 🟢, creates quick plan
 ```
 
 ## Your First Workflow
 
 ```
 1. User: "Добавь API endpoint для списка пользователей"
-   → role-meta-architect activates
+   → architect activates
 
 2. Meta-architect: Классифицирует 🟡 Medium
                    Создает Plan.md
@@ -97,13 +97,13 @@ Expected: role-meta-architect activates, classifies 🟢, creates quick plan
 4. Meta-architect: "Скажите: 'Выполни реализацию'"
 
 5. User: "Выполни реализацию"
-   → role-coder activates
+   → code activates
 
 6. Coder: Implements code
           "Скажите: 'Проверь код'"
 
 7. User: "Проверь код"
-   → role-reviewer activates
+   → review activates
 
 8. Reviewer: ✅ PASS — Done!
 ```
@@ -112,10 +112,10 @@ Expected: role-meta-architect activates, classifies 🟢, creates quick plan
 
 | Command | Activates | When |
 |---------|-----------|------|
-| "Добавь...", "Исправь..." | role-meta-architect | Start any task |
-| "Выполни реализацию" | role-coder | After meta-architect prompt |
-| "Проверь код" | role-reviewer | After implementation |
-| "Начни расследование" | role-coder-expert | Unknown root cause |
+| "Добавь...", "Исправь..." | architect | Start any task |
+| "Выполни реализацию" | code | After meta-architect prompt |
+| "Проверь код" | review | After implementation |
+| "Начни расследование" | debug | Unknown root cause |
 | "Помощь", "Где находится..." | role-guide | Questions |
 
 ## Troubleshooting Setup
@@ -124,7 +124,7 @@ Expected: role-meta-architect activates, classifies 🟢, creates quick plan
 
 - Check `.claude/skills/*/SKILL.md` files exist
 - Verify YAML frontmatter is valid
-- Try explicit invocation: `@role-meta-architect`
+- Try explicit invocation: `architect`
 
 **Wrong skill activates?**
 

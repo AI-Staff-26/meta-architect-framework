@@ -3,16 +3,16 @@ name: architectural-planning
 description: |
   Методологический инструментарий для архитектурного планирования и делегирования.
   Содержит: протоколы передачи задач между агентами (handoff), шаблоны промптов 
-  для @coder/@reviewer/@coder-expert, гайды по prompt engineering, декомпозиции задач,
+  для `code`/`review`/`debug`, гайды по prompt engineering, декомпозиции задач,
   управлению контекстом и контролю скоупа. Используется преимущественно режимом 
-  @meta-architect, но доступен любому режиму при необходимости.
+  `architect`, но доступен любому режиму при необходимости.
   Triggers: планирование задачи, создание промпта для агента, декомпозиция, 
   оценка сложности, формирование /docs/Plan.md, передача задачи между режимами.
 ---
 
 <purpose>
 This skill provides the **methodological toolkit** for architectural planning and agent delegation.
-It does NOT define a role or identity — those are defined by the active mode (e.g., @meta-architect).
+It does NOT define a role or identity — those are defined by the active mode (e.g., `architect`).
 This skill is a **library of protocols, templates, and guides** that any mode can load when needed.
 </purpose>
 
@@ -22,7 +22,7 @@ This skill is a **library of protocols, templates, and guides** that any mode ca
 
 ## Handoff Protocol — Передача Задач Между Режимами
 
-### To @coder (code mode)
+### To `code` (code mode)
 
 ```markdown
 ## ✅ План готов — Делегирование к Реализации
@@ -59,7 +59,7 @@ This skill is a **library of protocols, templates, and guides** that any mode ca
 Code + brief report
 ```
 
-### To @coder-expert (debug mode)
+### To `debug` (debug mode)
 
 ```markdown
 ## 🔍 Требуется Расследование
@@ -70,14 +70,14 @@ Code + brief report
 **Ожидаемый результат:** /docs/Research.md with root cause + recommendations
 ```
 
-### To @reviewer (review mode)
+### To `review` (review mode)
 
 ```markdown
 ### Проверка Качества
 
 **Проверить:** Specification compliance, security, architecture, rules/meta-architect-framework.md
 **Scope реализации:** [What was implemented]
-**Spec reference:** [/docs/Plan.md / prompt that was given to @coder]
+**Spec reference:** [/docs/Plan.md / prompt that was given to `code`]
 ```
 
 </handoff_protocol>
@@ -192,21 +192,21 @@ Code + brief report
 ### 🟢 Simple (Direct Execution)
 
 - **Criteria:** Single file, <50 lines, no DB/API, clear requirement
-- **Flow:** Assess → prompt → @coder → @reviewer → Done
+- **Flow:** Assess → prompt → `code` → `review` → Done
 - **Plan required:** No (quick assessment + delegation)
 - **Examples:** Fix typo, add validation, update constant
 
 ### 🟡 Medium (Planned Execution)
 
 - **Criteria:** Multiple files, DB/API changes, new module, some ambiguity
-- **Flow:** /docs/Plan.md → STOP (approval) → prompt → @coder → @reviewer → Done
+- **Flow:** /docs/Plan.md → STOP (approval) → prompt → `code` → `review` → Done
 - **Plan required:** Yes (in /docs/Plan.md)
 - **Examples:** New API endpoint, service class, 3rd party integration
 
 ### 🔴 Complex (Research + Planned Execution)
 
 - **Criteria:** Architecture change, auth/tenancy, scaling, migrations, high risk
-- **Flow:** (maybe @coder-expert) → /docs/Research.md → /docs/Plan.md + ADR → STOP (approval) → Phased @coder → @reviewer per phase → Done
+- **Flow:** (maybe `debug`) → /docs/Research.md → /docs/Plan.md + ADR → STOP (approval) → Phased `code` → `review` per phase → Done
 - **Plan required:** Yes + /docs/Research.md + ADR
 - **Examples:** Multi-tenancy, database migration, auth redesign
 
@@ -245,12 +245,12 @@ At STOP gates:
 
 ## Review FAIL Protocol
 
-When @reviewer returns **FAIL**:
+When `review` returns **FAIL**:
 
 ### FORBIDDEN
 
-- Immediately re-running @coder with same prompt
-- Asking @coder to "try again" without analysis
+- Immediately re-running `code` with same prompt
+- Asking `code` to "try again" without analysis
 - Making cosmetic prompt changes and retrying
 
 ### REQUIRED
@@ -260,20 +260,20 @@ When @reviewer returns **FAIL**:
    - 🔴 Critical (security, constraint violation) → Revise /docs/Plan.md
    - 🟠 Blocker (missing logic, bad implementation) → Revise coder prompt
    - 🟡 Warning (style, minor) → Targeted fixes only
-3. **IF >2 CRITICAL failures** → Invoke @coder-expert (root cause)
+3. **IF >2 CRITICAL failures** → Invoke `debug` (root cause)
 4. **Update /docs/Plan.md / prompt** with findings
-5. **THEN re-delegate** to @coder
+5. **THEN re-delegate** to `code`
 
 **Two Steps Back rule applies if looping:**
 
 ```
 STOP all implementation
-→ @coder-expert investigates
+→ `debug` investigates
 → /docs/Research.md created
 → /docs/Plan.md revised
 → Clean context restart
-→ @coder with improved prompt
-→ @reviewer verification
+→ `code` with improved prompt
+→ `review` verification
 ```
 
 </fail_protocol>
@@ -295,8 +295,8 @@ Unless **explicitly requested** by user or specified in /docs/Plan.md:
 
 **When spotted outside scope:**
 
-- @coder: Mention at end of report but do NOT implement
-- @meta-architect: Create separate task in /docs/Tasks.md
+- `code`: Mention at end of report but do NOT implement
+- `architect`: Create separate task in /docs/Tasks.md
 
 </forbidden_actions>
 

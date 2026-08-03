@@ -404,9 +404,9 @@ If the project is a **greenfield software project** (new codebase from scratch),
 
 ### Step 3.5.3: Project Scaffolding
 
-**Delegate to @coder:**
+**Delegate to `code`:**
 
-Create a prompt for @coder with:
+Create a prompt for `code` with:
 - Project initialization (npm init / cargo new / etc.)
 - Directory structure matching chosen architecture
 - Base configuration (tsconfig, eslint, etc.)
@@ -441,8 +441,8 @@ Create a prompt for @coder with:
 **Protocol:**
 
 1. Create `/docs/prompt-first-deliverable.md` with spec
-2. Delegate to @coder
-3. @reviewer verifies
+2. Delegate to `code`
+3. `review` verifies
 4. Update `memory/*` based on results
 
 **After first deliverable:**
@@ -582,7 +582,7 @@ Use this checklist to ensure nothing is missed:
 - [ ] Phase 3.5 (greenfield only): Stack selected, architecture defined, scaffolded, first deliverable
   - [ ] Stack selection proposed and approved (🟡🔴)
   - [ ] Architecture defined in `memory/repo-wiki/overview.md`
-  - [ ] Project scaffolded via @coder
+  - [ ] Project scaffolded via `code`
   - [ ] Smoke test passed
   - [ ] First deliverable implemented and reviewed
 - [ ] Phase 4: Presented summary, got confirmation, added final chronicle entry

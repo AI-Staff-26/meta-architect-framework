@@ -95,11 +95,11 @@ description: |
 
 ## Фаза 2: Глубокий Анализ
 
-### Шаг 2.1: @coder-expert для Анализа
+### Шаг 2.1: `debug` для Анализа
 
 ```markdown
 ## 🤖 Delegation
-**Agent:** @coder-expert
+**Agent:** `debug`
 **Purpose:** Провести анализ legacy системы
 **Expected Output:** Структурированный отчёт
 **Focus:**
@@ -110,7 +110,7 @@ description: |
 5. Точки входа и API
 6. Опасные зоны (complexity, coupling)
 
-🛑 STOP after completion. Return control to @meta-architect.
+🛑 STOP after completion. Return control to `architect`.
 ```
 
 ### Шаг 2.2: Что Анализировать
@@ -392,7 +392,7 @@ description: [Brief module description]
 
 ### Во Время Анализа
 
-- [ ] @coder-expert делегирован
+- [ ] `debug` делегирован
 - [ ] Ключевые артефакты найдены
 - [ ] Структура понятна
 - [ ] Hot spots выявлены
@@ -417,7 +417,7 @@ Legacy System
       ↓
 Оценка сложности 🟢🟡🔴⚫
       ↓
-@coder-expert анализ
+`debug` анализ
       ↓
 Документирование в memory/*:
 - memory/repo-wiki/overview.md (+ meta.json)

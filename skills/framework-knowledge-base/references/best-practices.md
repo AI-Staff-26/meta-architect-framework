@@ -69,7 +69,7 @@
 ✅ **DO:**
 
 - Let meta-architect analyze FAIL reports
-- Trust Two Steps Back rule (>2 failures → @expert)
+- Trust Two Steps Back rule (>2 failures → `debug`)
 - Update Plan.md with lessons learned
 
 ❌ **DON'T:**

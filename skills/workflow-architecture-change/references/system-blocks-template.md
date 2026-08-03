@@ -268,7 +268,7 @@ erDiagram
 
 | Версия | Дата | Автор | Изменения |
 |--------|------|-------|-----------|
-| 1.0 | YYYY-MM-DD | @meta-architect | Initial decomposition |
+| 1.0 | YYYY-MM-DD | `architect` | Initial decomposition |
 
 ---
 

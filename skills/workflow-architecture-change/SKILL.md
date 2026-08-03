@@ -97,11 +97,11 @@ description: |
 
 ## Фаза 2: Исследование (Research)
 
-### Шаг 2.1: @coder-expert для Анализа
+### Шаг 2.1: `debug` для Анализа
 
 ```markdown
 ## 🤖 Delegation
-**Agent:** @coder-expert
+**Agent:** `debug`
 **Purpose:** Провести архитектурный анализ для [изменение]
 **Expected Output:** Research.md с полным анализом
 **Focus:**
@@ -110,7 +110,7 @@ description: |
 - Риски и ограничения
 - Альтернативные подходы
 - Зависимости
-🛑 STOP after completion. Return control to @meta-architect.
+🛑 STOP after completion. Return control to `architect`.
 ```
 
 ### Шаг 2.2: Структура Research.md
@@ -327,11 +327,11 @@ description: |
 **Для КАЖДОЙ фазы:**
 
 ```
-1. Промпт для @coder (только эта фаза)
+1. Промпт для `code` (только эта фаза)
         ↓
-2. @coder реализует
+2. `code` реализует
         ↓
-3. @reviewer проверяет
+3. `review` проверяет
         ↓
 4. [PASS] → тесты GREEN → commit/checkpoint
    [FAIL] → анализ → исправление → повтор
@@ -343,7 +343,7 @@ description: |
 7. 🛑 STOP — подтверждение готовности к следующей фазе
 ```
 
-### Промпт для @coder (Архитектурные изменения)
+### Промпт для `code` (Архитектурные изменения)
 
 ```markdown
 # Task: [Phase N] — [Название]
@@ -389,7 +389,7 @@ description: |
 **Чеклист:**
 
 - [ ] Все фазы завершены
-- [ ] Все @reviewer PASS
+- [ ] Все `review` PASS
 - [ ] Все тесты проходят
 - [ ] Performance тесты (если применимо)
 - [ ] Миграция данных протестирована на staging
@@ -456,7 +456,7 @@ description: |
 ### Реализация
 
 - [ ] Поэтапно
-- [ ] @reviewer после каждой фазы
+- [ ] `review` после каждой фазы
 - [ ] Checkpoint'ы между фазами
 
 ### Деплой
@@ -482,8 +482,8 @@ ADR + Plan.md (фазы, rollback)
 🛑 STOP — утверждение плана
          ↓
 Поэтапная реализация:
-  Phase 1 → @coder → @reviewer → checkpoint
-  Phase 2 → @coder → @reviewer → checkpoint
+  Phase 1 → `code` → `review` → checkpoint
+  Phase 2 → `code` → `review` → checkpoint
   ...
          ↓
 Staging validation
@@ -503,7 +503,7 @@ DONE
 - `references/architecture-template.md` — шаблон архитектуры
 - `references/system-blocks-template.md` — шаблон системных блоков
 - `workflow-legacy-analysis/SKILL.md` — анализ legacy перед изменениями
-- `forensic-investigation/references/ai-failure-modes.md` — если @coder зацикливается
+- `forensic-investigation/references/ai-failure-modes.md` — если `code` зацикливается
 
 ---
 

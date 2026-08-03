@@ -20,7 +20,7 @@
 | **Название** | [Feature/Task name] |
 | **Сложность** | 🟡 Medium / 🔴 Complex |
 | **Создан** | YYYY-MM-DD |
-| **Автор** | @meta-architect |
+| **Автор** | `architect` |
 | **Статус** | ⏳ Pending Approval / ✅ Approved / 🚧 In Progress / ✅ Done |
 
 ---
@@ -108,34 +108,34 @@ ALTER TABLE users DROP COLUMN status;
 
 ### Фаза 1: [Название]
 **Цель:** [Что достигаем]  
-**Agent:** @coder
+**Agent:** `code`
 
 1. [ ] [Шаг 1.1]
 2. [ ] [Шаг 1.2]
 3. [ ] [Шаг 1.3]
 
-**Checkpoint:** @reviewer после фазы
+**Checkpoint:** `review` после фазы
 
 ---
 
 ### Фаза 2: [Название]
 **Цель:** [Что достигаем]  
-**Agent:** @coder
+**Agent:** `code`
 
 1. [ ] [Шаг 2.1]
 2. [ ] [Шаг 2.2]
 
-**Checkpoint:** @reviewer после фазы
+**Checkpoint:** `review` после фазы
 
 ---
 
 ### Фаза 3: Финализация
 **Цель:** Интеграция и проверка  
-**Agent:** @coder
+**Agent:** `code`
 
 1. [ ] Интеграционное тестирование
 2. [ ] Обновление документации
-3. [ ] Финальный @reviewer
+3. [ ] Финальный `review`
 
 ---
 
@@ -151,7 +151,7 @@ ALTER TABLE users DROP COLUMN status;
 - [ ] Integration тесты проходят
 - [ ] Build без ошибок и warnings
 - [ ] Lint/Format чистые
-- [ ] @reviewer PASS на всех фазах
+- [ ] `review` PASS на всех фазах
 
 ### Документация
 - [ ] `Architecture.md` обновлён (если арх. изменения)

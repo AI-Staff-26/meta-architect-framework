@@ -7,7 +7,7 @@
 **Symptom:** IDE loads incorrect role  
 **Solution:**
 
-1. Use explicit invocation: `@role-meta-architect`
+1. Use explicit invocation: `architect`
 2. Check if commands overlap (use more specific)
 3. Verify YAML descriptions don't conflict
 
@@ -67,7 +67,7 @@ Meta-architect will reclassify and create plan
 User: "Начни расследование почему fails повторяются"
 ```
 
-Invoke @coder-expert to analyze assumptions
+Invoke `debug` to analyze assumptions
 
 ---
 
@@ -101,7 +101,7 @@ Invoke @coder-expert to analyze assumptions
 
 ### Tests fail after implementation
 
-**Symptom:** @reviewer finds breaking changes  
+**Symptom:** `review` finds breaking changes  
 **Root cause:** Insufficient acceptance criteria  
 **Solution:**
 

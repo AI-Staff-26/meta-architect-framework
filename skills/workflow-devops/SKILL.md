@@ -3,7 +3,7 @@ name: workflow-devops
 description: |
   Structured protocol for infrastructure tasks. Provides step-by-step workflows 
   for Docker, CI/CD, deployment, environment setup, security hardening, 
-  secrets management, and observability. Used by @devops mode and @meta-architect.
+  secrets management, and observability. Used by `devops` mode and `architect`.
 tags:
   - devops
   - workflow
@@ -17,7 +17,7 @@ tags:
 
 ## Purpose
 
-Structured protocol for infrastructure tasks. Activated by **@devops** mode and **@meta-architect** when routing infrastructure work. Provides step-by-step workflows for the most common DevOps scenarios.
+Structured protocol for infrastructure tasks. Activated by **`devops`** mode and **`architect`** when routing infrastructure work. Provides step-by-step workflows for the most common DevOps scenarios.
 
 ## When to Load
 

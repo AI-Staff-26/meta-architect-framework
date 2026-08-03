@@ -1,7 +1,7 @@
-# 🛠️ @coder Prompt — Implement
+# 🛠️ `code` Prompt — Implement
 
 <purpose>
-Шаблон промпта для делегирования задачи реализации агенту @coder.
+Шаблон промпта для делегирования задачи реализации агенту `code`.
 Используется Meta-Architect для формирования точных инструкций.
 </purpose>
 
@@ -68,7 +68,7 @@
 После завершения — отчёт:
 - Что сделано
 - Какие файлы изменены
-- Готово к @reviewer
+- Готово к `review`
 ```
 
 ---
@@ -179,7 +179,7 @@
 - `./refactor.md` — для рефакторинга
 - `./fix-bug.md` — для багфиксов
 - `../../workflow-feature/SKILL.md` — основной workflow
-- `../../checklist-code-review/SKILL.md` — что проверит @reviewer
+- `../../checklist-code-review/SKILL.md` — что проверит `review`
 
 ---
 

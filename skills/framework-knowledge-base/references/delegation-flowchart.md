@@ -5,7 +5,7 @@
 ```
 [User Request] → "Добавь функцию X"
         ↓
-[role-meta-architect activates]
+[architect activates]
         ↓
     Analyze complexity
         ↓
@@ -28,7 +28,7 @@
          ↓
    [User] "Выполни реализацию"
          ↓
-   [role-coder activates]
+   [code activates]
          ↓
     Implement code
          ↓
@@ -36,14 +36,14 @@
          ↓
    [User] "Проверь код"
          ↓
-   [role-reviewer activates]
+   [review activates]
          ↓
     ┌────┴────┐
   PASS      FAIL
     │         │
     │         └→ [meta-architect analyzes]
     │            └→ Revise Plan.md
-    │               └→ Re-delegate @coder
+    │               └→ Re-delegate `code`
     │
     ↓
   [Done]
@@ -56,7 +56,7 @@
 ```
 [User] "Проблема X, не понятно почему"
         ↓
-[role-meta-architect]
+[architect]
         ↓
    Can explain why?
         ↓
@@ -65,7 +65,7 @@
      │     │
      │     └→ "Скажите: 'Начни расследование'"
      │              ↓
-     │        [role-coder-expert]
+     │        [debug]
      │              ↓
      │         Investigation
      │              ↓
@@ -89,22 +89,22 @@
 ```
 [User] Complex task
         ↓
-[role-meta-architect]
+[architect]
         ↓
    Plan.md with phases
    🛑 STOP approval
         ↓
    Phase 1:
-   └→ @coder → @reviewer → 🛑 Gate
+   └→ `code` → `review` → 🛑 Gate
                                ↓
    Phase 2:                  PASS?
-   └→ @coder → @reviewer → 🛑 Gate
+   └→ `code` → `review` → 🛑 Gate
                                ↓
    Phase 3:                  PASS?
-   └→ @coder → @reviewer → 🛑 Gate
+   └→ `code` → `review` → 🛑 Gate
                                ↓
    Phase N:                  PASS?
-   └→ @coder → @reviewer → Done
+   └→ `code` → `review` → Done
 ```
 
 ---
@@ -121,7 +121,7 @@
      ┌──┴──┐
    First  >2nd
      │      │
-     │      └→ "Invoke @coder-expert"
+     │      └→ "Invoke `debug`"
      │              ↓
      │         Root cause analysis
      │              ↓
@@ -134,9 +134,9 @@
          Update Plan.md OR
          Revise prompt
                     ↓
-           Re-delegate @coder
+           Re-delegate `code`
                     ↓
-              @reviewer
+              `review`
                     ↓
                PASS → Done
 ```
@@ -163,7 +163,7 @@
                        ├→ pattern-clean-architecture
                        └→ pattern-rbac
         ↓
-   Delegate to @coder
+   Delegate to `code`
    [User activates]
         ↓
    ┌────────────────┐
@@ -171,7 +171,7 @@
    │ Load: coder    │
    └────────────────┘
         ↓
-   Delegate to @reviewer
+   Delegate to `review`
    [User activates]
         ↓
    ┌────────────────┐

@@ -3,7 +3,7 @@ name: workflow-feature
 description: |
   Protocol for adding new functionality. Requirement gathering, 🟢🟡🔴 
   complexity assessment, edge case discovery, Plan.md creation. Loaded BY 
-  role-meta-architect when user requests feature/capability. Use for: new 
+  architect when user requests feature/capability. Use for: new 
   modules, endpoints, UI features. NOT for bugs (workflow-debugging) or 
   refactoring (workflow-refactoring).
 ---
@@ -88,11 +88,11 @@ description: |
 ```
 1. Анализ → понял scope, нет неясностей
          ↓
-2. Сформировать промпт для @coder (см. Фаза 4: шаблон промпта)
+2. Сформировать промпт для `code` (см. Фаза 4: шаблон промпта)
          ↓
-3. Делегировать @coder
+3. Делегировать `code`
          ↓
-4. Делегировать @reviewer
+4. Делегировать `review`
          ↓
 5. PASS → обновить memory/* если нужно → DONE
    FAIL → анализ → исправление
@@ -124,11 +124,11 @@ description: |
          ↓
 3. 🛑 STOP — запросить утверждение плана
          ↓
-4. [После утверждения] Сформировать промпт для @coder
+4. [После утверждения] Сформировать промпт для `code`
          ↓
-5. Делегировать @coder
+5. Делегировать `code`
          ↓
-6. Делегировать @reviewer
+6. Делегировать `review`
          ↓
 7. PASS → обновить memory/* → DONE
    FAIL → анализ → исправление
@@ -154,7 +154,7 @@ description: |
 ```
 1. Анализ → понял scope, выявил unknowns
          ↓
-2. [Если unknowns] Вызвать @coder-expert для исследования
+2. [Если unknowns] Вызвать `debug` для исследования
          ↓
 3. Создать /docs/Research.md
    - Анализ текущей архитектуры
@@ -174,11 +174,11 @@ description: |
          ↓
 7. [После утверждения] Поэтапная реализация:
    Для каждой фазы:
-   - Промпт для @coder
-   - @reviewer после каждой фазы
+   - Промпт для `code`
+   - `review` после каждой фазы
          ↓
 8. PASS all phases → обновить memory/* → DONE
-   FAIL → анализ → возможно @coder-expert → исправление
+   FAIL → анализ → возможно `debug` → исправление
 ```
 
 **Требуется:** Research.md + Plan.md + ADR (если арх. решение) + STOP-gate.
@@ -229,7 +229,7 @@ description: |
 - [ ] [Критерий 1 — измеримый]
 - [ ] [Критерий 2 — измеримый]
 - [ ] Тесты проходят
-- [ ] @reviewer PASS
+- [ ] `review` PASS
 
 ## Риски и Ограничения
 | Риск | Митигация |
@@ -244,7 +244,7 @@ description: |
 
 ## Фаза 4: Делегирование
 
-### Промпт для @coder
+### Промпт для `code`
 
 Используй шаблон:
 
@@ -278,24 +278,24 @@ description: |
 Только код. Объяснения не нужны.
 ```
 
-### После @coder
+### После `code`
 
-**ОБЯЗАТЕЛЬНО:** Вызвать @reviewer.
+**ОБЯЗАТЕЛЬНО:** Вызвать `review`.
 
 ```markdown
 ## 🤖 Delegation
-**Agent:** @reviewer
+**Agent:** `review`
 **Purpose:** Проверить качество реализации [название фичи]
 **Expected Output:** PASS / FAIL с комментариями
 **Input Documents:** /docs/prompt-*.md, rules/meta-architect-framework.md
-🛑 STOP after completion. Return control to @meta-architect.
+🛑 STOP after completion. Return control to `architect`.
 ```
 
 ---
 
 ## Фаза 5: Обработка Результатов
 
-### @reviewer PASS
+### `review` PASS
 
 1. Обновить `memory/*`:
    - `memory/repo-wiki/` — если добавлены модули/компоненты (обновить wiki + meta.json)
@@ -306,16 +306,16 @@ description: |
 
 2. Сообщить пользователю о завершении
 
-### @reviewer FAIL
+### `review` FAIL
 
 1. Проанализировать причину:
    - Ошибка в плане → исправить Plan.md
-   - Ошибка @coder → уточнить промпт, повторить
+   - Ошибка `code` → уточнить промпт, повторить
    - Сложнее чем ожидалось → пересмотреть 🟢→🟡 или 🟡→🔴
 
 2. Если >2 итерации без прогресса:
    - STOP → Two Steps Back
-   - Вызвать @coder-expert
+   - Вызвать `debug`
    - Пересмотреть подход
 
 ---
@@ -336,7 +336,7 @@ description: |
 
 ### После Реализации
 
-- [ ] @reviewer вызван
+- [ ] `review` вызван
 - [ ] PASS получен
 - [ ] `memory/*` обновлены (repo-wiki, FACTS, CONTEXT, CHRONICLE)
 
@@ -349,9 +349,9 @@ Feature Request
       ↓
 Анализ scope → Оценка 🟢🟡🔴
       ↓
-🟢 → @coder → @reviewer → docs → DONE
-🟡 → Plan.md → STOP → @coder → @reviewer → docs → DONE  
-🔴 → Research.md → Plan.md (+ADR) → STOP → phased @coder → @reviewer per phase → docs → DONE
+🟢 → `code` → `review` → docs → DONE
+🟡 → Plan.md → STOP → `code` → `review` → docs → DONE  
+🔴 → Research.md → Plan.md (+ADR) → STOP → phased `code` → `review` per phase → docs → DONE
 ```
 
 ---
@@ -362,7 +362,7 @@ Feature Request
 - `references/feature-context-snapshot.md` — шаблон контекстного снапшота
 - `references/requirements-template.md` — шаблон требований
 - `skills/checklist-code-review/SKILL.md` — чеклист ревью
-- `skills/forensic-investigation/SKILL.md` — если @coder зацикливается
+- `skills/forensic-investigation/SKILL.md` — если `code` зацикливается
 
 ---
 

@@ -21,7 +21,7 @@
 |------|----------|
 | **Feature** | [Название фичи] |
 | **Created** | YYYY-MM-DD |
-| **Author** | @meta-architect |
+| **Author** | `architect` |
 | **Status** | Draft / Approved / In Progress / Done |
 
 ---

@@ -241,13 +241,13 @@ graph TB
 
 **Действия:**
 
-1. Сформировать промпт для @coder с задачей:
+1. Сформировать промпт для `code` с задачей:
    - Инициализация проекта (npm init / cargo new / etc.)
    - Создание структуры директорий
    - Базовая конфигурация (tsconfig, eslint, etc.)
    - Инициализация Git + .gitignore
 
-2. Делегировать @coder
+2. Делегировать `code`
 
 **Структура должна соответствовать выбранной архитектуре.**
 
@@ -300,8 +300,8 @@ graph TB
 **Протокол:**
 
 1. Создать `/docs/prompt-first-deliverable.md` с спецификацией
-2. Делегировать @coder
-3. Делегировать @reviewer
+2. Делегировать `code`
+3. Делегировать `review`
 4. Обновить `memory/*` по результатам
 
 ---
@@ -382,7 +382,7 @@ graph TB
 ### Фаза 6: First Delivery
 
 - [ ] Первый deliverable реализован
-- [ ] @reviewer PASS
+- [ ] `review` PASS
 
 ### Фаза 7: Verification
 
@@ -405,9 +405,9 @@ memory/* Setup (FACTS, repo-wiki)
   ↓
 Architecture → memory/repo-wiki/overview.md → [🟡🔴 STOP]
   ↓
-Scaffold (@coder) → Smoke Test
+Scaffold (`code`) → Smoke Test
   ↓
-First Deliverable → @reviewer → Update memory/* → DONE
+First Deliverable → `review` → Update memory/* → DONE
 ```
 
 ---

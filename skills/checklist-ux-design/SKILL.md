@@ -3,7 +3,7 @@ name: checklist-ux-design
 description: |
   6-pass UX DESIGN methodology for UI-heavy features. Mental model, information 
   architecture, affordances, feedback, edge states, microinteractions. Used by 
-  @architect/@designer BEFORE implementation to prevent "vanilla UI".
+  `architect` BEFORE implementation to prevent "vanilla UI".
 ---
 
 <purpose>
@@ -25,7 +25,7 @@ BEFORE coding begins. Prevents "vanilla UI" syndrome.
 
 **Before:**
 
-- @coder starts UI implementation
+- `code` starts UI implementation
 - Feature spec finalized
 
 </when_to_use>
@@ -140,7 +140,7 @@ BEFORE coding begins. Prevents "vanilla UI" syndrome.
 ## Quick Reference
 
 ```text
-Before @coder starts UI work, verify:
+Before `code` starts UI work, verify:
 
 ✅ Pass 1: User expectations documented
 ✅ Pass 2: Entities & hierarchy defined  
@@ -189,12 +189,12 @@ Before @coder starts UI work, verify:
 
 | Next Role | What They Receive |
 |-----------|-------------------|
-| @coder | Completed UX design ready for implementation |
-| @reviewer | Baseline expectations for `checklist-ux-completeness` |
+| `code` | Completed UX design ready for implementation |
+| `review` | Baseline expectations for `checklist-ux-completeness` |
 
 </handoff_protocol>
 
 ---
 
-**Used by:** @architect, @designer  
+**Used by:** `architect`  
 **Followed by:** checklist-ux-completeness (verification)

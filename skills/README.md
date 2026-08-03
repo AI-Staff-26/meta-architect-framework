@@ -56,7 +56,7 @@ skills/
 ### architectural-planning
 **Методологический инструментарий** для архитектурного планирования и делегирования между AI-агентами.
 
-- Протоколы передачи задач (handoff) между @coder, @reviewer, @coder-expert
+- Протоколы передачи задач (handoff) между `code`, `review`, `debug`
 - Шаблоны промптов для реализации, баг-фиксов, рефакторинга
 - Гайды: prompt engineering, декомпозиция задач, управление контекстом, контроль скоупа
 - Фреймворк оценки сложности: 🟢 Simple / 🟡 Medium / 🔴 Complex
@@ -185,7 +185,7 @@ skills/
 Протоколы расследования сложных технических проблем.
 
 - 5 фаз: Сбор фактов → Гипотезы → Тестирование → Root Cause → Рекомендации
-- Диагностика AI-циклов (зацикливание @coder)
+- Диагностика AI-циклов (зацикливание `code`)
 - Reverse engineering legacy-кода
 - Анализ производительности
 - Инструменты: git archaeology, profiling, debugging
@@ -276,9 +276,9 @@ Role-Based Access Control с иерархией ролей и permissions.
 ### workflow-feature
 Добавление новой функциональности в существующий проект.
 
-- 🟢 Simple: @coder → @reviewer → Done
-- 🟡 Medium: Plan.md → STOP → @coder → @reviewer → Done
-- 🔴 Complex: Research.md → Plan.md + ADR → STOP → phased @coder → @reviewer → Done
+- 🟢 Simple: `code` → `review` → Done
+- 🟡 Medium: Plan.md → STOP → `code` → `review` → Done
+- 🔴 Complex: Research.md → Plan.md + ADR → STOP → phased `code` → `review` → Done
 
 ### workflow-debugging
 Отладка и исправление багов.
@@ -311,7 +311,7 @@ Role-Based Access Control с иерархией ролей и permissions.
 ### workflow-legacy-analysis
 Анализ и документирование legacy-систем.
 
-- Первичный обзор → @coder-expert анализ → Документирование в memory/* → Рекомендации
+- Первичный обзор → `debug` анализ → Документирование в memory/* → Рекомендации
 - Hot spots и risk areas
 - Hand-off к нужному workflow
 
@@ -326,7 +326,7 @@ Role-Based Access Control с иерархией ролей и permissions.
 9-фазный протокол UI-разработки.
 
 1. Design Tokens → 2. Layout Shell → 3. Navigation → 4. Core Components → 5. Data Display → 6. Forms & Inputs → 7. States & Feedback → 8. Microinteractions → 9. Polish Pass
-- Каждая фаза: готовый промпт для @coder
+- Каждая фаза: готовый промпт для `code`
 - Component Quality Gate для каждого компонента
 
 ### workflow-ai-session
@@ -348,7 +348,7 @@ Role-Based Access Control с иерархией ролей и permissions.
 ## ✅ Чеклисты
 
 ### checklist-code-review
-Качественные ворота для @reviewer. 5 категорий проверки:
+Качественные ворота для `review`. 5 категорий проверки:
 
 - 🔴 Функциональность (соответствие требованиям, тесты)
 - 🔴 Безопасность (input validation, авторизация, секреты, уязвимости)
