@@ -1,436 +1,78 @@
 ---
 name: workflow-new-project
 description: |
-  Greenfield project initialization protocol. Tech stack selection, folder 
-  structure, initial setup, first deliverable. For: new projects, bootstrapping, 
-  MVP creation. NOT for adding features to existing project (use workflow-feature).
-  All artifacts go to memory/* (repo-wiki, FACTS, DECISIONS, CONTEXT).
+  Starting a project from nothing — settling what it must do, choosing a stack
+  you can defend, and getting one thin path running end to end before anything
+  is built wide. Use for a greenfield project, an MVP or PoC, a new service in
+  an existing ecosystem, or a rewrite from scratch. For adding to a project
+  that exists use `workflow-feature`; for bootstrapping memory on a codebase
+  that already exists use `onboarding`.
 ---
 
-# 🆕 New Project Workflow — Инициализация Нового Проекта
+# Starting From Nothing
 
-<purpose>
-Протокол создания нового проекта с нуля.
-От идеи до рабочего скелета с настроенной инфраструктурой.
-Все артефакты записываются в memory/*.
-Применяется для любой сложности: 🟢 🟡 🔴
-</purpose>
+A new project has no tests to break, no users to disturb, and no history to respect — which is why the expensive mistakes here are all made in the first week and paid off over years.
 
----
+Two of them account for most of it: **choosing a stack for reasons that will not survive contact with the work**, and **building wide before anything runs**. The order below exists to prevent both.
 
-## Когда Использовать
+## 1. Settle what it must do
 
-**Триггеры:**
+Before any technology is named: what the thing does, for whom, and what it is explicitly not. A project that starts without a stated boundary grows one by accretion, and every later decision inherits the ambiguity.
 
-- Новый проект с нуля
-- MVP / PoC
-- Новый сервис в существующей экосистеме
-- Форк/переписывание с чистого листа
+Where the request is a sentence and the project is a month, run `grilling`; `workflow-requirements-interview` supplies the territory the questions have to cover and the `Requirements.md` it produces.
 
-**НЕ использовать для:**
+Name the first user-visible thing that would count as working. That sentence becomes the target for step 3, and it is the only requirement that must be settled before the stack is chosen — the rest can firm up while it is built.
 
-- Фичей в существующем проекте → `workflow-feature`
-- Рефакторинга → `workflow-refactoring`
-- Миграции архитектуры → `workflow-architecture-change`
+## 2. Choose the stack, and defend it
 
----
+Two or three real options, each with what it costs and what it buys, and a recommendation with the reason. Not a survey — a decision presented for approval.
 
-## Фаза 1: Scope & Requirements
+The reasons that hold: the team already knows it, it fits the shape of the problem, its failure modes are understood, and it will still be maintained in three years. The reasons that do not: it is new, it is fast in a benchmark nobody ran on this workload, or the alternative was fashionable last year.
 
-### Шаг 1.1: Понимание Задачи
+`references/tech-stack-selection.md` holds the selection method — the boring-technology default, the maturity check, total cost beyond the first month, and the spike for anything genuinely unknown.
 
-**Действия:**
+Then **STOP** for approval, and record the choice in `memory/DECISIONS.md` with its rationale and the alternatives rejected. A stack choice is the decision most often re-litigated six months later by someone who has forgotten why; the entry is what ends that conversation.
 
-1. Уточни у пользователя:
-   - Что должен делать проект? (ключевые функции)
-   - Для кого? (целевая аудитория, пользователи, системы)
-   - Какие ограничения? (бюджет, сроки, хостинг)
-   - Есть ли интеграции? (существующие системы, API)
+For anything architecturally consequential — the persistence model, the boundary between services, the auth approach — write an ADR too: `workflow-architecture-change/references/adr-template.md`.
 
-2. Определи тип проекта:
-   - Web App (SPA, MPA, SSR)
-   - API Service (REST, GraphQL, gRPC)
-   - CLI Tool
-   - Library / SDK
-   - Mobile App
-   - Desktop App
-   - Microservice
+## 3. Get one path running end to end
 
-**Выход:** Понимание scope + первичный список требований.
+The first deliverable is a **tracer bullet**: the thinnest possible slice that goes from the outside of the system to the store and back, running in the environment it will actually run in.
 
-### Шаг 1.2: Оценка Сложности
+One route, one handler, one table, one response, deployed. Not a scaffold, not a folder tree, not a login system. It proves the pieces connect — which is the only thing at this stage that cannot be proven by reasoning, and the thing every later estimate depends on.
 
-| Критерий | 🟢 Simple | 🟡 Medium | 🔴 Complex |
-|----------|-----------|-----------|------------|
-| Время | 1-2 дня | 1-2 недели | >2 недели |
-| Компоненты | 1-2 | 3-5 | >5 |
-| Интеграции | 0-1 | 2-3 | >3 |
-| БД | SQLite / NoSQL | PostgreSQL + cache | Multi-DB / Sharding |
-| Auth | Нет / Basic | OAuth / JWT | SSO / RBAC / Multi-tenant |
-| Deploy | Static / Single server | Container + CI/CD | K8s / Multi-region |
+Everything the tracer needs gets built now; everything it does not, waits. That is the whole rule, and it settles most of the "should we set up X first" questions on its own.
 
-**Правило:** При сомнении выбирай более высокий уровень сложности.
+| Now — the tracer needs it | Later — it does not |
+|---|---|
+| Runtime version pinned, one command to start | A component library |
+| The one route and the one table it uses | The full schema |
+| Configuration and secrets loading | A secret manager |
+| A test that runs the path, and a way to run tests | A coverage target |
+| Whatever it takes to deploy it once | A full pipeline, staging, blue-green |
 
----
+`workflow-devops` covers the environment and the container; `checklist-infra` verifies them. Both come in at the size the tracer needs, and grow with the project rather than ahead of it.
 
-## Фаза 2: Stack Selection
+## 4. Then build features
 
-### Шаг 2.1: Выбор Технологий
+From here it is `workflow-feature`, one vertical slice at a time, each landing on a path that already runs. `tdd` from the first slice — a project with tests from the start keeps them; a project that adds them later mostly does not.
 
-**Критерии выбора:**
+Structure grows from what the slices need. A folder layout designed before the second feature exists is a prediction, and predictions about a codebase that does not exist yet are wrong in ways that are expensive to undo.
 
-- Команда уже знает технологию?
-- Подходит ли для задачи?
-- Есть ли ограничения от заказчика?
-- Long-term support и community
+## 5. Write down what a newcomer needs
 
-**Действия:**
+`memory/PROFILE.md` comes from `onboarding` — if it is missing, that runs first. What this workflow adds: the stack and its rationale in `DECISIONS.md`, the constraints discovered while wiring things up in `FACTS.md`, and a `repo-wiki/` entry describing the shape once the tracer runs. Formats: `memory-keeping`.
 
-1. Предложи 2-3 варианта стека
-2. Для каждого варианта укажи Pros/Cons
-3. Дай рекомендацию с обоснованием
+The README earns its place with exactly two things at this stage: how to run it, and how to run the tests.
 
-**Артефакт (🟡🔴):**
+## Completion criterion
 
-```markdown
-## Stack Options
+Ready to build features when: one user-visible path works in the deployed environment, not only locally; a fresh clone can be started and tested from documented commands; the stack decision and its alternatives are in `DECISIONS.md`; secrets load from configuration and none are in the repository; and nothing has been built that the running path does not use.
 
-### Option A: [Название]
-**Pros:** ...
-**Cons:** ...
+## Related
 
-### Option B: [Название]
-**Pros:** ...
-**Cons:** ...
-
-**Рекомендация:** Option A, потому что [обоснование]
-```
-
-### Шаг 2.2: STOP-Gate (🟡🔴)
-
-```
-🛑 STOP — Утверждение стека перед продолжением
-```
-
-Для 🟢 достаточно устного подтверждения или предложения по умолчанию.
-
----
-
-## Фаза 3: Knowledge Base Setup (memory/*)
-
-### Шаг 3.1: Создание Структуры memory/
-
-**Действия:**
-
-1. Создай директорию `memory/` (если не существует — обычно создаётся при onboarding)
-2. Убедись что базовые файлы существуют:
-   - `memory/PROFILE.md` — если нет, запусти onboarding сначала
-   - `memory/CONTEXT.md` — обнови под новый проект
-   - `memory/FACTS.md` — добавь факты о стеке и архитектуре
-   - `memory/DECISIONS.md` — запиши решения по стеку
-   - `memory/repo-wiki/meta.json` — создай если нет
-
-### Шаг 3.2: Заполнение FACTS.md
-
-**Добавить в `memory/FACTS.md`:**
-
-```markdown
-## Technical
-- Project type: [Web App / API / CLI / etc.] [source: new-project, date: YYYY-MM-DD]
-- Tech stack: [stack details] [source: new-project, date: YYYY-MM-DD]
-- Database: [choice] [source: new-project, date: YYYY-MM-DD]
-- Deployment target: [target] [source: new-project, date: YYYY-MM-DD]
-
-## Constraints
-- [Budget/timeline/technical constraints] [source: new-project, date: YYYY-MM-DD]
-```
-
-### Шаг 3.3: Запись Решений в DECISIONS.md
-
-```markdown
-## #NNN — Tech Stack: [Decision] (YYYY-MM-DD)
-**Context**: Выбор технологического стека для нового проекта
-**Options**: [Option A, Option B, Option C]
-**Chosen**: [Selected option]
-**Consequences**: [What follows from this choice]
-**Status**: Active
-```
-
----
-
-## Фаза 4: Architecture Definition
-
-### Шаг 4.1: Выбор Архитектурного Паттерна
-
-**Опции (см. skills/pattern-*):**
-
-- `pattern-clean-architecture` — слоёная архитектура
-- `pattern-modular-monolith` — модульный монолит
-- Microservices — для 🔴 проектов
-
-**Действия:**
-
-1. Выбери паттерн на основе Requirements
-2. Адаптируй под конкретный стек
-3. Задокументируй в `memory/repo-wiki/overview.md`
-
-### Шаг 4.2: Определение Компонентов
-
-**Для каждого компонента определи:**
-
-- Название и ответственность
-- Зависимости (от чего зависит / что от него зависит)
-- Интерфейсы (публичные контракты)
-
-### Шаг 4.3: Создание repo-wiki/overview.md
-
-**Формат repo-wiki entry:**
-
-```markdown
----
-title: Architecture Overview
-description: High-level architecture of [Project Name]
----
-
-## Entry: System Architecture
-> Tags: system-diagram, entry-point, tech-stack
-
-### Overview
-[What this system does and why it exists]
-
-### Key Files
-| File | Lines | Description |
-|------|-------|-------------|
-| `src/main.ts` | 1-45 | Application entry point |
-
-### Architecture
-```mermaid
-graph TB
-    [Component diagram]
-```
-
-### Dependencies
-[External and internal dependencies]
-
-### Important Details
-[Non-obvious decisions, edge cases]
-```
-
-Зарегистрировать в `memory/repo-wiki/meta.json`:
-```json
-{
-  "files": {
-    "overview.md": {
-      "tags": ["system-diagram", "entry-point", "tech-stack"]
-    }
-  }
-}
-```
-
-### Шаг 4.4: STOP-Gate (🟡🔴)
-
-```
-🛑 STOP — Утверждение архитектуры перед scaffold
-```
-
----
-
-## Фаза 5: Project Scaffolding
-
-### Шаг 5.1: Создание Скелета
-
-**Действия:**
-
-1. Сформировать промпт для `code` с задачей:
-   - Инициализация проекта (npm init / cargo new / etc.)
-   - Создание структуры директорий
-   - Базовая конфигурация (tsconfig, eslint, etc.)
-   - Инициализация Git + .gitignore
-
-2. Делегировать `code`
-
-**Структура должна соответствовать выбранной архитектуре.**
-
-### Шаг 5.2: Настройка Инфраструктуры
-
-**В зависимости от сложности:**
-
-🟢:
-
-- Package manager + deps
-- Linter + Formatter
-- Basic scripts (dev, build, test)
-
-🟡:
-
-- CI конфиг (GitHub Actions / GitLab CI)
-- Docker (опционально)
-- Pre-commit hooks
-
-🔴:
-
-- Full CI/CD pipeline
-- Docker + Docker Compose
-- Infrastructure as Code
-- Monitoring setup
-
-### Шаг 5.3: Smoke Test
-
-**Критерии успешного scaffolding:**
-
-- [ ] Проект запускается (`npm run dev` / etc.)
-- [ ] Линтер проходит без ошибок
-- [ ] Тесты запускаются (пустой тест-сьют OK)
-- [ ] Структура соответствует архитектуре в repo-wiki
-
----
-
-## Фаза 6: Initial Implementation
-
-### Шаг 6.1: Определение Первого Deliverable
-
-**Выбери минимальный рабочий срез:**
-
-- Один endpoint / одна страница / одна команда
-- End-to-end путь (от входа до выхода)
-- Валидирует архитектурные решения
-
-### Шаг 6.2: Реализация
-
-**Протокол:**
-
-1. Создать `/docs/prompt-first-deliverable.md` с спецификацией
-2. Делегировать `code`
-3. Делегировать `review`
-4. Обновить `memory/*` по результатам
-
----
-
-## Фаза 7: Verification
-
-### Шаг 7.1: Финальная Проверка
-
-**Чеклист:**
-
-- [ ] Проект запускается и работает
-- [ ] `memory/repo-wiki/` актуален (overview.md + meta.json)
-- [ ] `memory/FACTS.md` содержит ключевые технические факты
-- [ ] `memory/CONTEXT.md` отражает текущее состояние
-- [ ] Git history чистая
-- [ ] README.md понятен новому разработчику
-- [ ] Первый deliverable демонстрируем
-
-### Шаг 7.2: Обновление memory/*
-
-**После завершения:**
-
-1. Обновить `memory/CONTEXT.md`:
-   - Working on: Project initialized and first deliverable complete
-   - Last completed: [What was done]
-
-2. Добавить в CHRONICLE.md:
-   ```markdown
-   ### [milestone] New project initialized
-   Project [name] created with [stack]. Architecture: [pattern].
-   First deliverable: [what was built]. Smoke test passed.
-   ```
-
-3. Обновить `memory/repo-wiki/` если структура изменилась при реализации
-
-### Шаг 7.3: Handoff
-
-**Действия:**
-
-1. Убедиться что пользователь понимает структуру
-2. Показать Quick Start (как запустить)
-3. Объяснить следующие шаги
-
----
-
-## Чеклист New Project
-
-### Фаза 1: Requirements
-
-- [ ] Scope понятен
-- [ ] Тип проекта определён
-- [ ] Сложность оценена
-
-### Фаза 2: Stack
-
-- [ ] Технологии выбраны
-- [ ] Утверждение получено (🟡🔴)
-- [ ] Решение записано в memory/DECISIONS.md
-
-### Фаза 3: Knowledge Base
-
-- [ ] memory/ структура создана/проверена
-- [ ] memory/FACTS.md обновлён
-- [ ] memory/DECISIONS.md обновлён
-
-### Фаза 4: Architecture
-
-- [ ] Паттерн выбран
-- [ ] memory/repo-wiki/overview.md создан + meta.json обновлён
-- [ ] Утверждение получено (🟡🔴)
-
-### Фаза 5: Scaffold
-
-- [ ] Проект инициализирован
-- [ ] Структура соответствует архитектуре
-- [ ] Smoke test пройден
-
-### Фаза 6: First Delivery
-
-- [ ] Первый deliverable реализован
-- [ ] `review` PASS
-
-### Фаза 7: Verification
-
-- [ ] memory/* актуальны
-- [ ] CHRONICLE.md обновлён
-- [ ] Пользователь понимает структуру
-
----
-
-## Quick Reference
-
-```
-Idea
-  ↓
-Requirements → Оценка 🟢🟡🔴
-  ↓
-Stack Selection → [🟡🔴 STOP] → memory/DECISIONS.md
-  ↓
-memory/* Setup (FACTS, repo-wiki)
-  ↓
-Architecture → memory/repo-wiki/overview.md → [🟡🔴 STOP]
-  ↓
-Scaffold (`code`) → Smoke Test
-  ↓
-First Deliverable → `review` → Update memory/* → DONE
-```
-
----
-
-## Anti-Patterns
-
-❌ **Не начинай кодить без записи решений в memory/DECISIONS.md**
-❌ **Не пропускай architecture в repo-wiki для 🟡🔴**
-❌ **Не переусложняй стек для простых проектов**
-❌ **Не создавай пустой каркас без первого deliverable**
-❌ **Не забывай обновлять memory/repo-wiki/ при изменениях структуры**
-
----
-
-**Связанные навыки:**
-
-- `skills/onboarding/SKILL.md` — если проект ещё не прошёл onboarding
-- `skills/workflow-feature/SKILL.md` — после инициализации, для добавления фич
-- `skills/pattern-clean-architecture/SKILL.md` — паттерн чистой архитектуры
-- `skills/pattern-modular-monolith/SKILL.md` — паттерн модульного монолита
-- `references/prd-template.md` — шаблон PRD
-- `references/tech-stack-selection.md` — гайд по выбору технологий
-
----
-
-**END OF WORKFLOW**
+- `references/tech-stack-selection.md` — how the stack decision gets made
+- `workflow-requirements-interview` + `grilling` — settling what it must do
+- `workflow-feature` — every slice after the tracer
+- `workflow-devops` — environment, containers, deployment
+- `pattern-*` — when the shape of the problem already has a known architecture

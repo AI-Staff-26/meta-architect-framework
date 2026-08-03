@@ -1,237 +1,68 @@
 ---
 name: checklist-release
 description: |
-  Pre-release verification checklist. 7 phases: code, docs, infra, security, 
-  monitoring, deployment, post-deploy. Go/No-Go decision criteria. Severity 
-  classification (🔴🟠🟡🟢). Required before every production release.
+  The Go / No-Go gate before production — the decision itself, not a second
+  copy of the code, security, and infrastructure checks. Use before a release,
+  before a first deploy of a new service, before a major or minor version, and
+  when the user asks "готовы ли мы к релизу". Depth comes from
+  `checklist-code-review`, `checklist-security`, and `checklist-infra`; this
+  skill decides whether to ship.
 ---
 
-# 🚀 Release Checklist — Предрелизный Чеклист
+# Go / No-Go
 
-<purpose>
-Финальные проверки перед релизом. Убедись, что ничего не упущено.
-</purpose>
+This is a decision, not an inspection. The inspections already happened — in review, in the security pass, in the infrastructure check. What this gate asks is narrower and harder: **what happens if this is wrong, and how fast can we undo it?**
 
----
+A release blocked here is cheap. A release that ships broken with no rehearsed rollback is the expensive kind, and the expense is paid by whoever is on call.
 
-## Когда Использовать
+## The seven questions
 
-- Перед каждым релизом в production
-- Перед major/minor версиями
-- После значительных изменений
-- При первом деплое нового сервиса
+Each is answered by naming evidence — a command, a run, a person — never by "yes".
 
----
+**1. Is the code actually finished?** Everything planned is in, everything in got a PASS from `review`, no blocking defect is open, and the feature flags are set the way production needs them rather than the way the last test left them.
 
-## 📋 Фаза 1: Готовность Кода
+**2. Do the gates pass on the artifact being shipped?** The full suite, the linter, the build — run on the commit that is deploying, not on one from earlier in the day. Depth: `checklist-code-review`.
 
-### Code Complete
+**3. Has security been looked at, for these changes?** Anything touching auth, permissions, user data, external input, or dependencies gets `checklist-security`. Dependencies scanned, nothing new and known-vulnerable, no secret anywhere in the repository or the image.
 
-- [ ] Все запланированные фичи реализованы
-- [ ] Все изменения получили PASS от `review`
-- [ ] Нет открытых блокирующих багов
-- [ ] Feature flags настроены правильно
+**4. Is the infrastructure ready?** Staging matches production closely enough for its result to mean something, configuration and secrets exist in the target environment, migrations have run against production-shaped data, and a backup taken before the deploy has been verified by restoring it. Depth: `checklist-infra`.
 
-### Quality Gates
+**5. Will you see it break before your users tell you?** Health checks answer, logs arrive somewhere you will look, the error-rate and latency alerts exist and have fired at least once in a test, and someone specific receives them.
 
-- [ ] Все тесты проходят (unit, integration, e2e)
-- [ ] Test coverage на приемлемом уровне
-- [ ] Linter/static analysis чистые
-- [ ] Build успешен
+**6. Can you undo it, and has anyone done so?** The rollback is a written command or procedure, rehearsed — not deduced. The abort thresholds are numbers agreed before the deploy, so the decision under pressure is a comparison rather than an argument. If a migration makes rollback impossible past a certain step, that step is marked and the recovery path for it is agreed with the user in advance.
 
-### Code Review
+**7. Is anyone there?** The deploy happens when people who can respond are available, stakeholders know it is happening, and the release is tagged so the next person can tell what shipped.
 
-- [ ] Все изменения прошли code review
-- [ ] Критические изменения review двумя reviewers
-- [ ] Security review для security-critical изменений
+## The decision
 
----
+**GO** requires all seven answered with evidence. Anything unanswered is a No-Go — an unanswered question is not a small risk, it is an unmeasured one.
 
-## 📋 Фаза 2: Документация
+**GO with known issues** is legitimate when the issue is understood, bounded, documented in the release notes, and has a follow-up task that exists. Written down, it is a decision; unwritten, it is the thing everyone forgets until it recurs.
 
-### Technical Documentation
+| Severity | What it means | Effect |
+|---|---|---|
+| 🔴 **Blocker** | Security hole, possible data loss, core flow broken | No-Go, no exceptions |
+| 🟠 **Critical** | A major capability broken or a significant regression | No-Go for a planned release; hotfix only under an explicit call |
+| 🟡 **Major** | Broken with an acceptable workaround | Go, if written into the release notes with its follow-up task |
+| 🟢 **Minor** | Cosmetic, rare edge case | Go |
 
-- [ ] `memory/repo-wiki/overview.md` актуален
-- [ ] API документация обновлена
-- [ ] README обновлён (если нужно)
-- [ ] CHANGELOG обновлён
+State the verdict plainly, with what it rests on: **GO — [evidence]** or **NO-GO — [what is unanswered or broken]**.
 
-### User-Facing (если применимо)
+## After the deploy
 
-- [ ] Release notes подготовлены
-- [ ] User documentation обновлена
-- [ ] Migration guide (если breaking changes)
+Verification is part of the release, not the next task. The critical user flows are exercised in production; error rate and latency are compared against the pre-deploy baseline rather than judged by eye; the logs are read for anything new.
 
-### Internal
+If the abort threshold is crossed, roll back first and diagnose after. A rollback under way is recoverable; a debugging session with users on the broken version is not.
 
-- [ ] Runbook / playbook обновлён
-- [ ] Monitoring dashboard готов
-- [ ] Известные issues задокументированы
+Then close it: release notes and tag published, `memory/` updated, and a post-mortem scheduled if anything went wrong — while the details are still recoverable.
 
----
+## Completion criterion
 
-## 📋 Фаза 3: Инфраструктура
+Decided when: all seven questions carry evidence rather than assertions; the verdict names what it rests on; every known issue shipped with the release has a written follow-up; the rollback has been rehearsed and its thresholds agreed; and post-deploy verification was run and its result recorded.
 
-### Environment
+## Related
 
-- [ ] Staging протестирован и соответствует production
-- [ ] Конфигурация production готова
-- [ ] Environment variables установлены
-- [ ] Secrets доступны и актуальны
-
-### Dependencies
-
-- [ ] Все dependencies зафиксированы (lockfile)
-- [ ] Dependencies проверены на уязвимости
-- [ ] Нет deprecated packages
-
-### Database
-
-- [ ] Миграции протестированы
-- [ ] Rollback миграций работает
-- [ ] Backup перед деплоем запланирован
-- [ ] Индексы оптимизированы для нового кода
-
----
-
-## 📋 Фаза 4: Безопасность
-
-### Security Review
-
-- [ ] `checklists/security.md` пройден для критических изменений
-- [ ] Нет новых уязвимостей (CVE scan)
-- [ ] Permissions/RBAC корректны
-- [ ] Audit logging работает
-
-### Secrets
-
-- [ ] Никаких secrets в коде
-- [ ] Secrets ротация не нужна / выполнена
-- [ ] Доступ к production secrets ограничен
-
----
-
-## 📋 Фаза 5: Мониторинг и Alerting
-
-### Monitoring
-
-- [ ] Метрики приложения настроены
-- [ ] Health checks работают
-- [ ] Logging настроен и работает
-- [ ] Traces / APM настроены (если есть)
-
-### Alerting
-
-- [ ] Алерты на критические ошибки настроены
-- [ ] Алерты на SLA нарушения (latency, errors)
-- [ ] Escalation path определён
-- [ ] On-call schedule актуален
-
----
-
-## 📋 Фаза 6: Deployment Plan
-
-### Strategy
-
-- [ ] Deployment strategy выбрана (blue-green, canary, rolling)
-- [ ] Canary % определён (если применимо)
-- [ ] Время деплоя согласовано
-
-### Rollback
-
-- [ ] Rollback plan готов
-- [ ] Rollback протестирован (dry-run)
-- [ ] Критерии для rollback определены
-- [ ] Ответственный за rollback назначен
-
-### Communication
-
-- [ ] Stakeholders уведомлены
-- [ ] Downtime window согласован (если нужен)
-- [ ] Status page готов к обновлению
-
----
-
-## 📋 Фаза 7: Post-Deploy
-
-### Verification
-
-- [ ] Smoke tests проходят в production
-- [ ] Ключевые user flows работают
-- [ ] Метрики в норме (error rate, latency)
-- [ ] Нет аномалий в логах
-
-### Monitoring Period
-
-- [ ] Усиленный мониторинг на X часов
-- [ ] Команда доступна для быстрого реагирования
-
-### Completion
-
-- [ ] Релиз отмечен (git tag, release notes)
-- [ ] Stakeholders уведомлены о завершении
-- [ ] Post-mortem запланирован (если были проблемы)
-
----
-
-## Go/No-Go Checklist
-
-**Критерии GO:**
-
-| Критерий | Status |
-|----------|--------|
-| Все тесты проходят | ⬜ |
-| Code review PASS | ⬜ |
-| Security review PASS | ⬜ |
-| Staging validation OK | ⬜ |
-| Rollback plan готов | ⬜ |
-| Monitoring настроен | ⬜ |
-| Team available for support | ⬜ |
-
-**Любой ⬜ = NO-GO**
-
----
-
-## Severity Levels
-
-| Level | Критерий | Действие |
-|-------|----------|----------|
-| 🔴 Blocker | Security, data loss, core功能 broken | NO-GO до исправления |
-| 🟠 Critical | Major功能 broken, significant regression | NO-GO для major release |
-| 🟡 Major | Minor功能 broken, acceptable workaround | GO с известными issues |
-| 🟢 Minor | Cosmetic, edge cases | GO |
-
----
-
-## Quick Reference
-
-```
-Release Readiness:
-
-✅ Code      — tests, review, build
-✅ Docs      — changelog, api docs
-✅ Infra     — env, deps, db
-✅ Security  — audit, secrets
-✅ Monitoring — alerts, dashboards
-✅ Deploy    — strategy, rollback
-✅ Post      — verify, monitor
-
-Red Flags:
-❌ Failing tests
-❌ Missing reviews
-❌ No rollback plan
-❌ Untested migrations
-❌ Missing monitoring
-```
-
----
-
-**Связанные файлы:**
-
-- `checklist-security/SKILL.md` — детальный security checklist
-- `checklist-code-review/SKILL.md` — code review checklist
-- `workflow-feature/SKILL.md` — feature development workflow
-
----
-
-**END OF CHECKLIST**
+- `checklist-code-review` — the code gate this one assumes has happened
+- `checklist-security` — the security pass for anything sensitive
+- `checklist-infra` — containers, pipeline, secrets, deployment safety
+- `workflow-devops` — building the deployment this verifies

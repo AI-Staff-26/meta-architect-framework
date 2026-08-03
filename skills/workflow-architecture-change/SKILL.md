@@ -1,510 +1,78 @@
 ---
 name: workflow-architecture-change
 description: |
-  Major architectural shift protocol. ADR creation, migration strategy, 
-  rollback plan. For: layer changes, pattern adoption, system redesign, 
-  breaking API changes, infrastructure migration. Always 🔴 Complex. 
-  NOT for simple refactoring (workflow-refactoring).
+  Changing the shape of a running system — data migrations, replacing a
+  framework or database, splitting a monolith, breaking a public contract,
+  moving infrastructure. Covers choosing the migration strategy, finding the
+  point of no return, and phasing the work so each step can be reversed. Always
+  🔴. Use before any change where rollback is not simply reverting a commit.
+  For structure without behaviour change use `workflow-refactoring`.
 ---
 
-# 🏗️ Architecture Change Workflow — Архитектурные Изменения
+# Architecture Change
 
-<purpose>
-Протокол для значительных архитектурных изменений системы.
-Миграции, масштабирование, смена технологий, breaking changes.
-</purpose>
+Ordinary work can be reverted by reverting a commit. This work cannot: data has been transformed, clients have been migrated, a service someone depends on has been turned off. **The plan is a plan for retreat as much as for advance.**
 
----
+Two questions decide everything that follows: *what is the point of no return*, and *how long can both worlds coexist*. Answer them before choosing a strategy.
 
-## Когда Использовать
+Always 🔴 — so the full path applies: investigation, plan, ADR, STOP, phased execution with a review per phase.
 
-**Триггеры:**
+## 1. State the change as a pair
 
-- Миграция базы данных (смена схемы, новая БД)
-- Переход на новый фреймворк/технологию
-- Декомпозиция монолита
-- Изменение публичных API (breaking changes)
-- Масштабирование архитектуры
-- Интеграция с новой инфраструктурой
+Current shape, target shape, and — the part usually skipped — the **driver**. What forces this now? Scale that hurts today, a cost that compounds, a limit already hit, a dependency going end-of-life. "It would be cleaner" is not a driver; it is a preference, and preferences do not survive the third week of a migration.
 
-**НЕ использовать для:**
+Then map the impact across data (migrated? reversible?), contracts (who breaks, and can they be versioned instead), dependencies (which modules, which external systems), infrastructure (what new thing must exist and be operated), and the team (who can run this).
 
-- Новой функциональности без арх. изменений → `feature.md`
-- Фикса багов → `debugging.md`
-- Рефакторинга без изменения архитектуры → `refactoring.md`
-- Анализа legacy без изменений → `legacy-analysis.md`
+The output is a `Research.md` — `forensic-investigation/references/research-template.md` for the shape, or `debug` to produce it when the current system is not understood well enough to describe. **STOP** before planning.
 
----
+## 2. Choose how the two worlds coexist
 
-## Ключевой Принцип
+The strategy is the single highest-leverage decision here, and it is chosen by how reversible you need to stay and how long you can afford to run both.
 
-> **Архитектурные изменения = высокий риск + высокая цена ошибки.**
+| Strategy | How it works | Costs | Fits when |
+|---|---|---|---|
+| **Strangler fig** | New system takes routes one at a time from behind a facade; old one shrinks | Longest calendar time; both run for months | The system is decomposable and must stay live — the default for anything large |
+| **Parallel run** | Both process everything; outputs compared; only one is authoritative | Double the compute; comparison logic to build and discard | Correctness must be proven on real traffic before switching — money, billing, ledgers |
+| **Feature-flagged switch** | One code path, selected at runtime, rolled out by percentage | Both paths must stay valid in one codebase | The change is internal and can be expressed as one branch point |
+| **Big bang** | Everything switches at once | Rollback is a full restore; failure is total | Genuinely small, or a hard external deadline leaves no coexistence window — say so explicitly |
 
-**Требуется ВСЕГДА:**
+Write down which was chosen and why the others were not. That is the ADR: `references/adr-template.md`.
 
-- Research.md (анализ)
-- Plan.md (детальный план)
-- ADR (Architecture Decision Record)
-- STOP-gates (утверждение)
-- Rollback strategy
+## 3. Phase it so each step stands alone
 
----
+Every phase ends in a system that works and can be shipped. A phase that only makes sense followed by the next one is not a phase — it is the middle of one, and it cannot be reviewed, deployed, or abandoned.
 
-## Фаза 1: Анализ и Оценка
+For each phase name: what it delivers, how it is verified, and how it is reversed. The reversal is not a sentence — it is a command or a procedure, written before the phase starts, when there is no pressure.
 
-### Шаг 1.1: Определение Scope
+**Locate the point of no return** and mark it in the plan. It is the first irreversible act: dropping the old column, deleting the old service, breaking the old contract for the last client. Everything before it is rehearsal, and it should be rehearsed. Everything after it is committed, and the plan should say what the recovery is when there is no rollback — a restore from backup with an accepted data loss window, usually, which is a decision the user makes rather than discovers.
 
-**Документировать:**
+Where data moves: the migration is written with its reverse, tested on a production-sized copy, and validated by comparing the two sides rather than by the migration reporting success. Backups are verified by restoring one, not by existing.
 
-```markdown
-## Architecture Change Request
+Where a public contract changes: version it and run both, deprecate with a date, and hold the old one until the clients are actually gone — measured, not assumed.
 
-### Цель
-[Что хотим изменить и зачем]
+The plan lands in `/docs/Plan.md` (`architectural-planning/references/plan-template.md`) with the phases, the strategy, the rollbacks, and the point of no return. **STOP** for approval.
 
-### Текущая Архитектура
-[Описание текущего состояния]
+## 4. Execute
 
-### Желаемая Архитектура
-[Описание целевого состояния]
+One phase per delegation, `review` after each, a checkpoint commit between them. Between phases the system is releasable — verify that rather than assuming it.
 
-### Драйверы Изменения
-- [Почему нужно менять: масштаб, производительность, maintainability]
-```
+Anything touching data or a contract is rehearsed on staging with production-shaped data before it runs anywhere else, and the rollback is rehearsed there too. A rollback that has never been executed is an intention.
 
-### Шаг 1.2: Оценка Воздействия
+After the switch: watch error rate, latency, and the business metric the system exists to serve. Decide the abort threshold before deploying, because deciding it while the graph is moving is how a rollback becomes a debugging session.
 
-| Область | Вопросы |
-|---------|---------|
-| **Данные** | Миграция данных нужна? Можно ли откатить? |
-| **API** | Breaking changes? Версионирование? |
-| **Зависимости** | Какие модули затронуты? |
-| **Интеграции** | Внешние системы затронуты? |
-| **Инфраструктура** | Новые сервисы/ресурсы нужны? |
-| **Команда** | Какие навыки нужны? |
+## 5. Close it
 
-### Шаг 1.3: Классификация Риска
+The ADR moves to Accepted, the wiki entries for changed modules are rewritten rather than annotated, and the old path's removal becomes a scheduled task with a date — otherwise both systems live forever and the migration's cost never ends.
 
-| Уровень | Критерии |
-|---------|----------|
-| 🟡 Medium | Внутренние изменения, нет breaking changes, данные не мигрируют |
-| 🔴 High | Breaking API changes, миграция данных, новая инфраструктура |
-| ⚫ Critical | Production data at risk, security implications, irreversible |
+## Completion criterion
 
-> **Для архитектурных изменений 🟢 не существует. Минимум 🟡.**
+Done when: the driver is named and still true; the strategy is chosen with the alternatives recorded in an ADR; every phase has verification and a reversal that has been executed at least once in a rehearsal; the point of no return is marked and its recovery agreed with the user; data migrations validated by comparison against a production-sized copy; monitoring stayed within threshold through the switch; and the removal of the old path is scheduled, not implied.
 
----
+## Related
 
-## Фаза 2: Исследование (Research)
-
-### Шаг 2.1: `debug` для Анализа
-
-```markdown
-## 🤖 Delegation
-**Agent:** `debug`
-**Purpose:** Провести архитектурный анализ для [изменение]
-**Expected Output:** Research.md с полным анализом
-**Focus:**
-- Текущая архитектура (as-is)
-- Целевая архитектура (to-be)
-- Риски и ограничения
-- Альтернативные подходы
-- Зависимости
-🛑 STOP after completion. Return control to `architect`.
-```
-
-### Шаг 2.2: Структура Research.md
-
-```markdown
-# Research: [Название изменения]
-*Created: YYYY-MM-DD*
-
-## Executive Summary
-[1-2 абзаца: что, зачем, основные риски]
-
-## Current Architecture (As-Is)
-[Диаграммы, описание текущего состояния]
-
-### Компоненты
-| Компонент | Роль | Зависимости |
-|-----------|------|-------------|
-| ... | ... | ... |
-
-### Ограничения Текущей Архитектуры
-- [Проблема 1]
-- [Проблема 2]
-
-## Target Architecture (To-Be)
-[Диаграммы, описание целевого состояния]
-
-### Ключевые Изменения
-| Область | Было | Будет |
-|---------|------|-------|
-| ... | ... | ... |
-
-## Analysis
-
-### Альтернативы
-| Вариант | Pros | Cons | Риск | Стоимость |
-|---------|------|------|------|-----------|
-| A | ... | ... | ... | ... |
-| B | ... | ... | ... | ... |
-
-### Риски
-| Риск | Вероятность | Impact | Митигация |
-|------|-------------|--------|-----------|
-| ... | ... | ... | ... |
-
-### Зависимости
-- [Внешние системы]
-- [Внутренние модули]
-- [Инфраструктура]
-
-## Recommendations
-[Какой вариант и почему]
-
----
-🛑 **STOP: Требуется review Research.md перед планированием**
-```
-
----
-
-## Фаза 3: Планирование
-
-### Шаг 3.1: STOP Gate #1 — Review Research
-
-> **Не начинать планирование без утверждения Research.md**
-
-### Шаг 3.2: Создание ADR
-
-```markdown
-# ADR-NNN: [Название Решения]
-*Status: Proposed/Accepted/Deprecated*
-*Date: YYYY-MM-DD*
-
-## Context
-[Ситуация, проблема, ограничения]
-
-## Decision
-[Что решили делать]
-
-## Rationale
-[Почему именно так]
-
-## Alternatives Considered
-- [Вариант A]: отклонён потому что...
-- [Вариант B]: отклонён потому что...
-
-## Consequences
-
-### Positive
-- [Плюс 1]
-- [Плюс 2]
-
-### Negative
-- [Минус 1]
-- [Минус 2]
-
-### Risks
-- [Риск и митигация]
-
-## Implementation Notes
-[Ключевые технические детали]
-```
-
-### Шаг 3.3: Создание Plan.md
-
-```markdown
-# Plan: [Название изменения]
-*Created: YYYY-MM-DD*
-*Related: ADR-NNN, Research.md*
-
-## Цель
-[Конкретная измеримая цель]
-
-## Стратегия Миграции
-
-### Подход
-- [ ] Parallel Run (старое и новое работают одновременно)
-- [ ] Big Bang (переключение в один момент)
-- [ ] Strangler Fig (постепенная замена)
-- [ ] Feature Flags (переключаемое поведение)
-
-### Обоснование
-[Почему выбран этот подход]
-
-## Фазы Реализации
-
-### Phase 1: [Название]
-**Цель:** [Что достигаем]
-**Длительность:** [Оценка]
-**Зависимости:** [Что нужно до начала]
-
-| Файл/Модуль | Изменение | Ответственный |
-|-------------|-----------|---------------|
-| ... | ... | ... |
-
-**Acceptance Criteria:**
-- [ ] [Критерий]
-
-**Rollback:**
-[Как откатить эту фазу]
-
----
-
-### Phase 2: [Название]
-... [та же структура]
-
----
-
-## Миграция Данных (если применимо)
-
-### Стратегия
-[Описание]
-
-### Скрипты
-- `migration_001.sql` — [описание]
-
-### Валидация
-- [ ] [Как проверить что данные мигрировали корректно]
-
-### Rollback
-- [ ] [Как откатить миграцию]
-
-## Breaking Changes
-
-### API Changes
-| Endpoint | Было | Будет | Migration Path |
-|----------|------|-------|----------------|
-| ... | ... | ... | ... |
-
-### Client Migration
-[Как клиенты должны мигрировать]
-
-## Timeline
-
-```
-
-Неделя 1: Phase 1
-Неделя 2: Phase 2
-Неделя 3: Migration + Validation
-Неделя 4: Switch + Monitoring
-
-```
-
-## Rollback Strategy
-
-### При сбое Phase 1
-[Действия]
-
-### При сбое Phase 2
-[Действия]
-
-### Point of No Return
-[Какая точка невозврата, после чего откат невозможен]
-
-## Success Criteria
-- [ ] [Измеримый критерий 1]
-- [ ] [Измеримый критерий 2]
-- [ ] Все тесты проходят
-- [ ] Performance не деградировала
-- [ ] Мониторинг показывает норму
-
----
-🛑 **STOP: Требуется утверждение плана перед реализацией**
-```
-
----
-
-## Фаза 4: Реализация
-
-### Шаг 4.1: STOP Gate #2 — Plan Approval
-
-> **Не начинать реализацию без утверждения Plan.md**
-
-### Шаг 4.2: Поэтапная Реализация
-
-**Для КАЖДОЙ фазы:**
-
-```
-1. Промпт для `code` (только эта фаза)
-        ↓
-2. `code` реализует
-        ↓
-3. `review` проверяет
-        ↓
-4. [PASS] → тесты GREEN → commit/checkpoint
-   [FAIL] → анализ → исправление → повтор
-        ↓
-5. Валидация acceptance criteria фазы
-        ↓
-6. [Если миграция] Тестовый прогон на стейджинге
-        ↓
-7. 🛑 STOP — подтверждение готовности к следующей фазе
-```
-
-### Промпт для `code` (Архитектурные изменения)
-
-```markdown
-# Task: [Phase N] — [Название]
-
-## Context
-Архитектурное изменение: [описание]
-Текущая фаза: [N из M]
-Зависит от: [предыдущие фазы завершены]
-
-## Scope (ТОЛЬКО ЭТА ФАЗА)
-[Конкретные шаги только для этой фазы]
-
-## Requirements
-1. [Требование]
-2. [Требование]
-
-## Constraints
-❌ НЕ выходить за scope этой фазы
-❌ НЕ менять другие модули без явного указания
-❌ Сохранять обратную совместимость (если указано)
-
-## Acceptance Criteria
-✅ [Критерий этой фазы]
-✅ Все тесты проходят
-✅ Нет регрессий
-
-## Files to Work With
-- `path/to/file` — [изменение]
-
-## Rollback
-Если что-то идёт не так: [как откатить]
-
-## Output Format
-Код + краткое описание изменений.
-```
-
----
-
-## Фаза 5: Валидация и Деплой
-
-### Шаг 5.1: Предпродакшн Валидация
-
-**Чеклист:**
-
-- [ ] Все фазы завершены
-- [ ] Все `review` PASS
-- [ ] Все тесты проходят
-- [ ] Performance тесты (если применимо)
-- [ ] Миграция данных протестирована на staging
-- [ ] Rollback протестирован
-
-### Шаг 5.2: Деплой Стратегия
-
-| Стратегия | Когда | Риск |
-|-----------|-------|------|
-| **Feature Flag** | Постепенный rollout | Низкий |
-| **Canary** | % трафика на новое | Средний |
-| **Blue-Green** | Мгновенное переключение | Средний |
-| **Big Bang** | Все сразу | Высокий |
-
-### Шаг 5.3: Мониторинг после Деплоя
-
-**Первые 24 часа:**
-
-- [ ] Error rate норма
-- [ ] Latency норма
-- [ ] Ключевые метрики норма
-- [ ] Нет жалоб пользователей
-
-**Если аномалии:**
-
-```
-1. Определить severity
-2. [Critical] → немедленный rollback
-3. [Major] → оценить, возможно rollback
-4. [Minor] → фиксим в hotfix режиме
-```
-
----
-
-## Антипаттерны Архитектурных Изменений
-
-| Антипаттерн | Почему плохо | Как правильно |
-|-------------|--------------|---------------|
-| **Без Research** | Неизвестные unknowns | Всегда Research.md |
-| **Big Bang без rollback** | Невозможно откатить | Всегда rollback strategy |
-| **Нет ADR** | Забудут почему так решили | Документировать решения |
-| **Все фазы сразу** | Нельзя отследить проблему | Поэтапно с checkpoint'ами |
-| **Миграция без backup** | Потеря данных | Backup + тестовый rollback |
-| **Skip staging** | Production surprises | Всегда staging сначала |
-
----
-
-## Чеклист
-
-### Перед Началом
-
-- [ ] Scope определён
-- [ ] Риск оценён (🟡/🔴/⚫)
-- [ ] Research.md создан и утверждён
-- [ ] ADR создан
-
-### Планирование
-
-- [ ] Plan.md создан
-- [ ] Фазы определены
-- [ ] Rollback для каждой фазы
-- [ ] 🛑 STOP-gate пройден (утверждение)
-
-### Реализация
-
-- [ ] Поэтапно
-- [ ] `review` после каждой фазы
-- [ ] Checkpoint'ы между фазами
-
-### Деплой
-
-- [ ] Staging validation
-- [ ] Rollback протестирован
-- [ ] Мониторинг настроен
-- [ ] План отката готов
-
----
-
-## Quick Reference
-
-```
-Архитектурное изменение
-         ↓
-Research.md (анализ as-is, to-be, риски)
-         ↓
-🛑 STOP — review Research
-         ↓
-ADR + Plan.md (фазы, rollback)
-         ↓
-🛑 STOP — утверждение плана
-         ↓
-Поэтапная реализация:
-  Phase 1 → `code` → `review` → checkpoint
-  Phase 2 → `code` → `review` → checkpoint
-  ...
-         ↓
-Staging validation
-         ↓
-Deploy (с мониторингом)
-         ↓
-Post-deploy monitoring
-         ↓
-DONE
-```
-
----
-
-**Связанные файлы:**
-
-- `references/adr-template.md` — шаблон ADR
-- `references/architecture-template.md` — шаблон архитектуры
-- `references/system-blocks-template.md` — шаблон системных блоков
-- `workflow-legacy-analysis/SKILL.md` — анализ legacy перед изменениями
-- `forensic-investigation/references/ai-failure-modes.md` — если `code` зацикливается
-
----
-
-**END OF WORKFLOW**
+- `references/adr-template.md` — the ADR this produces (also the format for any ADR in `memory/adrs/`)
+- `architectural-planning/references/plan-template.md` — the phased plan
+- `forensic-investigation/references/research-template.md` — the investigation that precedes it
+- `workflow-legacy-analysis` — the current shape is not understood well enough to describe
+- `workflow-refactoring` — the change turns out not to alter contracts or data
+- `pattern-*` — the target shape has a known name

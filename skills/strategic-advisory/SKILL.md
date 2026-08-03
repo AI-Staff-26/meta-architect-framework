@@ -1,16 +1,21 @@
 ---
 name: strategic-advisory
 description: |
-  Strategic consulting toolkit for CONSILIUM mode. Contains output format templates,
-  framework integration rules, and consulting mode details (STRATEG, NEGOTIATOR, 
-  PSYCHE, CRISIS, MENTOR). Reference files include 5 mode definitions and 7 
-  strategic frameworks (OODA, Voss Protocol, Taleb, Dalio, Power, Psychology, 
-  Stratagems). Used primarily by `consilium` mode for structured advisory output.
+  The `consilium` agent's toolkit — the six-block output format, the mapping
+  from mode to framework, five mode definitions (СТРАТЕГ, ПЕРЕГОВОРЩИК,
+  ПСИХОЛОГ, КРИЗИС, НАСТАВНИК), and seven framework files (OODA, Cynefin,
+  Voss, Taleb, Dalio, power, psychology, stratagems). Load it when advising on
+  negotiation, conflict, crisis, business model, pricing, or personal
+  strategy — `consilium` runs the situation reading, this supplies the shape.
 ---
 
-<output_format>
+# Strategic Advisory Toolkit
 
-## Формат Вывода
+`consilium` decides which mode runs — this holds what the mode then does: its file, its frameworks, and the shape of the answer.
+
+Blocks are used as the situation needs them, but the three levels — **стратегия → тактика → скрипт** — are always distinguishable. Advice that stops at strategy leaves the user to invent the moves; advice that is only scripts has no idea what it is playing for.
+
+## Формат вывода
 
 Структурируй ответ по блокам. Не все обязательны, но **уровни «Стратегия–Тактика–Скрипт» должны быть очевидны**:
 
@@ -103,15 +108,11 @@ description: |
 - [что менять]
 ```
 
-</output_format>
-
 ---
 
-<frameworks_integration>
+## Фреймворки по режимам
 
-## Фреймворки
-
-К каждому активному режиму подключай релевантные фреймворки:
+К активному режиму подключаются его фреймворки — файл читается перед ответом, а не пересказывается по памяти:
 
 | Режим | Фреймворки | Файлы |
 |:------|:-----------|:------|
@@ -121,11 +122,9 @@ description: |
 | КРИЗИС | OODA, Риск (Skin in the Game, Via Negativa), Cynefin | `frameworks/STRATEGIC_TOOLS.md`, `frameworks/RISK.md` |
 | НАСТАВНИК | Dalio (принципы, меритократия), Психология | `frameworks/DECISIONS.md`, `frameworks/PSYCHOLOGY.md` |
 
-</frameworks_integration>
-
 ---
 
-**Связанные файлы:**
+**Файлы:**
 
 **Режимы:**
 - `modes/STRATEG.md` — Режим Стратега
@@ -145,4 +144,6 @@ description: |
 
 ---
 
-**END OF strategic-advisory SKILL**
+## Критерий завершения
+
+Ответ готов, когда: режим выбран и назван; его файл и фреймворки прочитаны, а не воспроизведены по памяти; три уровня — стратегия, тактика, скрипт — различимы; у каждого шага есть ветки под ответ другой стороны; названы условия отхода; и при высоких ставках план атакован red team до выдачи, а последствия прослежены на три уровня.

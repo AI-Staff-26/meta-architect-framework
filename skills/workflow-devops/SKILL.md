@@ -1,34 +1,21 @@
 ---
 name: workflow-devops
 description: |
-  Structured protocol for infrastructure tasks. Provides step-by-step workflows 
-  for Docker, CI/CD, deployment, environment setup, security hardening, 
-  secrets management, and observability. Used by `devops` mode and `architect`.
-tags:
-  - devops
-  - workflow
-  - docker
-  - cicd
-  - deployment
-  - infrastructure
+  Seven infrastructure procedures with working templates — dev environment
+  bootstrap, container setup, CI/CD pipeline, deployment, OS hardening,
+  secrets management, and observability. Use for Docker, docker-compose,
+  registries, GitHub Actions, staging and production deploys, `.env` and
+  secret stores, health checks, metrics, and alerting. The `devops` agent's
+  toolkit; `checklist-infra` verifies what it builds.
 ---
 
-# 🛠️ Skill: workflow-devops
+# Infrastructure Procedures
 
-## Purpose
+Seven procedures, each ending in a verification step that runs something rather than inspects intent.
 
-Structured protocol for infrastructure tasks. Activated by **`devops`** mode and **`architect`** when routing infrastructure work. Provides step-by-step workflows for the most common DevOps scenarios.
+**Every change here has a blast radius outside the repository** — a container that will not start, a pipeline that leaks a secret into a log, a deploy with no way back. So each procedure finishes by proving it works, and anything touching production carries a rollback that has been executed before it is needed.
 
-## When to Load
-
-Load this skill when task involves:
-- Docker / docker-compose / container registry
-- CI/CD pipeline setup or debugging
-- Developer environment bootstrapping (Windows / Linux / Mac)
-- Deployment automation (staging / prod)
-- Security hardening of OS or services
-- Secret management setup
-- Monitoring / observability configuration
+Templates below are starting points, not law: the project's existing infrastructure conventions outrank them.
 
 ---
 
@@ -405,7 +392,18 @@ jobs:
 
 ---
 
-## References
+## Completion criterion
+
+Done when: the verification step of the procedure was run and its output seen; nothing in the result requires a secret to be in a file that gets committed; anything reaching staging or production has a rollback that was executed once in rehearsal; `checklist-infra` passes with no 🔴 or 🟠 outstanding; and the commands a person needs to reproduce this are written down where they will be looked for.
+
+## Related
+
+- `checklist-infra` — verification of everything built here
+- `checklist-release` — the Go / No-Go gate before production
+- `checklist-security` — application-level security inside the containers
+- `workflow-new-project` — infrastructure sized to a project's first running path
+
+## External references
 
 - Docker best practices: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
 - GitHub Actions docs: https://docs.github.com/en/actions

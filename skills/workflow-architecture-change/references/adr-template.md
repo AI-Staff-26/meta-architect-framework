@@ -1,226 +1,75 @@
-# 📋 Architecture Decision Record (ADR) Template
+# Шаблон ADR
 
-<purpose>
-Template for documenting significant architectural decisions.
-Creates a historical record of decision context, rationale, and consequences.
-</purpose>
+ADR фиксирует решение, которое дорого отменить: оно меняет структуру системы, живёт годами и выбрано из нескольких вариантов. Всё, что дешевле переиграть, — запись в `memory/DECISIONS.md`, а не ADR.
 
----
+Файл: `memory/adrs/ADR-NNN-краткое-название.md`. Номер не переиспользуется; отменённый ADR не удаляют, а переводят в статус.
 
-> **Instruction:** Fill in sections below when making an architectural decision that:  
-> - Affects system structure or major components  
-> - Has long-term consequences  
-> - Is difficult or costly to reverse  
-> - Involves trade-offs between alternatives
+Ценность записи — в отклонённых вариантах и в последствиях. Через полгода вопрос будет не «что решили», а «почему не сделали иначе», и ответить на него сможет только этот файл.
 
 ---
 
-## ADR-XXX: [Short Descriptive Title]
+```markdown
+# ADR-NNN: [название решения]
 
-**Date:** YYYY-MM-DD HH:MM (UTC +3)
-**Status:** Proposed / Accepted / Deprecated / Superseded
-**Deciders:** [Who approved this decision]
+**Дата:** YYYY-MM-DD
+**Статус:** Предложен / Принят / Устарел / Заменён ADR-NNN
+**Решение принял:** [кто утвердил]
 
-> **Supersedes:** ADR-XXX (if applicable)
-> **Superseded by:** ADR-XXX (if deprecated)
+## Контекст
 
----
+**Проблема:** [что именно требует решения — 2–4 предложения о проблеме, не о решении]
 
-## Context
+**Почему сейчас:** [что заставляет решать это в этот момент: предел, стоимость, срок, зависимость]
 
-### Problem Statement
-> What is the issue that requires a decision?
+**Как устроено сегодня:** [текущее состояние и чем оно не устраивает]
 
-[Describe the problem clearly in 2-4 sentences. Focus on WHAT the problem is, not the solution.]
+**Ограничения:** [что нельзя менять — совместимость, сроки, стек, люди]
 
-### Drivers
-Why does this decision need to be made now?
+## Решение
 
-- **Functional:** [Requirement or capability needed]
-- **Quality:** [Non-functional requirement: performance, security, etc.]
-- **Constraint:** [Technical or business limitation]
-- **Priority:** [Why this is urgent or important]
+**Выбрано:** [решение одним предложением] — потому что [главное обоснование].
 
-### Current State
-[If applicable, describe how things work today and why it's insufficient]
+[Детали: что создаётся, что меняется, как это работает. Диаграмма, если связи проще нарисовать.]
 
-```
-[Diagram of current state if helpful]
-```
+## Рассмотренные альтернативы
 
----
+### A. [название] — выбрано
+За: [что даёт]
+Против: [чем платим]
 
-## Decision
+### B. [название] — отклонено
+За: [что давало]
+Против: [что перевесило]
+Отклонено потому что: [конкретная причина, а не «хуже»]
 
-### Statement
-> We will **[chosen approach]** because **[primary justification]**.
+### C. [название] — отклонено
+...
 
-[1-2 sentences clearly stating the decision]
+## Последствия
 
-### Detailed Description
+**Что становится лучше:** [конкретно, наблюдаемо]
 
-[Expand on the decision with more detail:]
+**Чем платим:** [сложность, стоимость, новая зависимость, что стало труднее]
 
-- **What:** [Technical approach]
-- **Where:** [Affected components/layers]
-- **How:** [High-level implementation approach]
+**Что теперь запрещено или затруднено:** [решения, которые этот выбор закрывает]
 
-```
-[Architecture diagram showing the decided approach]
+**Риски:** [риск → что делаем заранее]
+
+## Проверка
+
+[Как через месяц понять, что решение было верным: метрика, наблюдаемое поведение, отсутствие класса проблем]
+
+## Что дальше
+
+[Связанный план, миграция, задача на удаление старого пути — со сроком]
 ```
 
 ---
 
-## Alternatives Considered
+**Статусы.** *Предложен* — написан, ждёт утверждения на STOP. *Принят* — утверждён, действует. *Устарел* — больше не применяется, замены нет. *Заменён ADR-NNN* — на его месте другое решение; в новом ADR ссылка назад.
 
-### Option A: [Chosen Option Name]
-> **STATUS: SELECTED**
+**Связанные файлы:**
 
-**Description:** [How this option works]
-
-| Aspect | Assessment |
-|--------|------------|
-| **Complexity** | Low / Medium / High |
-| **Effort** | X days/weeks |
-| **Risk** | Low / Medium / High |
-
-**Pros:**
-- ✅ [Advantage 1]
-- ✅ [Advantage 2]
-- ✅ [Advantage 3]
-
-**Cons:**
-- ❌ [Drawback 1]
-- ❌ [Drawback 2]
-
----
-
-### Option B: [Alternative Name]
-> **STATUS: REJECTED**
-
-**Description:** [How this option works]
-
-| Aspect | Assessment |
-|--------|------------|
-| **Complexity** | Low / Medium / High |
-| **Effort** | X days/weeks |
-| **Risk** | Low / Medium / High |
-
-**Pros:**
-- ✅ [Advantage 1]
-- ✅ [Advantage 2]
-
-**Cons:**
-- ❌ [Drawback 1]
-- ❌ [Drawback 2]
-
-**Why rejected:** [Key reasons]
-
----
-
-### Option C: [Alternative Name]
-> **STATUS: REJECTED**
-
-**Description:** [How this option works]
-
-**Pros:**
-- ✅ [Advantage 1]
-
-**Cons:**
-- ❌ [Drawback 1]
-
-**Why rejected:** [Key reasons]
-
----
-
-## Consequences
-
-### Positive
-- ✅ [Benefit 1: specific outcome]
-- ✅ [Benefit 2: specific outcome]
-- ✅ [Benefit 3: specific outcome]
-
-### Negative
-- ❌ [Trade-off 1: what we give up]
-- ❌ [Trade-off 2: additional complexity/cost]
-
-### Neutral
-- ⚬ [Side effect that is neither good nor bad]
-
----
-
-## Risks
-
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| [Risk 1] | Low/Med/High | Low/Med/High | [How to prevent/handle] |
-| [Risk 2] | Low/Med/High | Low/Med/High | [How to prevent/handle] |
-
----
-
-## Implementation
-
-### Affected Components
-| Component | Change Type | Impact |
-|-----------|-------------|--------|
-| [Component A] | Major / Minor | [What changes] |
-| [Component B] | Major / Minor | [What changes] |
-
-### Migration Path
-> If replacing existing functionality, how do we transition?
-
-1. [Step 1: Preparation]
-2. [Step 2: Implementation]
-3. [Step 3: Migration]
-4. [Step 4: Cleanup]
-
-### Timeline
-| Phase | Duration | Milestone |
-|-------|----------|-----------|
-| Design | X days | [Output] |
-| Implementation | X days | [Output] |
-| Testing | X days | [Output] |
-
----
-
-## Validation
-
-### Success Criteria
-How do we know this decision achieved its goals?
-
-- [ ] [Measurable criterion 1]
-- [ ] [Measurable criterion 2]
-- [ ] [Measurable criterion 3]
-
-### Review Points
-When will we revisit this decision?
-
-- **Initial review:** [Date or trigger event]
-- **Sunset condition:** [When to reconsider/deprecate]
-
----
-
-## References
-
-### Related Documents
-- `memory/repo-wiki/overview.md` → [Related section]
-- `memory/DECISIONS.md` → [Related decision]
-- `memory/adrs/ADR-XXX.md` → [Related ADR]
-
-### External References
-- [Link to relevant documentation]
-- [Link to research / RFC / standard]
-
----
-
-## Decision Log
-
-| Date | Action | Notes |
-|------|--------|-------|
-| YYYY-MM-DD | Proposed | Initial draft by @author |
-| YYYY-MM-DD | Discussed | Team review session |
-| YYYY-MM-DD | Accepted | Approved by @deciders |
-
----
-
-**END OF TEMPLATE**
+- `../SKILL.md` — протокол архитектурного изменения
+- `../../architectural-planning/references/plan-template.md` — план, который следует за ADR
+- `../../memory-keeping/SKILL.md` — форматы остальных файлов `memory/`

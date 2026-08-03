@@ -1,447 +1,83 @@
 ---
 name: workflow-legacy-analysis
 description: |
-  Understanding unfamiliar codebase protocol. Maps structure, identifies 
-  patterns, documents assumptions into memory/* (repo-wiki, FACTS, DECISIONS).
-  For: inherited projects, undocumented systems, pre-refactoring analysis.
-  Creates repo-wiki entries from code. NOT for new projects (onboarding skill).
+  Mapping an unfamiliar codebase before changing it — the reading order, which
+  evidence to trust, where the dangerous parts are, and how the map gets
+  written into `memory/repo-wiki/`. Use for an inherited or undocumented
+  project, before a refactor or migration, when a module nobody understands
+  has to be touched, or when the user says "разберись как тут всё устроено".
+  For a specific symptom use `workflow-debugging`; for a project with no code
+  yet use `onboarding`.
 ---
 
-# 🏚️ Legacy Analysis Workflow — Анализ Legacy Кода
+# Mapping Unfamiliar Code
 
-<purpose>
-Протокол для анализа и документирования legacy систем.
-Понимание перед изменением. Карта перед путешествием.
-Все результаты записываются в memory/* (repo-wiki, FACTS, DECISIONS, CONTEXT).
-</purpose>
+You are mapping, not exploring. The deliverable is a map good enough to predict where a change lands and what it will break — not a complete understanding of the system, which no one has, including the people who wrote it.
 
----
+**Time-box this.** Analysis without a boundary becomes a project of its own, and the map goes stale while it is being drawn. Decide up front how long it gets and what question it must answer.
 
-## Когда Использовать
+Write as you go, into `memory/repo-wiki/` and `memory/FACTS.md`. Notes kept in the session die with it, and the second pass costs as much as the first. `memory-keeping` holds the wiki format, the `meta.json` registration, and the FACTS entry shape.
 
-**Триггеры:**
+## Read in this order
 
-- Новый проект с существующим кодом (после onboarding)
-- Нужно понять незнакомый модуль
-- Подготовка к рефакторингу/миграции
-- Документация отсутствует или устарела
-- Передача проекта между командами
+Each step answers a question the next one depends on.
 
-**НЕ использовать для:**
+**1. Entry points.** `main`, `index`, route registrations, CLI commands, cron jobs, queue consumers. Everything the system does starts at one of them; anything unreachable from them may be dead.
 
-- Фикса багов → `workflow-debugging`
-- Изменения архитектуры → `workflow-architecture-change` (после анализа)
-- Нового проекта с нуля → `onboarding` skill (Phase 3.5)
+**2. The dependency manifest.** `package.json`, `requirements.txt`, `go.mod`, and the lockfile. The frameworks in it tell you the conventions before you read a line of code — the shape of a Django project is not a discovery you should have to make. Note what is abandoned or years behind.
 
----
+**3. Configuration and environment.** What the system needs to run tells you what it talks to: databases, queues, third-party APIs, feature flags. `.env.example`, compose files, CI config, deployment manifests.
 
-## Ключевой Принцип
+**4. The data model.** Schema, migrations, core entities. In most systems the data model is the truest statement of what the domain actually is — code drifts around it, the schema stays.
 
-> **Понять перед изменением. Документировать перед забыванием.**
+**5. The seams.** Where the layers meet: the boundary between transport and logic, the interface to the database, the calls to anything external. Changes happen at seams; `codebase-design` holds the vocabulary for judging them.
 
-```
-❌ Сразу менять legacy
-✅ Анализ → memory/* → План → Изменения
-```
+## Rank the evidence
 
-**Результат анализа (всё в memory/*):**
+Sources disagree, and the disagreement itself is information — usually the sign of a change nobody propagated.
 
-- `memory/repo-wiki/overview.md` — архитектурная карта системы
-- `memory/FACTS.md` — технические факты о системе
-- `memory/CONTEXT.md` — текущее понимание
-- `memory/DECISIONS.md` — решения по дальнейшей работе
-- `/docs/Research.md` — рекомендации (transient)
+| Trust | Source | Why |
+|---|---|---|
+| Highest | Running code and its output | It cannot be out of date with itself |
+| High | Tests that pass | Executable claims about intent, verified continuously |
+| Medium | Git history | Records what actually happened, though not why |
+| Low | Comments, README, wikis | Written once, at the moment of least knowledge, never re-run |
 
----
+When documentation contradicts the code, the code wins and the contradiction gets recorded as a fact — someone believed the documented version, and that belief is still in circulation.
 
-## Фаза 1: Первичный Обзор
+## Find the dangerous parts
 
-### Шаг 1.1: Сбор Артефактов
+Risk concentrates where change is frequent, structure is large, and tests are absent. Churn is measurable:
 
-**Найти и каталогизировать:**
-
-- [ ] README (если есть)
-- [ ] Существующая документация
-- [ ] Конфигурационные файлы
-- [ ] Точки входа (main, index, entry points)
-- [ ] Тесты (если есть)
-- [ ] CI/CD конфигурация
-- [ ] Package manifests (package.json, requirements.txt, etc.)
-
-### Шаг 1.2: Первичные Метрики
-
-**Оценить и записать в `memory/FACTS.md`:**
-
-```markdown
-## Technical (добавить в существующий раздел)
-- Project size: ~N lines of code, ~N files [source: legacy-analysis, date: YYYY-MM-DD]
-- Modules/packages: N [source: legacy-analysis, date: YYYY-MM-DD]
-- Test coverage: N% / No tests [source: legacy-analysis, date: YYYY-MM-DD]
-- Last commit: YYYY-MM-DD (Active/Abandoned?) [source: legacy-analysis, date: YYYY-MM-DD]
-- Dependencies: N (N outdated / N vulnerable) [source: legacy-analysis, date: YYYY-MM-DD]
-- Documentation: Full / Partial / None [source: legacy-analysis, date: YYYY-MM-DD]
+```bash
+git log --format=format: --name-only --since='12 months ago' \
+  | sed '/^$/d' | sort | uniq -c | sort -rn | head -20
 ```
 
-### Шаг 1.3: Оценка Сложности Анализа
+Cross the top of that list against file size and test coverage. A file that changes constantly, is large, and has no test is where the next regression will come from — and where the analysis time is best spent.
 
-| Уровень | Критерии |
-|---------|----------|
-| 🟢 Simple | <5K строк, <20 файлов, есть тесты/документация |
-| 🟡 Medium | 5-20K строк, 20-100 файлов, частичная документация |
-| 🔴 Complex | >20K строк, >100 файлов, нет документации |
-| ⚫ Archeological | Очень старый код, устаревшие технологии, авторы недоступны |
+Record these as a hot-spots entry in the wiki with what makes each one risky, and separately: **what not to touch**, with the reason. "Do not change without reading X" is the single most valuable line a map can carry into the next task.
 
----
+## Ask the code what it was for
 
-## Фаза 2: Глубокий Анализ
+Where a construct looks wrong, assume a reason existed before assuming incompetence. `git log -S'<symbol>'` and `git blame` find the commit that introduced it, and commit messages, linked issues, and the diff's surroundings usually explain what it was solving. A workaround removed without knowing what it worked around comes back as a bug with the original symptom.
 
-### Шаг 2.1: `debug` для Анализа
+Where the authors are reachable, ask them — half an hour of their memory outruns a day of reading.
 
-```markdown
-## 🤖 Delegation
-**Agent:** `debug`
-**Purpose:** Провести анализ legacy системы
-**Expected Output:** Структурированный отчёт
-**Focus:**
-1. Архитектура (верхний уровень)
-2. Ключевые компоненты и их роли
-3. Зависимости (внутренние и внешние)
-4. Потоки данных
-5. Точки входа и API
-6. Опасные зоны (complexity, coupling)
+## Close it out
 
-🛑 STOP after completion. Return control to `architect`.
-```
+The map lands in `memory/`: wiki entries per module registered in `meta.json`, technical facts and constraints in `FACTS.md` with source and date, hot spots and no-touch zones recorded, and `CONTEXT.md` reflecting the new state. Decisions taken during the analysis — what to migrate, what to leave — go to `DECISIONS.md` with their reasoning.
 
-### Шаг 2.2: Что Анализировать
+Then route: `workflow-refactoring` for structure, `workflow-feature` for new behaviour, `workflow-architecture-change` for migration, `workflow-debugging` for a specific symptom. Each of them now starts from the wiki instead of from zero, which is the entire return on this work.
 
-**1. Структура проекта:**
-- Directory layout и организация
-- Точки входа (main, index, CLI commands, API endpoints)
-- Разделение ответственности между модулями
+## Completion criterion
 
-**2. Dependency Graph:**
-- Внешние зависимости (packages) — версии, статус
-- Внутренние зависимости (модули между собой)
-- Циклические зависимости (проблема!)
+Done when: you can name where a given change would land and what it would break; entry points, data model, and external dependencies are documented in the wiki and registered in `meta.json`; hot spots and no-touch zones are written down with reasons; every contradiction found between docs and code is recorded; and the time-box held — or was extended deliberately, with what the extra time is buying.
 
-**3. Data Flow:**
-- Откуда данные приходят?
-- Где хранятся?
-- Как преобразуются?
-- Куда уходят?
+## Related
 
-**4. Hot Spots:**
-- Самые большие файлы/классы
-- Самые часто изменяемые (git history)
-- Самые сложные (cyclomatic complexity)
-- Самые связанные (high coupling)
-
----
-
-## Фаза 3: Документирование в memory/*
-
-### Шаг 3.1: Создать `memory/repo-wiki/overview.md`
-
-Использовать формат repo-wiki (см. memory-protocol.md):
-
-```markdown
----
-title: Architecture Overview
-description: High-level architecture of [Project Name]
----
-
-## Entry: System Architecture
-> Tags: system-diagram, entry-point, tech-stack
-
-### Overview
-[What this system does and why it exists]
-
-### Key Files
-| File | Lines | Description |
-|------|-------|-------------|
-| `src/main.ts` | 1-45 | Application entry point |
-| `src/config/` | — | Configuration files |
-
-### Architecture
-```mermaid
-graph TB
-    [Component diagram]
-```
-
-### Dependencies
-[External and internal dependencies]
-
-### Important Details
-[Non-obvious decisions, edge cases]
-```
-
-Зарегистрировать в `memory/repo-wiki/meta.json`:
-```json
-{
-  "files": {
-    "overview.md": {
-      "tags": ["system-diagram", "entry-point", "tech-stack"]
-    }
-  }
-}
-```
-
-### Шаг 3.2: Создать дополнительные wiki-файлы
-
-Для каждого крупного модуля/домена — отдельный wiki-файл:
-
-```markdown
----
-title: [Module Name]
-description: [Brief module description]
----
-
-## Entry: [Component Name]
-> Tags: tag1, tag2, tag3
-
-### Overview
-[What this component does]
-
-### Key Files
-| File | Lines | Description |
-|------|-------|-------------|
-
-### Architecture
-[Mermaid diagram if complex]
-
-### Dependencies
-[What this depends on and what depends on it]
-
-### Important Details
-[Non-obvious decisions, edge cases]
-```
-
-Зарегистрировать каждый файл в `meta.json` с правильными тегами.
-
-### Шаг 3.3: Обновить `memory/FACTS.md`
-
-Добавить все обнаруженные технические факты:
-
-```markdown
-## Technical
-- [Module X] handles [responsibility] [source: legacy-analysis, date: YYYY-MM-DD]
-- [Component Y] depends on [external service] [source: legacy-analysis, date: YYYY-MM-DD]
-- [Data flow]: [description] [source: legacy-analysis, date: YYYY-MM-DD]
-- [Pattern used]: [description] in [files] [source: legacy-analysis, date: YYYY-MM-DD]
-
-## Constraints
-- [Technical constraint discovered] [source: legacy-analysis, date: YYYY-MM-DD]
-- [Legacy limitation] [source: legacy-analysis, date: YYYY-MM-DD]
-```
-
-### Шаг 3.4: Обновить `memory/CONTEXT.md`
-
-```markdown
-# Current Context (updated: YYYY-MM-DD)
-
-## State
-- **Working on**: Legacy analysis completed
-- **Last completed**: Codebase mapped and documented in repo-wiki
-
-## Active Tasks
-- [Based on recommendations]
-
-## Recent Decisions
-- [Any decisions made during analysis]
-
-## Watch Out
-- ⚠️ [Hot spot]: [Why dangerous]
-- ⚠️ [Area]: [No tests, high coupling]
-- TBD: [Items needing further investigation]
-```
-
-### Шаг 3.5: Записать Hot Spots
-
-Добавить в `memory/FACTS.md` или создать отдельный wiki-файл:
-
-```markdown
-## Entry: Hot Spots & Risk Areas
-> Tags: risk, hot-spots, technical-debt
-
-### 🔴 Critical (Avoid changing without deep analysis)
-| Location | Reason | Risk |
-|----------|--------|------|
-| `path/to/file` | [God class, high coupling, no tests] | [Data loss possible] |
-
-### 🟡 Moderate (Change carefully)
-| Location | Reason | Risk |
-|----------|--------|------|
-
-### Code Quality Issues
-| Issue | Locations | Severity |
-|-------|-----------|----------|
-| Duplication | [files] | Medium |
-| Dead code | [files] | Low |
-```
-
----
-
-## Фаза 4: Рекомендации
-
-### Шаг 4.1: Assessment Matrix
-
-Создать `/docs/Research.md` (transient) с рекомендациями:
-
-```markdown
-# Research: Legacy Analysis — [Project Name]
-*Created: YYYY-MM-DD*
-
-## Assessment Summary
-
-| Aspect | Status | Priority |
-|--------|--------|----------|
-| Architecture | 🟢🟡🔴 | |
-| Code Quality | 🟢🟡🔴 | |
-| Test Coverage | 🟢🟡🔴 | |
-| Documentation | 🟢🟡🔴 | |
-| Dependencies | 🟢🟡🔴 | |
-| Security | 🟢🟡🔴 | |
-
-## Recommended Actions
-
-### Immediate (перед любыми изменениями)
-1. [ ] [Action]
-
-### Short-term (первые спринты)
-1. [ ] [Action]
-
-### Long-term (roadmap)
-1. [ ] [Action]
-
-## What NOT to Touch
-⛔ [Area]: [Why, what happens if touched]
-```
-
-### Шаг 4.2: Записать решения в `memory/DECISIONS.md`
-
-```markdown
-## #NNN — Legacy Analysis: [Decision Title] (YYYY-MM-DD)
-**Context**: [Why this decision was needed based on analysis findings]
-**Options**: [What alternatives were considered]
-**Chosen**: [What was selected]
-**Consequences**: [What follows]
-**Status**: Active
-```
-
----
-
-## Фаза 5: Выход и Hand-off
-
-### Шаг 5.1: Итоговые Артефакты
-
-**Обязательные (в memory/*):**
-
-- [ ] `memory/repo-wiki/overview.md` — карта системы (+ meta.json обновлён)
-- [ ] `memory/FACTS.md` — технические факты обновлены
-- [ ] `memory/CONTEXT.md` — текущее состояние обновлено
-- [ ] `memory/DECISIONS.md` — решения записаны
-- [ ] CHRONICLE.md — [milestone] entry добавлен
-
-**Transient (в /docs/):**
-
-- [ ] `/docs/Research.md` — рекомендации и assessment
-
-**Для сложных систем дополнительно:**
-
-- [ ] Отдельные wiki-файлы для крупных модулей
-- [ ] Hot Spots wiki entry
-- [ ] Dependency Graph (Mermaid в wiki)
-
-### Шаг 5.2: Следующие Шаги
-
-```
-Анализ завершён
-       ↓
-Нужны изменения?
-       ↓
-[Рефакторинг] → workflow-refactoring (использовать repo-wiki)
-[Новая фича] → workflow-feature (использовать repo-wiki + FACTS)
-[Миграция] → workflow-architecture-change (использовать Research.md)
-[Фикс бага] → workflow-debugging (использовать Hot Spots)
-```
-
----
-
-## Антипаттерны Анализа Legacy
-
-| Антипаттерн | Почему плохо | Как правильно |
-|-------------|--------------|---------------|
-| **Менять без анализа** | Ломаешь что не понимаешь | Сначала анализ |
-| **Анализ без записи в memory** | Забудешь через неделю | Записывать сразу в repo-wiki и FACTS |
-| **Полный переписать** | Потеря business logic, долго | Инкрементальные изменения |
-| **Игнорировать hot spots** | Сломаешь критичное | Карта рисков в FACTS |
-| **Не спрашивать авторов** | Упустишь контекст | Интервью если доступны |
-| **Overengineering analysis** | Анализ превращается в проект | Time-boxed, достаточный уровень |
-
----
-
-## Чеклист
-
-### Перед Анализом
-
-- [ ] Цель анализа понятна (зачем?)
-- [ ] Доступ к коду есть
-- [ ] Время на анализ выделено (time-box)
-- [ ] memory/PROFILE.md существует (если нет → onboarding сначала)
-
-### Во Время Анализа
-
-- [ ] `debug` делегирован
-- [ ] Ключевые артефакты найдены
-- [ ] Структура понятна
-- [ ] Hot spots выявлены
-
-### После Анализа
-
-- [ ] `memory/repo-wiki/overview.md` создан + meta.json обновлён
-- [ ] `memory/FACTS.md` обновлён
-- [ ] `memory/CONTEXT.md` обновлён
-- [ ] `/docs/Research.md` создан с рекомендациями
-- [ ] CHRONICLE.md обновлён
-- [ ] Hand-off к нужному workflow
-
----
-
-## Quick Reference
-
-```
-Legacy System
-      ↓
-Первичный обзор (метрики, артефакты) → memory/FACTS.md
-      ↓
-Оценка сложности 🟢🟡🔴⚫
-      ↓
-`debug` анализ
-      ↓
-Документирование в memory/*:
-- memory/repo-wiki/overview.md (+ meta.json)
-- memory/FACTS.md (технические факты)
-- memory/CONTEXT.md (текущее понимание)
-- memory/DECISIONS.md (решения)
-      ↓
-/docs/Research.md (рекомендации)
-      ↓
-Hand-off к нужному workflow:
-→ workflow-refactoring
-→ workflow-feature
-→ workflow-architecture-change
-→ workflow-debugging
-```
-
----
-
-**Связанные навыки:**
-
-- `skills/workflow-refactoring/SKILL.md` — если нужен рефакторинг после анализа
-- `skills/workflow-architecture-change/SKILL.md` — если нужна миграция
-- `skills/onboarding/SKILL.md` — если проект новый и нужен onboarding
-
----
-
-**END OF WORKFLOW**
+- `memory-keeping` — wiki entry format, `meta.json`, FACTS and DECISIONS shapes
+- `codebase-design` — seams, module depth, and where a boundary belongs
+- `workflow-refactoring` — changing the structure once the map exists
+- `workflow-architecture-change` — migrating it
+- `onboarding` — no `memory/PROFILE.md` yet; run that first

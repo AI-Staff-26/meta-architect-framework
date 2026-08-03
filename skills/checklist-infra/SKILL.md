@@ -1,31 +1,21 @@
 ---
 name: checklist-infra
 description: |
-  Pre-deployment and post-implementation verification checklist for infrastructure work. 
-  Covers Docker containers, CI/CD pipelines, secrets management, system hardening, 
-  and observability. Used by `devops` for self-check and `review` for infra reviews.
-tags:
-  - devops
-  - checklist
-  - review
-  - docker
-  - cicd
-  - security
-  - infrastructure
+  Verification for infrastructure work — containers, CI/CD pipelines, secrets,
+  deployment safety, developer environment, observability, and OS hardening,
+  each item carrying a severity. Use when reviewing a Dockerfile, a compose
+  file, pipeline yaml, or a deploy script, when `devops` self-checks before
+  calling work done, and before any infrastructure change reaches staging or
+  production. `workflow-devops` builds these things; this verifies them.
 ---
 
-# ✅ Skill: checklist-infra
+# Infrastructure Verification
 
-## Purpose
+`workflow-devops` is the build side; this is the verify side. The same subjects appear in both because building it and proving it are different acts — and the second one is where the container running as root and the secret in the compose file get caught.
 
-Pre-deployment and post-implementation verification checklist for infrastructure work. Loaded by **`devops`** before marking work complete, and by **`review`** when reviewing infrastructure changes (Dockerfiles, CI/CD yaml, compose files, scripts).
+**Verify against the artifact, not the intention.** Read the Dockerfile, run the command, inspect the container, open the pipeline log. An item confirmed from memory of how it was set up is the item most likely to be wrong.
 
-## When to Load
-
-- Before any infrastructure change reaches staging or production
-- When `review` is asked to review infrastructure-as-code
-- When `devops` completes a task and runs self-check
-- After major system configuration changes
+Severity governs what blocks: 🔴 and 🟠 must be clear before anything ships. Items that do not apply are marked as such with a reason — silence reads as passed.
 
 ---
 
@@ -236,3 +226,14 @@ Use this format when reporting checklist results:
 PASS: All 🔴 and 🟠 items clear
 FAIL: [N] critical / blocker issues must be resolved before deployment
 ```
+
+## Completion criterion
+
+Done when: every checklist that applies has been walked against the actual artifact; each item is passed with where it was verified, failed with its fix, or marked not applicable with a reason; every 🔴 and 🟠 is resolved or explicitly accepted by the user; and the rollback path named in the deployment section has been executed at least once in a rehearsal.
+
+## Related
+
+- `workflow-devops` — building the infrastructure this verifies
+- `checklist-security` — application-level security: auth, input, data
+- `checklist-release` — the Go / No-Go gate this feeds
+- `checklist-code-review` — the code inside the containers

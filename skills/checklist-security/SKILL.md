@@ -1,35 +1,21 @@
 ---
 name: checklist-security
 description: |
-  Security verification checklist. Authentication, authorization, input validation, 
-  API security, secrets management, data protection. Loaded by review for 
-  security-critical changes. 9 categories, severity classification.
+  Security verification for a change — authentication, authorization, input
+  validation, API surface, data protection, secrets, logging, and the tests
+  that prove it. Use whenever a change touches auth or permissions, user or
+  payment data, a new or public endpoint, an external integration, file
+  uploads, or PII; the `review` agent loads it for security-critical diffs and
+  `checklist-release` for the pre-production pass.
 ---
 
-# 🔒 Security Checklist — Чеклист Безопасности
+# Проверка безопасности
 
-<purpose>
-Детальная проверка безопасности для критических изменений.
-Используй при изменении auth/authz, работе с данными, интеграциях.
-</purpose>
+**Начинай с того, что изменение открывает наружу.** Полный список ниже прочитывается за минуту и подтверждается за минуту — так проверка превращается в ритуал. Работает она иначе: сначала назови новую поверхность — какой ввод стал достижим извне, какие данные стали доступнее, кто теперь может дотянуться до чего, — и от неё иди по разделам, которые эту поверхность закрывают.
 
----
+Разделы, которых изменение не касается, отмечаются как неприменимые с причиной. Раздел, помеченный «ок» без проверки, хуже пропущенного: он выглядит проверенным.
 
-## Когда Использовать
-
-**Обязательно:**
-
-- Изменения в аутентификации/авторизации
-- Работа с пользовательскими данными
-- Новые API endpoints (особенно публичные)
-- Интеграции с внешними сервисами
-- Обработка платежей / финансов
-- Работа с PII (Personal Identifiable Information)
-
-**Рекомендуется:**
-
-- Любые изменения в security-critical модулях
-- Перед релизом (как часть release checklist)
+Уязвимость ищется на пути данных: откуда пришло → кому доверяем → что с этим делаем → куда попало. Каждый переход — место, где проверка либо есть, либо её нет.
 
 ---
 
@@ -223,32 +209,26 @@ description: |
 
 ---
 
-## Quick Reference
+## Формат находки
 
-```
-Security Priority:
+Каждая находка — это место, воздействие и исправление, а не название класса уязвимости:
 
-1. Authentication — кто это?
-2. Authorization — что может делать?
-3. Input Validation — можно ли доверять данным?
-4. Data Protection — защищены ли данные?
-5. Secrets — защищены ли credentials?
-
-Red Flags:
-❌ User input → SQL/Command без sanitization
-❌ Secrets в коде / логах
-❌ Отсутствие auth checks
-❌ Verbose errors с internal details
-❌ HTTP (не HTTPS)
+```markdown
+🔴 IDOR в `GET /api/orders/:id` — `src/api/orders.ts:42`
+Проверяется аутентификация, но не принадлежность заказа пользователю.
+Любой авторизованный клиент читает чужие заказы по перебору id.
+Исправление: проверка `order.userId === session.userId` в сервисном слое.
 ```
 
----
+Пять типовых мест, где находки концентрируются: пользовательский ввод, дошедший до SQL или командной строки без параметризации; эндпоинт без проверки прав рядом с эндпоинтами, где она есть; секрет в коде, логе или истории git; подробная внутренняя ошибка, отданная клиенту; данные, ушедшие по HTTP.
 
-**Связанные файлы:**
+## Критерий завершения
 
-- `checklist-code-review/SKILL.md` — общий чеклист ревью
-- `checklist-release/SKILL.md` — предрелизный чеклист
+Проверка закончена, когда: поверхность, которую открыло изменение, названа; каждый раздел либо пройден с указанием, где именно проверено, либо помечен неприменимым с причиной; каждая находка имеет место, воздействие и исправление; для 🔴 и 🟠 названо, что происходит при эксплуатации; и для нового поведения написан негативный тест — тот, что падает, если защиту убрать.
 
----
+## Связанные скилы
 
-**END OF CHECKLIST**
+- `checklist-infra` — секреты и доступы на стороне развёртывания: CI, контейнеры, окружения
+- `checklist-code-review` — общее ревью, ось Security которого это углубляет
+- `checklist-release` — предрелизный гейт, вызывающий эту проверку
+- `pattern-rbac`, `pattern-multi-tenant` — когда права и изоляция арендаторов проектируются, а не проверяются

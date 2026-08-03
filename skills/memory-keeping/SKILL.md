@@ -107,6 +107,8 @@ Every fact carries where it came from. An unsourced fact cannot be re-verified w
 
 Numbered sequentially. A number is never reused — superseding creates a new entry pointing back.
 
+A decision that reshapes the system and is expensive to reverse earns an ADR in `memory/adrs/` as well: format in `workflow-architecture-change/references/adr-template.md`. The `DECISIONS.md` entry then points at it rather than repeating it.
+
 ### INSIGHTS.md
 
 Three sections: **What Works**, **What Doesn't Work** (with the context that made it fail), **Patterns**.
