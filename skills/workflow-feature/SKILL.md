@@ -50,7 +50,7 @@ Escalate the moment the feature touches an auth boundary, changes the schema, al
 
 ## 4. Plan (🟡🔴)
 
-`architectural-planning` holds decomposition, scope, and the prompt; `references/plan-template.md` holds the document. Reach for `codebase-design` when the feature needs a new module or a seam, and the matching `pattern-*` skill when it needs an architecture that already has a name.
+`architectural-planning` holds decomposition, scope, and the prompt; its `references/plan-template.md` holds the document. Reach for `codebase-design` when the feature needs a new module or a seam, and the matching `pattern-*` skill when it needs an architecture that already has a name.
 
 **Sequence the slices so the first one runs end to end.** The thinnest possible path through every layer the feature touches — one field, one route, one screen — proves the attachment before any breadth is built on top of it. Widen from there. Slices cut per layer hide the integration risk until the last one lands, which is exactly when it is most expensive.
 

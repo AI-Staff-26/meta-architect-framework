@@ -1,199 +1,75 @@
-# Troubleshooting Common Issues
+# Когда фреймворк ведёт себя не так
 
-## Skill Activation Issues
-
-### Wrong skill activates
-
-**Symptom:** IDE loads incorrect role  
-**Solution:**
-
-1. Use explicit invocation: `architect`
-2. Check if commands overlap (use more specific)
-3. Verify YAML descriptions don't conflict
+Симптом → вероятная причина → что делать. Причина почти всегда в тексте фреймворка или во входных данных, а не в модели: одинаковый вход даёт один и тот же класс сбоя.
 
 ---
 
-### Skills don't activate at all
+## Скилы и агенты
 
-**Symptom:** No role responds  
-**Diagnosis:**
+### Скил не вызывается сам
 
-- Check `.claude/skills/*/SKILL.md` files exist
-- Verify YAML frontmatter syntax (---...---)
-- Test with explicit `@role-name`
+Описание не совпадает со словами, которыми задачу формулирует пользователь. `description` — это поверхность срабатывания: в ней должны стоять конкретные слова, файлы и ветки задач, а не пересказ содержимого.
 
-**Solution:**
+Проверить: `/имя-скила` вызывает его вручную. Сработало вручную, но не само — правьте описание по `authoring-skills` («Writing the description»). Не сработало и вручную — проверьте, что файл лежит в `skills/<имя>/SKILL.md` и frontmatter закрыт двумя `---`.
 
-1. Validate YAML with online validator
-2. Restart IDE
-3. Check IDE supports Skills
+### Вызывается не тот скил
 
----
+Два описания претендуют на одну ветку задач. Разведите их и допишите в каждое, куда идти в соседнем случае: «для сломанного — `workflow-debugging`». Ссылка на альтернативу работает лучше, чем уточнение собственных границ.
 
-## Workflow Issues
+### Агент делает не то, что написано в его роли
 
-### Meta-architect skips planning for 🟡🔴
-
-**Symptom:** Delegates directly without Plan.md  
-**Root cause:** Misclassified as 🟢  
-**Solution:**
-
-```
-User: "STOP — это 🟡 Medium, нужен Plan.md"
-```
-
-Meta-architect will reclassify and create plan
+Проверьте, не противоречит ли инструкция агента `CLAUDE.md`: агент читает и то, и другое, и следует последнему прочитанному. Формулировки-запреты («не меняй архитектуру») исполняются хуже, чем описание нужного поведения («реализуй как в спеке; архитектурные изменения возвращай архитектору»).
 
 ---
 
-### Coder improvises beyond scope
+## Ворота и процесс
 
-**Symptom:** Implementation adds unrequested features  
-**Root cause:** Weak constraints in prompt  
-**Solution:**
+### Архитектор пропустил план на 🟡🔴
 
-- Meta-architect: Revise prompt with explicit ❌ constraints
-- Add to memory/FACTS.md if pattern repeats
+Задача была оценена как 🟢 и по ходу выросла. Скажите об этом прямо — «это 🟡, нужен план», — и переоценка произойдёт вслух. Если это повторяется на однотипных задачах, признак этой сложности стоит записать в `memory/FACTS.md`: оценка опирается на то, что известно о проекте.
 
----
+### Работа пошла дальше STOP без подтверждения
 
-### Reviewer always FAILs
+Ворота нарушены. Остановите, вернитесь к артефакту и подтвердите его явно. Вопрос — не подтверждение: на него отвечают и снова встают на STOP.
 
-**Symptom:** >3 FAIL reports on same code  
-**Root cause:** Fundamental misunderstanding in Plan.md  
-**Solution:**
+### `code` делает больше, чем просили
 
-```
-User: "Начни расследование почему fails повторяются"
-```
+Скоуп в промпте не назвал границу. Что не записано, то вне скоупа только на бумаге — в промпте это нужно сказать. `architectural-planning` держит разметку IN / OUT / FUTURE и анатомию промпта.
 
-Invoke `debug` to analyze assumptions
+### `review` возвращает FAIL третий раз подряд
+
+Повторный FAIL одного класса — это не про исполнение, а про вход. Классифицируйте находки: критичное правит план, блокирующее — промпт, мелочь чинится точечно. Два критичных подряд — в `debug`, а на третьей итерации — `forensic-investigation`: она разбирает не баг, а цикл.
 
 ---
 
-## Context Issues
+## Контекст
 
-### AI starts repeating
+### Агент повторяется, забывает ограничения, выдумывает API
 
-**Symptom:** Same responses, circular logic  
-**Root cause:** Context degradation (>50% full)  
-**Solution:**
+Контекст деградировал. Не помогает добавить поправку — она встаёт в один ряд с шумом, который должна была перебить. `workflow-ai-session`: снимок в `CONTEXT.md`, чистый рестарт, промпт, который не ссылается на прошлую сессию.
 
-1. Create Context.md
-2. Restart session
-3. Resume with Context.md
+### Правки ломают соседнее, патчи копятся
+
+Это уже цикл, а не деградация. Рестарт с тем же промптом воспроизведёт тот же провал быстрее. Сначала `forensic-investigation` — она находит, где именно ошибка входа: в промпте, в контексте, в оценке сложности или в архитектуре.
 
 ---
 
-### AI forgets earlier decisions
+## Память
 
-**Symptom:** Contradicts previous statements  
-**Root cause:** Context "lost in the middle"  
-**Solution:**
+### Новая сессия не знает проекта
 
-- Update /docs/* with decisions
-- Reference docs explicitly
-- Restart if >15 turns
+Нет `memory/PROFILE.md` — запустите `onboarding`. PROFILE есть, но контекст всё равно теряется — `CONTEXT.md` не обновлялся: он бридж между сессиями, и обновляется по завершении работы, а не когда о нём вспомнили.
 
----
+### Память противоречит сама себе
 
-## Quality Issues
+Значение перезаписали, не записав, что оно менялось. Молча перезаписанная память неотличима от всегда правильной, а обоснование старого значения потеряно. Протокол противоречий — в `rules/memory-protocol.md`; разбор дублей и устаревшего — в разделе гигиены там же.
 
-### Tests fail after implementation
+### Вики репозитория описывает код, которого нет
 
-**Symptom:** `review` finds breaking changes  
-**Root cause:** Insufficient acceptance criteria  
-**Solution:**
-
-- Meta-architect: Add explicit test requirements to Plan.md
-- Include "all existing tests must pass" in constraints
+Записи обновляются после изменений кода, а не по расписанию. Приведите запись и её теги в `meta.json` в соответствие; форматы — `memory-keeping`.
 
 ---
 
-### Security issues found late
+## Если не помогло
 
-**Symptom:** checklist-security FAIL after deployment  
-**Root cause:** Checklist not loaded during review  
-**Prevention:**
-
-- Meta-architect: Mark task as security-critical
-- Reviewer will auto-load checklist-security
-
----
-
-## Performance Issues
-
-### Slow skill loading
-
-**Symptom:** Delays before response  
-**Root cause:** Too many large skills active  
-**Solution:**
-
-- Normal for first activation (IDE caches after)
-- If persistent: Restart IDE
-
----
-
-### Description budget exceeded
-
-**Symptom:** Some skills not activating  
-**Diagnosis:** Total descriptions >15KB  
-**Solution:**
-
-- Check skill descriptions total
-- Trim less-used skills to 150 chars
-- Prioritize role skills (400 chars OK)
-
----
-
-## IDE-Specific Issues
-
-### Claude Code / Antigravity
-
-- Skills work natively
-- No known issues
-
-### Cursor
-
-- May need explicit @role-name more often
-- Enable "Custom Instructions" in settings
-
-### Windsurf
-
-- Same as Cursor
-- Check both `.claude/` and `.windsurf/` folders
-
----
-
-## Emergency Recovery
-
-### Complete framework failure
-
-**Symptoms:** Nothing works, random behavior  
-**Solution:**
-
-1. Clear `.claude/` folder
-2. Re-install framework files
-3. Verify YAML in all SKILL.md files
-4. Restart IDE
-5. Test with simple task
-
----
-
-### Lost project context
-
-**Symptoms:** AI doesn't know project structure  
-**Solution:**
-
-1. Check memory/repo-wiki/overview.md exists
-2. Regenerate if missing:
-
-   ```
-   User: "Создай Architecture.md на основе текущего кода"
-   ```
-
-3. Update Context.md for session
-
----
-
-**Still having issues?** Ask role-guide: "Помощь с проблемой X"
+Опишите симптом одной фразой и покажите, что именно вы дали на вход. Отсутствующее правило — это пробел во фреймворке, и чинится он через `authoring-skills`, а не обходным приёмом в конкретной сессии.

@@ -1,108 +1,51 @@
 ---
 name: framework-knowledge-base
 description: |
-  Comprehensive documentation for Meta-Architect Framework. Contains all reference
-  materials about framework architecture, roles, workflows, skills catalog, complexity
-  classification, delegation patterns, best practices, troubleshooting, and IDE 
-  compatibility. Answers questions about the framework itself — roles, workflows, delegation, troubleshooting.
-  Available to any mode needing framework documentation reference.
+  Answers questions about the Meta-Architect Framework itself — how it is
+  installed, why it is shaped this way, what to do when it misbehaves, and
+  which file defines what. Use when the user asks "как работает фреймворк",
+  "зачем нужен STOP", "почему агент не сработал", "как поставить в проект",
+  "чем отличается X от Y", or asks about roles, gates, delegation, memory, or
+  IDE setup. For writing or editing framework text, use `authoring-skills`.
 ---
 
-<knowledge_base>
+# The Framework, Documented
 
-## Comprehensive Documentation Access
+Two kinds of question arrive here. *How does this work?* is already answered by the framework itself — it is written to be read. *Why is it built this way?* is what this skill holds.
 
-All framework documentation is available in `references/` folder. **These files are
-pre-loaded and always accessible.** You do NOT need to search or fetch them.
+**Answer from the source, never from a copy kept here.** A catalog of roles or skills in this folder would be a second set of definitions, and copies drift until the agent believes whichever it read last. When asked what an agent or a skill does, open its file and quote it.
 
-### Available References
+## Where each answer lives
 
-1. **framework-overview.md** (~8KB)
-   - Complete architecture and role system
-   - Delegation flows, quality gates
-   - /docs/* memory system
+| Question | Source |
+|---|---|
+| What binds every task — language, complexity, gates, roles | `CLAUDE.md` |
+| What a given agent owns and how it works | `agents/<name>.md` |
+| Which skill fits this work | `skills/README.md`, then that skill's own `description` |
+| What gets recorded, when, and by whom | `rules/memory-protocol.md` |
+| The format of a memory file, ADR, wiki entry, or work report | `memory-keeping` |
+| How framework text is written and pruned | `authoring-skills` |
+| Why the framework is shaped this way | `references/framework-overview.md` |
+| How to install it and run the first task | `references/getting-started.md` |
+| Something behaves wrong — agent, skill, gate, memory | `references/troubleshooting.md` |
+| Which IDE reads which folder | `references/ide-compatibility.md` |
 
-2. **getting-started.md** (~3KB)
-   - Installation instructions
-   - IDE setup (Claude Code, Cursor, Windsurf)
-   - First task walkthrough
+## Answering well
 
-3. **workflow-examples.md** (~5KB)
-   - End-to-end scenarios (🟢🟡🔴)
-   - Real examples with full flows
-   - Investigation and architecture change examples
+Name the file the answer came from — it lets the user verify it and find it again without you.
 
-4. **skills-index.md** (~4KB)
-   - Catalog of all skills
-   - Quick reference for each role/workflow/pattern/checklist
-   - Skill relationships diagram
+A question about the current project's state is a different question: `memory/CONTEXT.md`, `memory/FACTS.md`, and `memory/repo-wiki/` answer that, not this skill.
 
-5. **complexity-guide.md** (~3KB)
-   - 🟢🟡🔴 decision matrix
-   - Examples for each level
-   - Escalation rules
+When the question is a request for action wearing a question mark — «а как бы ты добавил X?» — answer briefly, then do the work through the normal route rather than continuing to describe it.
 
-6. **delegation-flowchart.md** (~4KB)
-   - Visual delegation patterns
-   - Multi-phase flows
-   - FAIL loop prevention
+When the framework has no answer, say so and say what would fill the gap. An invented convention becomes real the moment someone follows it.
 
-7. **best-practices.md** (~3KB)
-   - User best practices
-   - Common patterns
-   - Do's and don'ts
+## Completion criterion
 
-8. **troubleshooting.md** (~4KB)
-   - Common issues and solutions
-   - Context degradation recovery
-   - Emergency procedures
+Answered when: the answer names its source file; nothing was restated from memory that the source contradicts; and any gap found in the framework is either fixed through `authoring-skills` or reported as a gap.
 
-9. **ide-compatibility.md** (~4KB)
-   - Supported IDEs
-   - Feature matrix
-   - Setup instructions per IDE
+## Related
 
-</knowledge_base>
-
----
-
-<how_to_use>
-
-## How to Use References
-
-**When answering questions:**
-
-1. Check which reference file covers the topic
-2. Cite specific information from that file
-3. Provide examples from workflow-examples.md if helpful
-4. Reference skills-index.md for skill details
-
-**You do NOT need to:**
-
-- Search project files for framework info
-- Guess framework behavior
-- Say "let me check the documentation"
-
-**All framework knowledge is instantly available to you.**
-
-**For codebase questions:** Search project files as normal (not covered by this skill).
-
-</how_to_use>
-
----
-
-**Связанные файлы:**
-
-- `references/framework-overview.md` — полный обзор архитектуры фреймворка
-- `references/getting-started.md` — инструкции по установке и настройке
-- `references/workflow-examples.md` — примеры сценариев использования
-- `references/skills-index.md` — каталог всех скилов
-- `references/complexity-guide.md` — матрица 🟢🟡🔴
-- `references/delegation-flowchart.md` — диаграммы делегирования
-- `references/best-practices.md` — лучшие практики
-- `references/troubleshooting.md` — решение проблем
-- `references/ide-compatibility.md` — совместимость с IDE
-
----
-
-**END OF framework-knowledge-base SKILL**
+- `authoring-skills` — writing and editing framework text
+- `skill-creator` — building a skill with evals and measured triggering
+- `onboarding` — a project with no `memory/PROFILE.md` yet

@@ -1,138 +1,63 @@
-# Getting Started with Meta-Architect Framework
+# Начало работы
 
-## Prerequisites
+## Что нужно
 
-- AI IDE with Skills support: Claude Code, Cursor, Windsurf, or compatible
-- Project with `.claude/` folder structure
+IDE с поддержкой скилов и субагентов — Claude Code, Cursor, Windsurf, KiloCode, Antigravity. Раскладка папок по IDE — в `ide-compatibility.md`.
 
-## Installation
+## Установка
 
-### 1. Add to Project
+Фреймворк — это набор файлов. Положить их можно двумя способами.
 
-```bash
-# In your project root
-mkdir -p .claude/rules
-mkdir -p .claude/skills
-```
+**Глобально** — `~/.claude/`. Действует во всех проектах, память создаётся отдельно в каждом.
 
-### 2. Copy Framework Files
+**В проект** — `<проект>/.claude/`. Действует только здесь; удобно, когда фреймворк едет вместе с репозиторием и его правят под проект.
 
 ```
 .claude/
+├── CLAUDE.md              # всегда включённый слой: язык, сложность, роли, ворота
 ├── rules/
-│   └── meta-architect-framework.md  # Always-On Rules
-└── skills/
-    ├── architect/SKILL.md
-    ├── code/SKILL.md
-    ├── review/SKILL.md
-    ├── debug/SKILL.md
-    ├── role-guide/SKILL.md
-    ├── workflow-*/SKILL.md (10 workflows)
-    ├── pattern-*/SKILL.md (5 patterns)
-    └── checklist-*/SKILL.md (5 checklists)
+│   └── memory-protocol.md # подключается из CLAUDE.md через @import
+├── agents/                # роли: code, review, debug, devops, advisor, consilium, vibe-mentor
+└── skills/                # методы: workflow-*, checklist-*, pattern-* и остальные
 ```
 
-### 3. Create /docs/ Folder
+Папка `memory/` не копируется — её создаёт скил `onboarding` под конкретный проект.
 
-```bash
-mkdir -p docs/adr
-```
+## Первая задача
 
-### 4. First Task
+Онбординг стоит гейтом: если `memory/PROFILE.md` нет, первый же содержательный запрос запускает `onboarding`. Это разговор о проекте — стек, границы, что уже работает, чего делать нельзя, — из которого собирается стартовая память. Пройти его стоит целиком: всё, что дальше читает PROFILE, опирается на эти ответы.
 
-**Option A: Start new feature**
+Дальше работа идёт обычными словами. Роли переключает архитектор; отдельных команд для передачи задачи между агентами нет.
 
 ```
-You: "Добавь регистрацию пользователей"
-→ architect activates automatically
+Вы:         Добавь эндпоинт со списком пользователей
+
+Архитектор: 📊 Анализ — 🟡, затрагивает API и схему ответа
+            📋 План → /docs/Plan.md
+            🛑 STOP — жду подтверждения
+
+Вы:         Утверждаю
+
+Архитектор: делегирует code → делегирует review → PASS
+            обновляет memory/, пишет отчёт о работе
 ```
 
-**Option B: Ask for help**
+Что стоит сказать в начале задачи:
 
-```
-You: "Помощь по фреймворку"
-→ role-guide activates
-```
+- **Что должно работать после** — наблюдаемый критерий, а не название функции.
+- **Чего делать нельзя** — что нельзя ломать и что уже пробовали.
+- **Насколько это обратимо** — от этого зависит уровень подготовки.
 
-## IDE-Specific Setup
+## Как обращаться к конкретной роли
 
-### Claude Code / Antigravity
+Обычно роль выбирает архитектор. Назвать её прямо имеет смысл, когда вы уже знаете, что нужно: «отревьюь этот бранч», «расследуй, почему падает», «настрой docker». Роли и их триггеры перечислены в `CLAUDE.md`, подробности — в `agents/<имя>.md`.
 
-- Skills auto-activate based on YAML descriptions
-- No additional configuration needed
+Скилы вызываются по имени: `/grilling`, `/tdd`, `/checklist-release`. Указатель — `skills/README.md`.
 
-### Cursor
+## Проверка, что всё встало
 
-- Enable Custom Instructions
-- Skills activate via semantic matching
-- May need explicit @role-name invocation
+1. Спросите «как устроен фреймворк» — ответ должен ссылаться на конкретные файлы.
+2. Дайте мелкую задачу — ожидается 🟢 и делегирование без плана.
+3. Дайте задачу с изменением схемы — ожидается 🟡🔴, `Plan.md` и STOP.
 
-### Windsurf
-
-- Same as Cursor
-- Skills in `.windsurf/skills/` also supported
-
-## Verify Installation
-
-```
-You: "Помощь"
-Expected: role-guide activates and explains framework
-
-You: "Добавь простую функцию для проверки"
-Expected: architect activates, classifies 🟢, creates quick plan
-```
-
-## Your First Workflow
-
-```
-1. User: "Добавь API endpoint для списка пользователей"
-   → architect activates
-
-2. Meta-architect: Классифицирует 🟡 Medium
-                   Создает Plan.md
-                   🛑 STOP — ожидает approval
-
-3. User: "approved"
-
-4. Meta-architect: "Скажите: 'Выполни реализацию'"
-
-5. User: "Выполни реализацию"
-   → code activates
-
-6. Coder: Implements code
-          "Скажите: 'Проверь код'"
-
-7. User: "Проверь код"
-   → review activates
-
-8. Reviewer: ✅ PASS — Done!
-```
-
-## Common Commands
-
-| Command | Activates | When |
-|---------|-----------|------|
-| "Добавь...", "Исправь..." | architect | Start any task |
-| "Выполни реализацию" | code | After meta-architect prompt |
-| "Проверь код" | review | After implementation |
-| "Начни расследование" | debug | Unknown root cause |
-| "Помощь", "Где находится..." | role-guide | Questions |
-
-## Troubleshooting Setup
-
-**Skills don't activate?**
-
-- Check `.claude/skills/*/SKILL.md` files exist
-- Verify YAML frontmatter is valid
-- Try explicit invocation: `architect`
-
-**Wrong skill activates?**
-
-- Use explicit command: `@role-name`
-- Check skill descriptions for overlap
-
-**See troubleshooting.md for more.**
-
----
-
-**You're ready!** Start with simple task to get familiar.
+Не сработало — `troubleshooting.md`.

@@ -190,11 +190,11 @@ Before `code` starts UI work, verify:
 | Next Role | What They Receive |
 |-----------|-------------------|
 | `code` | Completed UX design ready for implementation |
-| `review` | Baseline expectations for `checklist-ux-completeness` |
+| `review` | Baseline expectations for `checklist-ux-review` |
 
 </handoff_protocol>
 
 ---
 
 **Used by:** `architect`  
-**Followed by:** checklist-ux-completeness (verification)
+**Followed by:** checklist-ux-review (verification)

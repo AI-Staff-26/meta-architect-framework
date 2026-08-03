@@ -1,215 +1,49 @@
-# IDE Compatibility & Limitations
+# Установка по IDE
 
-## Supported IDEs
+Матрица полей frontmatter и поддержки папок — в `authoring-skills` («IDE folder paths»). Здесь — что сделать, чтобы фреймворк заработал в конкретной среде.
 
-### ✅ Fully Supported
-
-**Claude Code (Antigravity)**
-
-- Skills: Native support
-- Auto-activation: ✅ Excellent
-- Folder: `.claude/skills/`
-- Rules: `.claude/rules/`
-- Version: Latest
-
-**Google Antigravity**
-
-- Skills: Native support (same as Claude Code)
-- Auto-activation: ✅ Excellent
-- Same folder structure
+Универсально: держите файлы в `.claude/` — Cursor и Windsurf читают эту папку напрямую, так что одна копия работает везде.
 
 ---
 
-**Cursor**
+## Claude Code, Antigravity
 
-- Skills: Via Custom Instructions
-- Auto-activation: ⚠️ Good (may need explicit @role-name)
-- Folder: `.claude/skills/` or `.cursor/skills/`
-- Setup: Enable Custom Instructions in settings
-- Version: 0.40+
+Настройка не нужна. Файлы кладутся в `~/.claude/` (глобально) или `<проект>/.claude/`.
 
----
+Скилы срабатывают по описаниям, агенты вызываются архитектором через субагентов, `@import` в `CLAUDE.md` подтягивает правила.
 
-**Windsurf (Codeium)**
+## Cursor
 
-- Skills: Via agent mode
-- Auto-activation: ⚠️ Good
-- Folder: `.claude/skills/` or `.windsurf/skills/`
-- Setup: Enable agent mode
-- Version: Latest
+Включить Custom Instructions в настройках. Папка — `.claude/` или `.cursor/`.
 
----
+Автосрабатывание слабее: если нужный скил не поднялся, вызовите его по имени. Субагенты доступны, но роль иногда приходится называть явно.
 
-### ⚠️ Partial Support
+## Windsurf
 
-**VS Code with Continue**
+Включить agent mode. Папка — `.claude/` или `.windsurf/`. В остальном как Cursor.
 
-- Skills: Manual loading via context
-- Auto-activation: ❌ No (manual @role selection)
-- Workaround: Use `.continue/config.json` with context files
+## KiloCode
 
-**Zed with AI assistant**
+Папки `.kilocode/skills/` и `.kilocode/rules/`. Поддержка полей frontmatter полная, автосрабатывание надёжное.
 
-- Skills: Experimental
-- Auto-activation: ❌ Limited
-- Status: Check Zed docs for latest
+## VS Code + Continue
+
+Скилы вручную. В `.continue/config.json` подключить `CLAUDE.md` и `rules/memory-protocol.md` как контекст, роли выбирать явно. Автозагрузка скилов и делегирование субагентам не работают — процесс придётся вести самому.
 
 ---
 
-### ❌ Not Supported
+## Переезд между IDE
 
-- IDEs without Skills/agent architecture
-- Plain ChatGPT (no file system access)
-- GitHub Copilot (no multi-agent support)
+Скопировать `.claude/` как есть и включить то, что требует новая среда (Custom Instructions, agent mode). Проверка после переезда — три шага из `getting-started.md`: вопрос о фреймворке, мелкая задача, задача с изменением схемы.
 
----
-
-## Feature Matrix
-
-| Feature | Claude Code | Cursor | Windsurf | VS Code+Continue |
-|---------|-------------|--------|----------|------------------|
-| Auto skill activation | ✅ | ⚠️ | ⚠️ | ❌ |
-| YAML frontmatter | ✅ | ✅ | ✅ | ⚠️ |
-| Progressive Disclosure | ✅ | ⚠️ | ⚠️ | ❌ |
-| Multi-agent coordination | ✅ | ✅ | ✅ | ⚠️ |
-| File system access | ✅ | ✅ | ✅ | ✅ |
-| /docs/* updates | ✅ | ✅ | ✅ | ✅ |
+Что ломается при переезде первым — надёжность автосрабатывания скилов. Если роль перестала подниматься сама, вызывайте по имени, пока не поправите описание.
 
 ---
 
-## Known Limitations
+## Что упирается в среду, а не во фреймворк
 
-### Description Budget (All IDEs)
+**Бюджет описаний.** Все `description` лежат в окне на каждом ходу. Разрастаясь, они начинают конкурировать между собой, и часть скилов перестаёт срабатывать. Лечится сокращением описаний до триггеров — `authoring-skills`.
 
-- Total: ~15KB for all skill descriptions
-- Current usage: ~5.3KB (35%)
-- Limit: ~250-450 chars per skill recommended
+**Размер окна.** Различается по IDE и модели. Фреймворк рассчитан на загрузку под текущее решение, а не под задачу целиком; при деградации — `workflow-ai-session`.
 
-### Context Window (IDE-dependent)
-
-- Claude Code: ~200K tokens
-- Cursor: Varies by model (Claude/GPT-4)
-- Windsurf: ~100K tokens
-- Recommendation: Keep sessions <50% capacity
-
-### File Operations
-
-- All: Can read/write files in project
-- Limitation: Cannot execute shell commands (security)
-- Workaround: Generate scripts, user executes
-
-### Simultaneous Skills
-
-- No hard limit (Progressive Disclosure manages)
-- Practical: 3-5 skills active simultaneously
-- IDE handles loading/unloading automatically
-
----
-
-## Setup Instructions by IDE
-
-### Claude Code / Antigravity
-
-```bash
-# No special setup needed
-# Just add files to:
-project/.claude/
-├── rules/meta-architect-framework.md
-└── skills/*/SKILL.md
-```
-
----
-
-### Cursor
-
-```bash
-# 1. Enable Custom Instructions
-Settings → Features → Custom Instructions: ON
-
-# 2. Add framework
-project/.claude/
-# or
-project/.cursor/
-
-# 3. May need explicit invocation
-User: `architect`
-```
-
----
-
-### Windsurf
-
-```bash
-# Similar to Cursor
-Settings → Agent Mode: ON
-
-project/.claude/
-# or
-project/.windsurf/
-```
-
----
-
-### VS Code + Continue
-
-```bash
-# Add to .continue/config.json
-{
-  "contextProviders": [
-    {
-      "name": "meta-architect",
-      "params": {
-        "files": [
-          ".claude/CLAUDE.md",
-          ".claude/rules/memory-protocol.md"
-        ]
-      }
-    }
-  ]
-}
-
-# Manual role selection in chat
-User: `architect`
-```
-
----
-
-## Migration Between IDEs
-
-**From Claude Code → Cursor:**
-
-- Copy `.claude/` folder unchanged
-- Enable Custom Instructions
-- Test with simple task
-
-**From Cursor → Windsurf:**
-
-- Copy `.claude/` → `.windsurf/` (or keep .claude)
-- Enable Agent Mode
-- May need to adjust activation commands
-
-**Universal:**
-
-- `/docs/*` folder works everywhere
-- Always-On Rules may need IDE-specific tweaks
-- Test delegation flow after migration
-
----
-
-## Future Compatibility
-
-**Expected to add support:**
-
-- Zed (planned)
-- JetBrains IDEs (if they add Skills)
-- More Codeium products
-
-**Unlikely to support:**
-
-- Plain text editors (Vim, Emacs) — no agent architecture
-- Web-only tools without file access
-
----
-
-**Check IDE version:** Skills support evolves rapidly  
-**Best practice:** Use Claude Code/Antigravity for full feature set
+**Выполнение команд.** Где инструментов запуска нет, агент готовит команды, а запускает их пользователь. Критерии приёмки от этого не меняются: их всё равно проверяет запуск.

@@ -36,8 +36,8 @@ Provides phase-specific prompts for `code` delegation.
 **Before starting:**
 
 - [ ] Plan.md approved (for 🟡🔴)
-- [ ] feature-spec.md → UX Design Pass completed
-- [ ] checklist-ux-completeness reviewed
+- [ ] UX Design Pass completed (checklist-ux-design)
+- [ ] checklist-ux-review reviewed
 
 </prerequisites>
 
@@ -418,7 +418,7 @@ Fields: [List with types and validation]
 ✅ Build clean
 
 ## Reference
-- Tokens file, checklist-ux-completeness
+- Tokens file, checklist-ux-review
 ```
 
 </build_order>

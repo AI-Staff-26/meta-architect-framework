@@ -263,7 +263,7 @@ description: |
 ## Requirements
 1. Поведение НЕ МЕНЯЕТСЯ
 2. Все существующие тесты проходят
-3. Код соответствует rules/meta-architect-framework.md
+3. Код соответствует CLAUDE.md и конвенциям проекта
 
 ## Constraints
 ❌ НЕ менять поведение
