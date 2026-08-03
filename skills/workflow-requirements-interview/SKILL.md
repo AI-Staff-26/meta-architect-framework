@@ -1,263 +1,106 @@
 ---
 name: workflow-requirements-interview
 description: |
-  STRUCTURED REQUIREMENTS GATHERING through questioning. Discovers edge cases, 
-  constraints, success criteria, hidden assumptions. Loaded BY role-meta-architect 
-  when requirements unclear or incomplete. Creates Requirements.md. Use for: 
-  ambiguous requests, complex features. NOT for: clear requirements.
+  Turn a vague request into a Requirements.md that can be planned against —
+  the coverage map of what a feature's requirements must settle, plus the
+  document template. Use when a request has several possible readings, when a
+  past attempt missed the mark, or when the user says "не уверен что именно
+  нужно", "надо обсудить", "сделай как лучше". Supplies the territory;
+  invoke grilling for the interview loop itself.
 ---
 
-<identity>
-Protocol for extracting clear requirements through structured questioning.
-Transforms vague requests into actionable specifications.
-</identity>
+# Requirements Interview
 
----
+Extract requirements you can plan against. This skill holds the **coverage map** — the territory a feature's requirements have to settle — and the document they land in.
 
-<when_to_use>
+**The interview loop lives in `grilling`.** Invoke it and work this map through it: one question at a time, facts looked up rather than asked, every question carrying a recommended answer, blocking unknowns first. This skill supplies *what* to resolve; `grilling` supplies *how* to ask.
 
-## Activation Criteria
+## When it earns its cost
 
-**Use this workflow when:**
+Reach for it when the request has more than one reasonable reading, when it carries many decision points, or when a previous attempt built the wrong thing. When a clear specification already exists, or the whole change is under half an hour, go straight to planning — an interview there spends the user's attention to confirm what you both already know.
 
-- User request is vague or ambiguous
-- Multiple interpretations possible
-- Complex feature with many decision points
-- User says "I'm not sure exactly what I need"
-- Past implementations missed the mark
+## Coverage map
 
-**Do NOT use when:**
+Six areas. They are territory, not a sequence — follow whichever branch the last answer opened, and use this to notice what has gone unexamined.
 
-- Requirements already clear
-- Clear specification exists
-- Simple task (< 30 min)
+**Problem** — what problem this solves, for whom, what success looks like, and what failure looks like. Ask *why* behind each stated requirement; the answer often replaces the requirement with a better one.
 
-</when_to_use>
+**Scope** — what it must do, what would be nice, and what is explicitly excluded. The exclusions are the most valuable answers in the interview and the ones users volunteer least, so ask for them directly.
 
----
+**Behaviour** — walk one typical case end to end. What the user provides, what comes back, which user types differ, what each is allowed to do.
 
-<protocol>
+**Quality attributes** — speed, scale, security level, availability, and any compliance obligation. Ask for a number wherever a number exists: "fast" is not reviewable, "under 200 ms at the 95th percentile" is.
 
-## Requirements Interview Protocol
+**Edge cases** — empty data, too much data, malformed input, unexpected user action, external service failure, concurrent access, a second device. Each one either gets defined behaviour or gets written down as deliberately undefined.
 
-### Phase 1: Core Understanding
+**Blocking unknowns** — accounts, API keys, hosting, payment provider, data ownership, deadline. These belong in the opening questions, per `grilling`.
 
-```
-GOAL QUESTIONS:
-1. "What problem are you trying to solve?"
-2. "Who will use this feature?"
-3. "What does success look like?"
-4. "What would failure look like?"
-```
+### Domain question banks
 
-### Phase 2: Scope Definition
+Pull the bank matching what is being built.
 
-```
-BOUNDARY QUESTIONS:
-1. "What MUST this do?" (must-haves)
-2. "What would be nice to have?" (should-haves)
-3. "What is explicitly NOT included?" (won't-haves)
-4. "What's the timeline/priority?"
-```
+| Domain | Resolve |
+|---|---|
+| **User-facing** | Primary users; what triggers the flow; the happy path; which errors occur and how they surface; where it lives in the UI; available actions; which need confirmation |
+| **API** | Purpose; methods; required and optional inputs; response shape; error cases; authentication; rate limiting; idempotency |
+| **Data** | What is stored; relationships; expected volume; retention; who may read what; audit trail; backup and recovery |
+| **Integration** | Which external system; protocol; authentication; retry and failure behaviour; timeouts; format mapping |
 
-### Phase 3: Functional Details
+## Conducting it
 
-```
-BEHAVIOR QUESTIONS:
-1. "Walk me through a typical use case"
-2. "What data does user provide?"
-3. "What output/feedback do they expect?"
-4. "What happens if [edge case]?"
-5. "Are there different user types/permissions?"
-```
+Ask open questions before closed ones — a closed question proposes an answer, and users accept proposals rather than correcting them.
 
-### Phase 4: Non-Functional Requirements
+Listen for the unstated assumption, and repeat your understanding back in your own words. When the user corrects the restatement, that correction is the requirement.
 
-```
-QUALITY QUESTIONS:
-1. "How fast should this be?" (performance)
-2. "How many users/items will this handle?" (scale)
-3. "What security level is needed?" (security)
-4. "How reliable must it be?" (availability)
-5. "Any compliance requirements?" (regulatory)
-```
+Keep gathering separate from solving. A solution offered mid-interview stops the user describing the problem and starts them evaluating your idea, and the remaining branches go unexplored.
 
-### Phase 5: Edge Case Discovery
+Phrases that open branches: *"Help me understand…"*, *"What happens if…"*, *"Can you give me an example?"*, *"What would be unacceptable?"*, *"Let me repeat back what I heard…"*.
 
-```
-EDGE CASE QUESTIONS:
-1. "What if the data is empty?"
-2. "What if there's too much data?"
-3. "What if the user does something unexpected?"
-4. "What if the external service fails?"
-5. "What about concurrent access?"
-6. "What about mobile/different devices?"
-```
+## Output
 
-### Phase 6: Documentation
-
-```
-CREATE /docs/Requirements.md:
-- Functional requirements (FR)
-- Non-functional requirements (NFR)  
-- Acceptance criteria
-- Out of scope
-- Open questions (if any)
-```
-
-</protocol>
-
----
-
-<question_templates>
-
-## Question Templates by Domain
-
-### User-Facing Features
-
-```
-- Who are the primary users?
-- What trigger starts this workflow?
-- What's the happy path?
-- What errors can occur?
-- How should errors be communicated?
-- Where does this appear in the UI?
-- What actions are available?
-- What confirmations are needed?
-```
-
-### API Endpoints
-
-```
-- What's the endpoint purpose?
-- What HTTP method(s)?
-- What inputs are required/optional?
-- What's the response format?
-- What errors can occur?
-- Authentication required?
-- Rate limiting needed?
-- Idempotency considerations?
-```
-
-### Data/Database
-
-```
-- What data is stored?
-- What relationships exist?
-- How much data expected?
-- How long is data retained?
-- Who can access what data?
-- Audit trail needed?
-- Backup/recovery needs?
-```
-
-### Integration
-
-```
-- What external system?
-- What's the API/protocol?
-- Authentication method?
-- Retry/failure handling?
-- Timeout expectations?
-- Data format/mapping?
-```
-
-</question_templates>
-
----
-
-<requirements_template>
-
-## Requirements.md Template
+Write `/docs/Requirements.md`:
 
 ```markdown
-# Requirements: [Feature Name]
+# Requirements: [Feature]
 
 ## Overview
-[What this feature does - 2-3 sentences]
+[What this does, in two or three sentences]
 
 ## User Stories
-
-### As [user type]
-- I want to [action]
-- So that [benefit]
+As [user type], I want to [action], so that [benefit].
 
 ## Functional Requirements
-
-### FR-1: [Requirement Name]
-**Description:** [What it does]
-**Acceptance Criteria:**
-- [ ] [Criterion 1]
-- [ ] [Criterion 2]
-
-### FR-2: [Requirement Name]
-...
+### FR-1: [Name]
+**Description:** [what it does]
+**Acceptance criteria:**
+- [ ] [Observable, checkable]
 
 ## Non-Functional Requirements
-
-### Performance
-- [Requirement, e.g., "Response time < 200ms"]
-
-### Security
-- [Requirement, e.g., "Must be authenticated"]
-
-### Scalability
-- [Requirement, e.g., "Support 10K concurrent users"]
+- **Performance:** [number]
+- **Security:** [level]
+- **Scale:** [number]
 
 ## Edge Cases
-
-| Scenario | Expected Behavior |
-|----------|-------------------|
-| Empty input | [behavior] |
-| Invalid data | [behavior] |
-| Timeout | [behavior] |
+| Scenario | Expected behaviour |
+|---|---|
+| Empty input | … |
+| Invalid data | … |
+| External timeout | … |
 
 ## Out of Scope
-- [Explicitly excluded 1]
-- [Explicitly excluded 2]
+- [Explicitly excluded]
 
 ## Open Questions
-- [ ] [Question needing user input]
+- [ ] PLACEHOLDER — [what is unresolved and who decides]
 
 ## Dependencies
-- [External system/API]
-- [Other feature]
+- [External system, other feature]
 ```
 
-</requirements_template>
+Every acceptance criterion is observable: something you could hand to a reviewer who would reach the same verdict as you.
 
----
+## Completion criterion
 
-<interview_tips>
+Requirements are done when every area of the coverage map is either resolved or carries a written `PLACEHOLDER` naming who decides; every acceptance criterion is checkable; the Out of Scope list is non-empty; and the user has confirmed the restatement in their own words.
 
-## Interview Best Practices
-
-### DO
-
-- Ask open-ended questions first
-- Listen for unstated assumptions
-- Repeat back understanding
-- Probe "why" behind requirements
-- Document as you go
-
-### DON'T
-
-- Lead the witness (suggest solutions)
-- Assume you know what they mean
-- Skip edge cases "for now"
-- Mix gathering with solutioning
-
-### Phrases That Help
-
-- "Help me understand..."
-- "What happens if..."
-- "Can you give me an example?"
-- "What would be unacceptable?"
-- "Let me repeat back what I heard..."
-
-</interview_tips>
-
----
-
-**Loaded by:** role-meta-architect  
-**Output:** /docs/Requirements.md with clear specifications
+**Areas covered, not questions asked.** A question count stops early on a payments integration and pads a rename.
