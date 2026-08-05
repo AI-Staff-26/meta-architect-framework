@@ -16,3 +16,8 @@ backups/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Claude Code runtime artifacts (not part of the framework)
+.last-update-result.json
+paste-cache/
+tasks/
