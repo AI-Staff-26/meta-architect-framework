@@ -1,523 +1,99 @@
 ---
 name: pattern-clean-architecture
 description: |
-  Layered architecture with dependency inversion. Domain/Application/Presentation/
-  Infrastructure separation. For complex business logic, long-term maintainability, 
-  testability. AVOID for simple CRUD apps or MVPs. Foundational pattern.
+  The dependency rule — every import points inward, so business rules run
+  without a database, an HTTP server, or a framework, and the four layers
+  (domain, application, presentation, infrastructure) stop being folders.
+  Use when choosing an architecture for a system with real business rules,
+  answering "куда положить этот код", judging whether existing layers are
+  still intact, or planning to make the framework or ORM replaceable.
+  When the pressure is team size and feature ownership rather than
+  framework independence, use `pattern-modular-monolith`.
 ---
 
-# 🧅 Clean Architecture — Чистая Архитектура
+# Clean Architecture
 
-<purpose>
-Паттерн слоёной архитектуры с чётким разделением ответственностей.
-Инверсия зависимостей: бизнес-логика не зависит от фреймворков.
-</purpose>
+**Dependencies point inward.** That single direction is the whole pattern — the four layers are filing until the direction is enforced. Four folders with imports running both ways cost more than no layers at all: the indirection is paid for and nothing is bought.
 
----
+## What the direction buys
 
-## Когда Использовать
+Three properties, each of which stops being true the moment one import runs outward:
 
-**Подходит для:**
+- **Business rules exercisable without infrastructure** — the domain runs in a test with no database, no server, no fixtures, in milliseconds. This is what makes `tdd` cheap enough to actually do on business logic.
+- **A replaceable framework and ORM** — nothing inside knows their names, so swapping the ORM, the web framework, or the payment provider is an infrastructure-layer change with the rules untouched.
+- **A domain readable on its own** — the rules are legible without paging through connection handling, retries, and serialisation.
 
-- Проекты со сложной бизнес-логикой
-- Долгоживущие проекты (>1 года поддержки)
-- Проекты с высокими требованиями к тестируемости
-- Команды >2 человек
-- Проекты с возможной сменой технологий
+A project that needs none of the three is paying the cost for nothing.
 
-**НЕ подходит для:**
+## Where does this code go?
 
-- MVP / PoC с ограниченным временем
-- Простые CRUD приложения
-- Одноразовые скрипты
-- Прототипы
+| Layer | Holds | May import |
+|---|---|---|
+| **Domain** | Entities, value objects, domain services, domain events, repository interfaces | The language and its standard library. Nothing else |
+| **Application** | Use cases — one scenario each, orchestration only — and their DTOs | Domain |
+| **Presentation** | Controllers, resolvers, CLI commands, presenters, mappers | Application and Domain |
+| **Infrastructure** | Repository implementations, ORM, API clients, config, the composition root | Everything — it exists to implement what the inner layers declare |
 
-**Сложность внедрения:** 🟡 Medium
+The inversion that makes this work: the interface is declared where it is *needed* and implemented where the technology lives. `UserRepository` is a domain file; `PostgresUserRepository` is an infrastructure file. Data still reaches the database while the arrow still points inward.
 
----
+One place does the wiring — the composition root builds concrete implementations and injects them.
 
-## Концепция
+The events in the Domain row are the domain's own. An event *published to other modules* is a contract rather than an internal fact, and it belongs to `pattern-modular-monolith`'s `api/`.
 
-### Принцип Зависимостей
+## The check is mechanical
 
-```
-Зависимости направлены ВНУТРЬ.
-Внутренние слои ничего не знают о внешних.
+Read a layer's import list. A domain file importing a driver, an ORM, or a web framework is the violation, and it is visible without reading a single function body — which is what makes it a lint rule that fails the build rather than something reviewers remember to look for. `pattern-modular-monolith` holds the mechanism per stack, and the argument for why a boundary nobody enforces decays.
 
-    ┌─────────────────────────────────┐
-    │         Infrastructure          │  ← Frameworks, DB, External
-    │   ┌─────────────────────────┐   │
-    │   │       Presentation      │   │  ← Controllers, Views
-    │   │   ┌─────────────────┐   │   │
-    │   │   │   Application   │   │   │  ← Use Cases
-    │   │   │   ┌─────────┐   │   │   │
-    │   │   │   │ Domain  │   │   │   │  ← Entities, Business Rules
-    │   │   │   └─────────┘   │   │   │
-    │   │   └─────────────────┘   │   │
-    │   └─────────────────────────┘   │
-    └─────────────────────────────────┘
-```
+## The cost, and where it is not repaid
 
-### Ключевые Принципы
+Indirection: a change that would touch one file touches four. Mapping between DTO and entity is real code carrying no business value. A stack trace runs further before reaching the rule that produced it.
 
-1. **Dependency Inversion** — зависимости направлены к центру
-2. **Separation of Concerns** — каждый слой отвечает за своё
-3. **Testability** — бизнес-логика тестируется без внешних зависимостей
-4. **Framework Independence** — можно заменить фреймворк/БД
+That cost is repaid by change over time — years of maintenance, rules worth naming, a technology expected to move. It is not repaid here:
 
----
+| Situation | Shape to reach for instead |
+|---|---|
+| A surface that is genuinely a thin shell over tables | Controllers talking to the ORM directly; introduce a seam only where one part grows deep — `codebase-design` |
+| A PoC whose open question is whether anyone wants the thing | One thin path end to end — `workflow-new-project` — and architecture once demand is real |
+| Mixed: a rich core plus a wide CRUD periphery | Layers around the core only, and the periphery left flat. The rule is worth enforcing where the rules live |
 
-## Слои
+## When the pattern is decorative
 
-### 1. Domain Layer (Core)
+| Symptom | What it means | Direction of fix |
+|---|---|---|
+| All four folders exist, entities are bags of public fields, every rule lives in a use case | The layers are present and the rule is not — the domain is a data format, not a model | Move each rule onto the entity that owns its invariant; leave use cases with orchestration only |
+| A use case imports a concrete repository | The arrow reversed exactly where it mattered: the application layer is now pinned to a database | Depend on the interface; construct it in the composition root |
+| A domain file imports an ORM or framework type for convenience | The boundary leaked through a type rather than through a call | Give the domain its own value object and map at the edge |
+| Every layer boundary is a one-method pass-through | Layer discipline placed the boundaries; nothing decided whether they earn their place | `codebase-design` |
+| Layer rules hold in review but not in CI | The check is human, so it is intermittent | Add the lint rule and let it fail the build |
 
-**Ответственность:** Бизнес-сущности и правила.
+## Where cross-cutting concerns go
 
-**Содержит:**
+Authorisation, tenancy, and feature evaluation get asked about from everywhere, which makes the layer table look like it forbids them. It does not — they arrive the way every other technology does:
 
-- Entities — бизнес-объекты с идентичностью
-- Value Objects — иммутабельные объекты без идентичности
-- Domain Services — логика, не принадлежащая одной сущности
-- Domain Events — события предметной области
-- Repository Interfaces — контракты (НЕ реализации!)
+- **Authorisation** and **flag evaluation** are interfaces declared where they are needed and implemented in Infrastructure — `pattern-rbac`, `pattern-feature-flags`.
+- **The tenant** is ambient, read by the infrastructure repositories rather than threaded inward through every signature — `pattern-multi-tenant`.
+- A domain rule that branches on a permission or a flag takes the decision as an argument. The moment the domain calls the store itself, the direction is gone.
 
-**Правила:**
+## Introducing it into a codebase that exists
 
-- ❌ Никаких зависимостей от внешних библиотек
-- ❌ Никаких импортов из других слоёв
-- ✅ Только чистый язык (TypeScript/Python/etc.)
-- ✅ Полностью тестируем в изоляции
+Carry **one use case end to end** through all four layers first: one scenario, its entity, its repository interface, its implementation, its wiring, its tests. The shape gets proven where it is thin and cheap to change, and it produces the reference every later slice is written against.
 
-**Пример структуры:**
+Land the lint rule as soon as that reference slice is settled, before any file outside it moves. Moving every file first produces four folders and the old direction.
 
-```
-/domain
-├── entities/
-│   ├── User.ts
-│   └── Order.ts
-├── value-objects/
-│   ├── Email.ts
-│   └── Money.ts
-├── services/
-│   └── PricingService.ts
-├── events/
-│   └── OrderPlaced.ts
-└── repositories/
-    ├── IUserRepository.ts    # Интерфейс!
-    └── IOrderRepository.ts   # Интерфейс!
-```
+## Adopting it
 
-### 2. Application Layer (Use Cases)
+🔴 — architecture, by the signals in CLAUDE.md's complexity table, which is where the gate lives. The ADR records which layers this project actually takes, what was rejected, the cost accepted, and where the boundary is allowed to be thin. Format in `memory-keeping`.
 
-**Ответственность:** Оркестрация бизнес-процессов.
+Into a running system it stays 🔴 for a second reason: contracts move, data migrates, and rollback is no longer a revert. That is `workflow-architecture-change`'s territory, phased so every step reverses.
 
-**Содержит:**
+## Completion criterion
 
-- Use Cases / Interactors — конкретные сценарии использования
-- DTOs — объекты передачи данных
-- Application Services — координация use cases
-- Port Interfaces — входные/выходные порты
+Done when: every layer's imports match the table above and a CI rule fails the build when they stop matching; every business rule sits on the entity or domain service that owns its invariant, with use cases holding orchestration only; the domain suite runs with no database, no server, and no framework container; every dependency an inner layer has on an outer one is an interface declared where it is needed and constructed in the composition root; each repository implementation is exercised against the real technology rather than only through its interface; one use case has been carried end to end through all four layers before the rest moved; and an ADR records the choice, the rejected alternative, and the cost accepted.
 
-**Правила:**
+## Related
 
-- ✅ Зависит от Domain Layer
-- ❌ НЕ зависит от Infrastructure
-- ❌ НЕ содержит бизнес-логику (только оркестрация)
-- ✅ Один Use Case = один файл
-
-**Пример структуры:**
-
-```
-/application
-├── use-cases/
-│   ├── user/
-│   │   ├── CreateUser.ts
-│   │   ├── GetUserById.ts
-│   │   └── UpdateUserEmail.ts
-│   └── order/
-│       ├── PlaceOrder.ts
-│       └── CancelOrder.ts
-├── dtos/
-│   ├── UserDTO.ts
-│   └── OrderDTO.ts
-└── ports/
-    ├── input/
-    │   └── IUserService.ts
-    └── output/
-        └── IEmailSender.ts
-```
-
-### 3. Presentation Layer (Interface Adapters)
-
-**Ответственность:** Адаптация внешних запросов к внутренним контрактам.
-
-**Содержит:**
-
-- Controllers — обработка HTTP/CLI/etc.
-- Presenters — форматирование ответов
-- View Models — данные для отображения
-- Mappers — преобразование между слоями
-
-**Правила:**
-
-- ✅ Зависит от Application Layer
-- ✅ Вызывает Use Cases
-- ❌ НЕ содержит бизнес-логику
-- ❌ НЕ обращается напрямую к Domain
-
-**Пример структуры:**
-
-```
-/presentation
-├── http/
-│   ├── controllers/
-│   │   ├── UserController.ts
-│   │   └── OrderController.ts
-│   ├── middleware/
-│   │   └── AuthMiddleware.ts
-│   └── routes/
-│       └── index.ts
-├── cli/
-│   └── commands/
-│       └── CreateUserCommand.ts
-└── graphql/
-    ├── resolvers/
-    └── schema/
-```
-
-### 4. Infrastructure Layer
-
-**Ответственность:** Реализация внешних зависимостей.
-
-**Содержит:**
-
-- Repository Implementations — работа с БД
-- External Services — интеграции, API клиенты
-- Framework Configurations — настройки фреймворков
-- Persistence — ORM, миграции
-
-**Правила:**
-
-- ✅ Реализует интерфейсы из Domain/Application
-- ✅ Содержит все внешние зависимости
-- ❌ Бизнес-логика не размещается здесь
-
-**Пример структуры:**
-
-```
-/infrastructure
-├── persistence/
-│   ├── repositories/
-│   │   ├── PostgresUserRepository.ts
-│   │   └── PostgresOrderRepository.ts
-│   ├── orm/
-│   │   └── prisma/
-│   └── migrations/
-├── external/
-│   ├── email/
-│   │   └── SendGridEmailSender.ts
-│   └── payment/
-│       └── StripePaymentGateway.ts
-├── config/
-│   ├── database.ts
-│   └── app.ts
-└── di/
-    └── container.ts    # Dependency Injection
-```
-
----
-
-## Dependency Injection
-
-### Принцип
-
-```typescript
-// ❌ WRONG: Use Case зависит от конкретной реализации
-class CreateUser {
-  private repo = new PostgresUserRepository(); // Жёсткая связь!
-}
-
-// ✅ RIGHT: Use Case зависит от интерфейса
-class CreateUser {
-  constructor(private repo: IUserRepository) {} // Инъекция!
-}
-```
-
-### Схема DI
-
-```
-Composition Root (main.ts / app.ts)
-         │
-         ├── Создаёт Infrastructure implementations
-         ├── Создаёт Application use cases с инъекцией
-         └── Конфигурирует Presentation layer
-```
-
-### Пример Composition Root
-
-```typescript
-// /infrastructure/di/container.ts
-
-import { IUserRepository } from '@/domain/repositories/IUserRepository';
-import { PostgresUserRepository } from '@/infrastructure/persistence/repositories/PostgresUserRepository';
-import { CreateUser } from '@/application/use-cases/user/CreateUser';
-import { UserController } from '@/presentation/http/controllers/UserController';
-
-// Wiring
-const userRepository: IUserRepository = new PostgresUserRepository();
-const createUser = new CreateUser(userRepository);
-const userController = new UserController(createUser);
-
-export { userController };
-```
-
----
-
-## Структура Проекта
-
-### Вариант 1: Flat (по слоям)
-
-```
-/src
-├── domain/
-├── application/
-├── presentation/
-├── infrastructure/
-└── main.ts
-```
-
-**Когда использовать:** Небольшие проекты, один bounded context.
-
-### Вариант 2: Modular (по фичам)
-
-```
-/src
-├── modules/
-│   ├── user/
-│   │   ├── domain/
-│   │   ├── application/
-│   │   ├── presentation/
-│   │   └── infrastructure/
-│   └── order/
-│       ├── domain/
-│       ├── application/
-│       ├── presentation/
-│       └── infrastructure/
-├── shared/
-│   ├── domain/
-│   └── infrastructure/
-└── main.ts
-```
-
-**Когда использовать:** Средние/большие проекты, несколько bounded contexts.
-
----
-
-## Data Flow
-
-### Пример: Create User
-
-```
-HTTP Request
-     │
-     ▼
-┌─────────────┐
-│ Controller  │  ← Парсит request, валидирует input
-└──────┬──────┘
-       │ CreateUserDTO
-       ▼
-┌─────────────┐
-│  Use Case   │  ← Оркестрирует логику
-│ CreateUser  │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│   Domain    │  ← Создаёт User entity
-│    User     │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│ Repository  │  ← IUserRepository.save()
-│ (Interface) │
-└──────┬──────┘
-       │ Реализация
-       ▼
-┌─────────────┐
-│  Postgres   │  ← PostgresUserRepository
-│ Repository  │
-└──────┬──────┘
-       │
-       ▼
-   Database
-```
-
----
-
-## Тестирование
-
-### Unit Tests
-
-**Domain Layer:**
-
-```typescript
-// Тестируем без зависимостей
-describe('User', () => {
-  it('should validate email format', () => {
-    expect(() => new User('invalid-email')).toThrow();
-  });
-});
-```
-
-**Application Layer:**
-
-```typescript
-// Мокаем репозитории
-describe('CreateUser', () => {
-  it('should create user', async () => {
-    const mockRepo: IUserRepository = {
-      save: jest.fn(),
-      findById: jest.fn(),
-    };
-    
-    const useCase = new CreateUser(mockRepo);
-    await useCase.execute({ email: 'test@test.com' });
-    
-    expect(mockRepo.save).toHaveBeenCalled();
-  });
-});
-```
-
-### Integration Tests
-
-**Infrastructure:**
-
-```typescript
-// Тестируем с реальной БД (test container)
-describe('PostgresUserRepository', () => {
-  it('should persist and retrieve user', async () => {
-    const repo = new PostgresUserRepository(testDb);
-    const user = new User('test@test.com');
-    
-    await repo.save(user);
-    const found = await repo.findById(user.id);
-    
-    expect(found).toEqual(user);
-  });
-});
-```
-
----
-
-## Common Mistakes
-
-### ❌ Анемичные Сущности
-
-```typescript
-// WRONG: Сущность без поведения
-class User {
-  id: string;
-  email: string;
-  name: string;
-}
-
-// RIGHT: Сущность с бизнес-логикой
-class User {
-  private constructor(
-    public readonly id: string,
-    private _email: Email,
-    private _name: string
-  ) {}
-
-  changeEmail(newEmail: Email): void {
-    // Валидация и бизнес-правила
-    this._email = newEmail;
-  }
-}
-```
-
-### ❌ Бизнес-логика в Use Case
-
-```typescript
-// WRONG
-class CreateOrder {
-  execute(dto: CreateOrderDTO) {
-    if (dto.items.length === 0) throw new Error('Empty order'); // Логика!
-    const total = dto.items.reduce((sum, i) => sum + i.price, 0); // Логика!
-  }
-}
-
-// RIGHT: Логика в Domain
-class Order {
-  static create(items: OrderItem[]): Order {
-    if (items.length === 0) throw new DomainError('Empty order');
-    return new Order(items, this.calculateTotal(items));
-  }
-}
-```
-
-### ❌ Прямые зависимости от Infrastructure
-
-```typescript
-// WRONG
-import { PrismaClient } from '@prisma/client'; // В Application слое!
-
-// RIGHT
-import { IUserRepository } from '@/domain/repositories/IUserRepository';
-```
-
----
-
-## Чеклист Внедрения
-
-### Domain
-
-- [ ] Entities содержат бизнес-логику
-- [ ] Value Objects иммутабельные
-- [ ] Repository — только интерфейсы
-- [ ] Нет внешних зависимостей
-
-### Application
-
-- [ ] Use Cases — один класс = один сценарий
-- [ ] DTOs для входа/выхода
-- [ ] Нет прямых зависимостей от Infrastructure
-
-### Presentation
-
-- [ ] Controllers только вызывают Use Cases
-- [ ] Валидация входных данных
-- [ ] Маппинг в/из DTOs
-
-### Infrastructure
-
-- [ ] Реализует интерфейсы из Domain/Application
-- [ ] DI Container настроен
-- [ ] Все внешние зависимости изолированы
-
----
-
-## Quick Reference
-
-```
-Domain    → Entities, Value Objects, Interfaces
-Application → Use Cases, DTOs, Orchestration  
-Presentation → Controllers, Adapters, IO
-Infrastructure → DB, External APIs, Framework
-
-Зависимости: Infrastructure → Presentation → Application → Domain
-                    ↓              ↓              ↓
-              [implements]    [uses]        [uses]
-```
-
----
-
-**Связанные файлы:**
-
-- `pattern-modular-monolith/SKILL.md` — альтернативный паттерн
-- `workflow-new-project/SKILL.md` — применение при создании проекта
-
----
-
-**END OF PATTERN**
+- `codebase-design` — whether each layer boundary is deep enough to earn its hop
+- `pattern-modular-monolith` — when the split that matters is by feature and team, not by technical layer
+- `tdd` — the test suite the inward direction is what makes possible
+- `workflow-architecture-change` — introducing or moving layers in a system already running
+- `memory-keeping` — the ADR this decision gets written into
