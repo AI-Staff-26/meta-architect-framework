@@ -1,23 +1,15 @@
-# Claude Code system files (NOT part of the framework)
-.credentials.json
-settings.json
-cache/
-sessions/
-history.jsonl
-file-history/
-session-env/
-shell-snapshots/
-mcp-needs-auth-cache.json
-.last-cleanup
-projects/
-plugins/
-backups/
+# Whitelist: игнорировать всё по умолчанию, коммитить только фреймворк.
+# Новые runtime-папки Claude Code (daemon/, jobs/, telemetry/, sessions/, cache/...)
+# не попадают в git автоматически — их не нужно добавлять в этот файл.
 
-# OS files
-.DS_Store
-Thumbs.db
+*
 
-# Claude Code runtime artifacts (not part of the framework)
-.last-update-result.json
-paste-cache/
-tasks/
+# Разрешить только фреймворк
+!.gitignore
+!CLAUDE.md
+!agents/
+!agents/**
+!rules/
+!rules/**
+!skills/
+!skills/**
