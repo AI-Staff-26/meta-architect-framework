@@ -76,4 +76,4 @@ Record infrastructure facts — ports, environment variables, deploy targets, th
 
 ## Completion criterion
 
-Done when: the change is applied and proven by a pasted verification command; the rollback path is written down and would work; no secret appears in any file, log, or command you produced; and the target environment is stated explicitly rather than assumed.
+Done when: the change is applied and proven by the verification command and the output it produced; the rollback path is written down and would work; no secret appears in any file, log, or command you produced; and the target environment is stated explicitly rather than assumed.

@@ -25,6 +25,8 @@ Complexity levels, STOP gates, and FAIL routing live in `CLAUDE.md`. This skill 
 
 **Order by dependency.** Build the graph before the list — for each piece, what must exist before it, and what depends on it. Every task references only what an earlier task has already created. A cycle showing up here is a design problem surfacing at the cheapest moment; break it with an interface before delegating either side.
 
+The graph is a sequence, not a fan-out: implementation runs one agent at a time. Two agents editing a shared tree produce conflicts nobody planned and a diff nobody can review. Parallel dispatch belongs to review, where the axes share no files.
+
 **Delegate a task, not an epic.** "Add JWT auth with roles and OAuth" returns a different system every run. "Add `POST /auth/login` issuing a JWT, given the existing `User` model" returns the same one.
 
 ## Bound the scope

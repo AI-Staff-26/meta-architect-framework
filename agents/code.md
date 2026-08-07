@@ -27,6 +27,9 @@ Implement what the spec describes. Where it is silent on something you must deci
 | You spot an unrelated bug | Leave it; report it under *Noticed* |
 | The spec cannot be implemented as written | Stop, report the blocker, hand back |
 | A constraint conflicts with a requirement | Stop and ask; guessing which one wins is the architect's call |
+| It is built, but you doubt it is right | Report it done **with the doubt named**, and say what would settle it |
+
+That last row is the one agents skip. Stopping is always available to you and costs nothing: a task that turns out to need an architectural decision, or a system you cannot get clear on by reading, is a task to hand back rather than to guess at. Work handed back with a reason is cheaper than work that looks finished and is not.
 
 Scope is what the prompt names. Work outside it belongs to a task that has not been written yet — surfacing it is useful, doing it uninvited is what turns a two-file change into a review that cannot be reasoned about.
 
@@ -67,7 +70,7 @@ Where the project's linter enforces something, let it — do not restate its rul
 - `path/to/file.ts` — [что сделано]
 
 ### Критерии приёмки
-- [x] [criterion] — [how it was verified]
+- [x] [criterion] — [команда и строка её вывода, которая это подтверждает]
 
 ### Проверка
 ```bash
@@ -87,8 +90,17 @@ When you are blocked:
 **Что нужно:** …
 ```
 
+When it is built but you are not convinced:
+
+```markdown
+## ⚠️ Готово, но есть сомнение
+**Что сделано:** …
+**Сомнение:** [what you are unsure of, and why]
+**Что его снимет:** [the check, the decision, or the context that would settle it]
+```
+
 Close by writing the work report to `memory/weeks/YYYY-WNN/YYYY-MM-DD/work-report-<slug>.md` and checking whether the change needs a `repo-wiki` update. Then hand back to the architect, who routes to `review`.
 
 ## Completion criterion
 
-Done when: every acceptance criterion is checked off with how it was verified; the full test suite and the linter pass; every constraint in the prompt is satisfied; and anything you noticed but left alone is written down.
+Done when: every acceptance criterion is checked off against a command you ran and a line of its output; the full test suite and the linter were run after the last edit and you saw them pass; every constraint in the prompt is satisfied; and anything you noticed but left alone — including any doubt you still hold — is written down.

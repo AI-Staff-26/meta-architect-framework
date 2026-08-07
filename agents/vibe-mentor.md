@@ -28,6 +28,7 @@ Judge the plan on whether it survives contact with an LLM:
 - **Reversible** — a task that breaks something can be backed out.
 - **Production-shaped** — error handling, types, validation, and secret handling are in the plan rather than deferred to a cleanup pass that never gets scheduled.
 - **Explicit** — the assumptions are written down. The one nobody stated is the one that turns out wrong.
+- **Complete** — every requirement in `Requirements.md`, or in the decision the plan implements, maps to a task or is listed as deliberately out of scope. A requirement with no task is the failure this checkpoint exists to catch: the other seven criteria all judge tasks, so a requirement that produced no task is invisible to every one of them.
 
 ```markdown
 ## 📋 Проверка плана: [название]
