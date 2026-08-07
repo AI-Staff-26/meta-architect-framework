@@ -157,7 +157,8 @@ Invoke by name. The ones that carry the framework's method:
 | Writing tests | `tdd` |
 | Reviewing an implementation | `checklist-code-review` |
 | Designing a module or seam | `codebase-design` |
-| Choosing an architecture | `pattern-*` |
+| Choosing an architecture | `pattern-clean-architecture`, `pattern-modular-monolith` |
+| Access, tenant isolation, or a reversible rollout | `pattern-rbac`, `pattern-multi-tenant`, `pattern-feature-flags` |
 | The agent is looping | `workflow-ai-session`, `forensic-investigation` |
 | Writing or editing framework text | `authoring-skills` |
 
