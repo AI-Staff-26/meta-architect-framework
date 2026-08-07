@@ -13,7 +13,7 @@ description: |
 
 Extract requirements you can plan against. This skill holds the **coverage map** — the territory a feature's requirements have to settle — and the document they land in.
 
-**The interview loop lives in `grilling`.** Invoke it and work this map through it: one question at a time, facts looked up rather than asked, every question carrying a recommended answer, blocking unknowns first. This skill supplies *what* to resolve; `grilling` supplies *how* to ask.
+**The interview loop lives in `grilling`.** Invoke it and work this map through it. This skill supplies *what* to resolve; `grilling` supplies *how* to ask.
 
 ## When it earns its cost
 
@@ -33,7 +33,7 @@ Six areas. They are territory, not a sequence — follow whichever branch the la
 
 **Edge cases** — empty data, too much data, malformed input, unexpected user action, external service failure, concurrent access, a second device. Each one either gets defined behaviour or gets written down as deliberately undefined.
 
-**Blocking unknowns** — accounts, API keys, hosting, payment provider, data ownership, deadline. These belong in the opening questions, per `grilling`.
+**Blocking unknowns** — see `grilling`; they open the interview.
 
 ### Domain question banks
 

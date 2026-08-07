@@ -42,11 +42,11 @@ While grilling a codebase project, keep the domain language current as decisions
 
 ## Completion criterion
 
+When the tree stops opening branches, state the resolved picture back in a short summary — in your own words, not a replay of theirs. The restatement is what makes the gap visible: when the user corrects it, that correction is the requirement.
+
 Grilling is done when **both** hold:
 
 - Every branch you have surfaced is either resolved or explicitly marked `PLACEHOLDER`, and no answer given has opened a branch you have not put to the user.
-- The user has confirmed shared understanding, in their own words.
-
-Then state the resolved picture back in a short summary and proceed.
+- The user has confirmed that restatement. **Silence is not confirmation**, and a follow-up question is not confirmation — answer it and restate again.
 
 **The count of questions is not the criterion.** Five may exhaust a one-file change; forty may not exhaust a payments integration. Asking a fixed number stops early on hard work and pads easy work. Resolve the tree.
