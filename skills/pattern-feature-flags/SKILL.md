@@ -1,523 +1,112 @@
 ---
 name: pattern-feature-flags
 description: |
-  Feature toggle pattern for runtime configuration. Gradual rollout, A/B testing, 
-  kill switches, per-tenant features. 🟢 Low complexity. Trunk-based development 
-  enabler. NOT for static configurations.
+  A flag is a branch that lives in production: shipping one ships both paths
+  and the obligation that comes with them — a removal date, or the acceptance
+  that it is now a permanent operational control. Covers the four flag types
+  and their lifespans, the fallback when the flag store is unreachable,
+  consistent bucketing for percentage rollouts, and cleanup as part of the work
+  that created the flag. Use for a gradual rollout, a kill switch, an A/B
+  experiment, per-plan entitlements and limits, trunk-based development, or
+  making a 🔴 rollout reversible; triggers "фича-флаг", "выкатить на часть
+  пользователей".
+  Whether this actor may act at all is `pattern-rbac`.
 ---
 
-# 🚩 Feature Flags — Флаги Функций
+# Feature Flags
 
-<purpose>
-Паттерн управления функциональностью через конфигурацию.
-Включение/выключение фич без деплоя кода.
-</purpose>
+**A flag is a branch that lives in production.** Shipping one ships both paths and the obligation that comes with them: either a date it is removed, or the acceptance that it is now a permanent operational control. A flag with neither is untested code with a switch on it.
 
----
+A value that only changes by deploy is configuration, not a flag: it has no second path and nothing to remove, and giving it a type, an owner and an evaluation log buys nothing.
 
-## Когда Использовать
+So the first decision is not the toggle — it is which kind of flag this is, because the kind sets everything after it.
 
-**Подходит для:**
+## The four types differ by lifespan
 
-- Постепенный rollout новых фич
-- A/B тестирование
-- Per-tenant конфигурация в SaaS
-- Kill switches для проблемных фич
-- Trunk-based development
+| Type | Question it answers | Lifespan | Removal |
+|---|---|---|---|
+| **Release** | Is this unfinished work visible yet? | Temporary — one release cycle | A removal ticket created together with the flag |
+| **Experiment** | Which variant wins? | A fixed measurement window | The window closes, a decision is recorded, both flag and losing path go |
+| **Ops kill switch** | Can we turn this off at 3am? | Permanent by design | None — this is an operational control, not debt |
+| **Entitlement** | Does this plan or tenant include the capability? | Permanent | None — it belongs to the billing and tenant model |
 
-**НЕ подходит для:**
+Two of these are debt on a clock and two are product surface. Calling a permanent control "technical debt" gets it deleted the week you need it; calling a release flag permanent is how a branch survives three years unread. Each flag also names the person who decides when it ends — a flag the whole team owns is a flag nobody removes.
 
-- Простые приложения без релизов
-- Проекты с редкими деплоями
-- Статические конфигурации
+## Entitlement is not permission
 
-**Сложность внедрения:** 🟢 Low
+An **entitlement** asks whether the plan includes a capability. A **permission** asks whether this actor may act, and that is `pattern-rbac`. Conflating them is how billing rules end up inside the authorisation service, where a pricing change becomes a security change and a plan upgrade goes through a permission migration.
 
----
+The two compose: the entitlement decides whether the feature exists for this tenant, the permission decides who inside that tenant may use it. In a multi-tenant product the entitlement is keyed by tenant and lives with the plan model — `pattern-multi-tenant`.
 
-## Концепция
+Entitlements are often quantitative — seats, storage, API rate. A plan limit is the same lookup returning a number instead of a boolean, under the same fallback rule, which is why it belongs here and not in a second configuration system.
+
+## The fallback is part of creating the flag
+
+Every evaluation returns something when the flag store is unreachable, and the answer is decided when the flag is created, not discovered during the outage. Choose it so failure lands on the safe side.
+
+A kill switch that fails open is not a kill switch — the thing it exists to stop stays on exactly when the control plane is down. A release flag fails to the path that was already working. An entitlement fails to what the session already carries rather than to *granted*, so a flaky store never hands out a plan nobody paid for.
+
+## Bucketing has to be consistent
+
+The same subject gets the same answer across requests, processes, and services. That means hashing the subject together with the flag key, never sampling per call:
 
 ```
-┌─────────────────────────────────────────┐
-│           Feature Flag System           │
-│                                         │
-│  ┌─────────────┐    ┌───────────────┐  │
-│  │ Flag Store  │───▶│ Evaluation    │  │
-│  │ (Config)    │    │ Engine        │  │
-│  └─────────────┘    └───────┬───────┘  │
-│                             │          │
-│         ┌───────────────────┼─────┐    │
-│         ▼                   ▼     ▼    │
-│    ┌────────┐         ┌────────┐       │
-│    │ User A │         │ User B │       │
-│    │ ✅ ON  │         │ ❌ OFF │       │
-│    └────────┘         └────────┘       │
-└─────────────────────────────────────────┘
+bucket  = hash(flag_key + ":" + subject_id) mod 100
+enabled = bucket < rollout_percent
 ```
 
-### Типы Флагов
-
-| Тип | Описание | Пример |
-|-----|----------|--------|
-| Release | Скрытие незаконченных фич | new_checkout_flow |
-| Experiment | A/B тесты | signup_variant_b |
-| Ops | Kill switches | enable_external_api |
-| Permission | Per-user/tenant | premium_feature |
-
----
-
-## Domain Model
-
-```typescript
-// domain/entities/FeatureFlag.ts
-class FeatureFlag extends Entity {
-  constructor(
-    public readonly key: string,
-    private _name: string,
-    private _description: string,
-    private _type: FlagType,
-    private _enabled: boolean,
-    private _rules: TargetingRule[],
-    private _defaultValue: boolean | string | number
-  ) {
-    super();
-  }
-
-  evaluate(context: EvaluationContext): FlagValue {
-    if (!this._enabled) {
-      return this._defaultValue;
-    }
-
-    for (const rule of this._rules) {
-      if (rule.matches(context)) {
-        return rule.value;
-      }
-    }
-
-    return this._defaultValue;
-  }
-}
-
-enum FlagType {
-  BOOLEAN = 'boolean',
-  STRING = 'string',
-  NUMBER = 'number',
-  JSON = 'json'
-}
-
-// Targeting Rules
-class TargetingRule {
-  constructor(
-    public readonly conditions: Condition[],
-    public readonly value: FlagValue,
-    public readonly percentage?: number
-  ) {}
-
-  matches(context: EvaluationContext): boolean {
-    // ALL conditions must match
-    return this.conditions.every(c => c.evaluate(context));
-  }
-}
-
-interface Condition {
-  attribute: string;  // userId, tenantId, email, country...
-  operator: Operator; // equals, contains, in, gt, lt...
-  value: unknown;
-}
-```
-
----
-
-## Feature Flag Service
-
-```typescript
-// application/services/FeatureFlagService.ts
-class FeatureFlagService {
-  constructor(
-    private flagRepo: IFeatureFlagRepository,
-    private cache: ICache
-  ) {}
-
-  async isEnabled(
-    key: string, 
-    context: EvaluationContext
-  ): Promise<boolean> {
-    const flag = await this.getFlag(key);
-    if (!flag) return false;
-    
-    return flag.evaluate(context) === true;
-  }
-
-  async getValue<T>(
-    key: string, 
-    context: EvaluationContext,
-    defaultValue: T
-  ): Promise<T> {
-    const flag = await this.getFlag(key);
-    if (!flag) return defaultValue;
-    
-    return flag.evaluate(context) as T ?? defaultValue;
-  }
-
-  private async getFlag(key: string): Promise<FeatureFlag | null> {
-    const cacheKey = `flag:${key}`;
-    
-    let flag = await this.cache.get<FeatureFlag>(cacheKey);
-    if (flag) return flag;
-
-    flag = await this.flagRepo.findByKey(key);
-    if (flag) {
-      await this.cache.set(cacheKey, flag, { ttl: 60 });
-    }
-    
-    return flag;
-  }
-}
-
-// Evaluation Context
-interface EvaluationContext {
-  userId?: string;
-  tenantId?: string;
-  email?: string;
-  country?: string;
-  userAgent?: string;
-  percentage?: number; // 0-100, для gradual rollout
-  attributes?: Record<string, unknown>;
-}
-```
-
----
-
-## Targeting Strategies
-
-### Percentage Rollout
-
-```typescript
-// 10% пользователей видят новую фичу
-const rule: TargetingRule = {
-  conditions: [],
-  value: true,
-  percentage: 10
-};
-
-// Consistent hashing для стабильности
-function getPercentageBucket(userId: string, flagKey: string): number {
-  const hash = crypto.createHash('md5')
-    .update(`${flagKey}:${userId}`)
-    .digest('hex');
-  return parseInt(hash.substring(0, 8), 16) % 100;
-}
-
-evaluate(context: EvaluationContext): boolean {
-  if (this.percentage === undefined) return true;
-  const bucket = getPercentageBucket(context.userId, this.flagKey);
-  return bucket < this.percentage;
-}
-```
-
-### User/Tenant Targeting
-
-```typescript
-// Только для определённых тенантов
-{
-  key: 'new_billing_system',
-  rules: [
-    {
-      conditions: [
-        { attribute: 'tenantId', operator: 'in', value: ['acme', 'globex'] }
-      ],
-      value: true
-    }
-  ],
-  defaultValue: false
-}
-
-// Beta users
-{
-  key: 'experimental_ui',
-  rules: [
-    {
-      conditions: [
-        { attribute: 'email', operator: 'endsWith', value: '@company.com' }
-      ],
-      value: true
-    }
-  ],
-  defaultValue: false
-}
-```
-
----
-
-## Usage Patterns
-
-### В Use Cases
-
-```typescript
-// application/use-cases/ProcessPayment.ts
-class ProcessPayment {
-  constructor(
-    private featureFlags: FeatureFlagService,
-    private oldProcessor: OldPaymentProcessor,
-    private newProcessor: NewPaymentProcessor
-  ) {}
-
-  async execute(dto: PaymentDTO): Promise<Result<Payment>> {
-    const context = { tenantId: dto.tenantId, userId: dto.userId };
-    
-    const useNewProcessor = await this.featureFlags.isEnabled(
-      'new_payment_processor', 
-      context
-    );
-
-    const processor = useNewProcessor 
-      ? this.newProcessor 
-      : this.oldProcessor;
-
-    return processor.process(dto);
-  }
-}
-```
-
-### В Controllers
-
-```typescript
-// presentation/controllers/CheckoutController.ts
-class CheckoutController {
-  @Get('/checkout')
-  async getCheckout(req: Request, res: Response) {
-    const context = this.buildContext(req);
-    
-    const variant = await this.featureFlags.getValue<string>(
-      'checkout_variant',
-      context,
-      'control'
-    );
-
-    return res.render(`checkout-${variant}`);
-  }
-}
-```
-
-### Middleware для Context
-
-```typescript
-// presentation/middleware/FeatureFlagMiddleware.ts
-class FeatureFlagMiddleware {
-  async handle(req: Request, res: Response, next: NextFunction) {
-    req.flagContext = {
-      userId: req.user?.id,
-      tenantId: req.tenant?.id,
-      email: req.user?.email,
-      country: req.headers['cf-ipcountry'],
-      userAgent: req.headers['user-agent'],
-      percentage: this.calculateBucket(req.user?.id)
-    };
-    next();
-  }
-}
-```
-
----
-
-## Multi-Tenant Feature Flags
-
-```typescript
-// Per-tenant feature overrides
-interface TenantFeatureOverride {
-  tenantId: string;
-  flagKey: string;
-  enabled: boolean;
-  value?: FlagValue;
-}
-
-class TenantAwareFeatureFlagService extends FeatureFlagService {
-  async isEnabled(key: string, context: EvaluationContext): Promise<boolean> {
-    // 1. Check tenant override
-    if (context.tenantId) {
-      const override = await this.getOverride(context.tenantId, key);
-      if (override !== null) return override;
-    }
-
-    // 2. Fall back to global flag
-    return super.isEnabled(key, context);
-  }
-}
-
-// Tenant subscription limits
-const flags = {
-  'advanced_analytics': {
-    rules: [
-      { conditions: [{ attribute: 'plan', operator: 'in', value: ['pro', 'enterprise'] }], value: true }
-    ],
-    defaultValue: false
-  }
-};
-```
-
----
-
-## Frontend Integration
-
-```typescript
-// API endpoint
-// GET /api/flags?context=...
-app.get('/api/flags', async (req, res) => {
-  const context = buildContext(req);
-  const flags = await featureFlagService.getAllForContext(context);
-  res.json(flags);
-});
-
-// React Hook
-function useFeatureFlag(key: string, defaultValue = false) {
-  const { flags } = useFeatureFlags();
-  return flags[key] ?? defaultValue;
-}
-
-// Component
-function NewDashboard() {
-  const showNewDashboard = useFeatureFlag('new_dashboard');
-  
-  if (!showNewDashboard) {
-    return <OldDashboard />;
-  }
-  
-  return <NewDashboardV2 />;
-}
-```
-
----
-
-## Admin UI
-
-### Flag Management
-
-```typescript
-// Admin endpoints
-POST   /admin/flags           # Create flag
-PUT    /admin/flags/:key      # Update flag
-DELETE /admin/flags/:key      # Delete flag
-POST   /admin/flags/:key/toggle  # Quick toggle
-
-// Audit log
-interface FlagAuditLog {
-  flagKey: string;
-  action: 'created' | 'updated' | 'toggled' | 'deleted';
-  previousValue: unknown;
-  newValue: unknown;
-  userId: string;
-  timestamp: Date;
-}
-```
-
----
-
-## Структура Проекта
-
-```
-/src
-├── modules/
-│   └── feature-flags/
-│       ├── api/
-│       │   ├── FeatureFlagService.ts
-│       │   └── dtos/
-│       └── internal/
-│           ├── domain/
-│           │   ├── FeatureFlag.ts
-│           │   └── TargetingRule.ts
-│           ├── application/
-│           │   └── EvaluateFlag.ts
-│           └── infrastructure/
-│               └── FeatureFlagRepository.ts
-│
-├── shared/
-│   └── feature-flags/
-│       ├── context.ts
-│       └── decorators.ts
-│
-└── presentation/
-    └── middleware/
-        └── FeatureFlagMiddleware.ts
-```
-
----
-
-## Anti-Patterns
-
-### ❌ Флаги без Cleanup
-
-```typescript
-// WRONG: Флаг существует годами
-if (featureFlags.isEnabled('new_checkout_2019')) { ... }
-
-// RIGHT: Удаляй флаги после полного rollout
-// + документируй lifecycle каждого флага
-```
-
-### ❌ Бизнес-логика в Флагах
-
-```typescript
-// WRONG: Сложная логика
-if (flag && user.plan === 'pro' && !user.isBlocked) { ... }
-
-// RIGHT: Логика в TargetingRules
-const enabled = await flags.isEnabled('feature', context);
-if (enabled) { ... }
-```
-
-### ❌ Флаги без Мониторинга
-
-```typescript
-// WRONG: Не знаем сколько людей видят фичу
-if (flags.isEnabled('experiment')) { ... }
-
-// RIGHT: Track usage
-const enabled = await flags.isEnabled('experiment', context);
-analytics.track('flag_evaluated', { flag: 'experiment', enabled });
-```
-
----
-
-## Чеклист
-
-- [ ] FeatureFlag entity с rules
-- [ ] FeatureFlagService с caching
-- [ ] EvaluationContext middleware
-- [ ] Percentage rollout support
-- [ ] Multi-tenant overrides
-- [ ] Admin UI для управления
-- [ ] Audit logging
-- [ ] Flag cleanup процесс
-
----
-
-## Quick Reference
-
-```
-Flag Types:
-  Release    → hide incomplete features
-  Experiment → A/B testing
-  Ops        → kill switches
-  Permission → per-tenant features
-
-Targeting:
-  User ID, Tenant ID, Email, Country, Percentage
-
-Usage:
-  flags.isEnabled('key', context) → boolean
-  flags.getValue('key', context, default) → T
-
-Lifecycle:
-  Create → Gradual Rollout → Full Release → Cleanup
-```
-
----
-
-**Связанные файлы:**
-
-- `pattern-multi-tenant/SKILL.md` — per-tenant flags
-- `pattern-rbac/SKILL.md` — feature permissions
-
----
-
-**END OF PATTERN**
+The flag key belongs inside the hash so that two 10% rollouts do not land on the same tenth of the population. The subject is whatever experiences the feature — user, tenant, or account; a per-user bucket on something a whole team sees splits the team mid-workflow.
+
+A percentage rollout that flickers per request is worse than no rollout: the user watches the feature appear and vanish, and the bug report that follows is unreproducible.
+
+## The combination is what ships
+
+Flags multiply paths combinatorially, and the combination that reaches production is the one that has to be tested. Test the paths that will actually be live together — not each flag alone against a clean baseline — and keep the number of simultaneously live release flags small enough that someone can enumerate them from memory. When nobody can list them, nobody can say what is running.
+
+## Cleanup is part of the work that created the flag
+
+The removal task exists from day one, created with the flag and carrying its type's lifespan. An intention to clean up later is not a task and does not survive the sprint.
+
+An old release flag costs twice: it is a live untested branch, and it is a stale mental model that tells every reader a choice is still open long after the decision was made. Removing it deletes the flag *and* the losing path, in its own change — `workflow-refactoring`.
+
+## Evaluation is observable
+
+Record each evaluation with the flag key, the subject, the result, and the reason — which rule matched, or which fallback fired. A flag whose evaluations are not recorded cannot be rolled back with confidence, because nobody can say who was on it. For an experiment that record *is* the data the decision rests on.
+
+Flips are audited separately: who changed it, when, from what to what. During an incident that log is the first thing read.
+
+## Where the flag lives
+
+Environment config is honest at the start — version-controlled, reviewed, free. The trigger for moving to a store is a person who cannot deploy needing to flip it: support killing a broken integration at 3am, product opening an experiment. That is when the flag needs an interface, an audit trail, and a cache whose invalidation is fast enough that a kill switch actually kills.
+
+Choose the product after the trigger fires. What keeps that choice reversible is one narrow seam in your code — a single `evaluate(key, subject)` the whole codebase calls, with the store behind it (`codebase-design`). It returns the flag's **value**, not only a boolean: on or off for a release or kill switch, the winning variant for an experiment, the number for a plan limit. A boolean-only seam is redesigned at the first three-armed experiment and again at the first metered plan.
+
+Settle the key grammar with the same care `pattern-rbac` gives permission strings, and for the same reason: the key appears in code, the store, the audit log, and every dashboard, so renaming one later touches all of them at once.
+
+## Failure modes
+
+| Symptom | What it means | Direction of fix |
+|---|---|---|
+| A flag with no owner and no removal date | Its type was never decided | Assign a type; release and experiment get a removal ticket, ops and entitlement get written down as permanent |
+| The feature appears and vanishes for one user | Rollout samples per call | Bucket on `hash(flag_key + subject)` so the answer is stable |
+| `if (flag && plan == 'pro')` at the call site | An entitlement leaked into the branch | Move the condition into the flag's own rules; the call site asks one question |
+| The store goes down and requests fail | No fallback was decided | Give every flag a default that lands on the safe side |
+| A kill switch nobody has ever flipped | Untested code holding the incident plan | Exercise it in staging, and in a low-traffic window in production |
+
+## Adopting it
+
+🟢 to add one flag where the system already evaluates them — a clear prompt to `code`. Introducing the flag mechanism, or paying down accumulated flag debt, is 🟡; CLAUDE.md's complexity table holds the gate. The ADR records the store, the fallback convention, and the key grammar (`memory-keeping`).
+
+The reason the framework cares is 🔴 work. A migration or a rewrite placed behind a flag becomes reversible without a deploy, which is what turns a rollback plan from a hope into a switch — see `workflow-architecture-change`.
+
+## Completion criterion
+
+Done when: every live flag has a type, an owner, and either a removal ticket or a written statement that it is a permanent control; each flag's fallback is decided and fails to the safe side; percentage rollouts bucket on the flag key plus the subject so one subject's answer is stable across requests and services; the flag combinations that will be live together are covered by tests; every evaluation goes through the single flag seam rather than a store call at the call site, and is recorded with flag key, subject, result, and the rule or fallback that produced it; each flip is recorded with actor, time, and the values on both sides; entitlement checks sit in the flag layer and permission checks in the authorisation service; and every removed flag took its losing path with it.
+
+## Related
+
+- `workflow-feature` — building the feature the release flag is hiding
+- `pattern-multi-tenant` — per-tenant entitlements, keyed to the plan model
+- `pattern-rbac` — whether this actor may act, as opposed to whether the plan includes it
+- `checklist-release` — the Go / No-Go; what ships behind a flag changes what shipping means
+- `workflow-devops` — the store, its config, and flipping it safely in production
