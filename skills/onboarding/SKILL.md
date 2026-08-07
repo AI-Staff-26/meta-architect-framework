@@ -13,7 +13,7 @@ description: >
 
 **Purpose:** Initialize the Project Memory Framework for a new project by discovering its nature, goals, and context — then generating the complete memory structure.
 
-This skill is activated **once per project**, when `memory/PROFILE.md` does not exist. All generated files follow the schemas defined in `memory-protocol.md`.
+This skill is activated **once per project**, when `memory/PROFILE.md` does not exist. All generated files follow the schemas in `memory-keeping`.
 
 ---
 
@@ -136,13 +136,15 @@ Based on project type, recommend which core agents should be active:
 
 | Project Type | Recommended Agents |
 |---|---|
-| **Dev projects** (saas, api, library, mobile, cli, devops, data) | arhitect, coder, review, debug, ask, consilium, devops |
-| **Business** | consilium, ask + custom agents as needed |
-| **Creative** | ask, consilium + custom agents as needed |
-| **Research** | ask, consilium + custom agents as needed |
-| **Personal** | Minimal — ask, coder (if technical) |
-| **Education** | ask, consilium + custom agents as needed |
+| **Dev projects** (saas, api, library, mobile, cli, devops, data) | `code`, `review`, `debug`, `devops`, `vibe-mentor` |
+| **Business** | `consilium`, `advisor` + custom agents as needed |
+| **Creative** | `advisor` + custom agents as needed |
+| **Research** | `advisor`, `consilium` + custom agents as needed |
+| **Personal** | Minimal — `advisor`, and `code` where the work is technical |
+| **Education** | `advisor`, `consilium` + custom agents as needed |
 | **Mixed** | Appropriate combination based on components |
+
+The architect orchestrates in every case and is not listed — it is the entry point, not an option.
 
 ### Recommend Custom Extensions
 
@@ -169,7 +171,7 @@ Wait for user confirmation before proceeding to Phase 3.
 
 ## PHASE 3 — GENERATION
 
-Create all memory files following the schemas in `memory-protocol.md`. Use today's date and current ISO week for all timestamps.
+Create all memory files following the schemas in `memory-keeping`. Use today's date and current ISO week for all timestamps.
 
 ### File 1: `memory/PROFILE.md`
 
