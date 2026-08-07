@@ -70,11 +70,11 @@ Confirm the failure is the one the **user** described, not a different one nearb
 
 Then **minimise**: shrink to the smallest scenario that still goes red. Cut inputs, callers, config, data, and steps one at a time, re-running after each cut. A minimal reproduction shrinks the hypothesis space in Phase 3 and becomes the regression test in Phase 5.
 
-**Completion criterion:** every remaining element is load-bearing — removing any one of them turns the loop green.
+**Completion criterion:** the loop goes red on demand, from a clean start, for the reason the bug report describes — and every remaining element is load-bearing, so removing any one of them turns it green.
 
 ## Phase 3 — Hypothesise
 
-Generate **three to five ranked hypotheses before testing any of them**. Generating one at a time anchors you on the first plausible idea.
+Generate **ranked hypotheses before testing any of them** — enough that the list contains at least one you consider unlikely. Generating one at a time anchors you on the first plausible idea, and stopping at the first plausible one is the same failure with extra steps.
 
 Each must be **falsifiable** — state the prediction it makes:
 

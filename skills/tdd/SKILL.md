@@ -21,23 +21,21 @@ The tell for a bad test: it breaks when you refactor, while behaviour is unchang
 
 ## Seams — where tests go
 
-A **seam** is the public boundary you test at: the place where you observe behaviour without reaching inside.
+`codebase-design` defines **seam**, and this skill uses it in exactly that sense: the place where behaviour can be observed and altered without reaching inside. Invoke it for the vocabulary; what follows is only where tests attach to it.
 
 **Agree the seams before writing the first test.** Write down which seams are under test and confirm them with the user or the architect's plan. You cannot test everything; agreeing the seams up front is how the effort lands on critical paths and complex logic instead of spreading evenly over every edge case.
 
 Prefer an existing seam to a new one, and prefer the highest seam that still reaches the behaviour — the fewer seams a codebase has, the cheaper it is to change. When the behaviour is only reachable through a seam that does not exist yet, propose it and get agreement before building it.
 
-For the vocabulary of interfaces and seams, invoke `codebase-design`.
-
 ## The loop
 
-1. **Red.** Write one failing test at an agreed seam. Run it. Watch it fail for the reason you expect — a test that fails for the wrong reason is not red, it is broken.
+1. **Red.** Write one failing test at an agreed seam. Run it. Watch it fail for the reason you expect — a test that fails for the wrong reason is not red, it is broken. A test that *passes* on its first run is red too: either the behaviour already exists and this cycle is unnecessary, or the test does not reach what it claims to. Find out which before writing any code.
 2. **Green.** Write only enough code to pass it. Leave future tests to future cycles.
 3. **Repeat.** One seam, one test, one minimal implementation per cycle.
 
 Each test is a **tracer bullet**: it cuts a narrow but complete path and tells you where the next one should go. Let what the last cycle taught you change what you write next.
 
-Refactoring is not part of this loop — it belongs to review. Mixing them means a green bar that proves nothing, because the code under it changed after the test passed.
+Refactoring is not part of this loop — it is its own task, run green to green, and `workflow-refactoring` holds it. Folding it into a cycle means a green bar that proves nothing, because the code under it changed after the test passed.
 
 ## Anti-patterns
 

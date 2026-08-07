@@ -54,4 +54,4 @@ A phase is done when its row above is true by inspection — you can name the ar
 - `forensic-investigation/references/research-template.md` — what finished research contains
 - `checklist-code-review` — the review phase itself
 - `memory-keeping` — the work report that closes the task
-- `vibe-mentor` — the checkpoint before implementation, and phase readiness generally
+- the `vibe-mentor` agent — the checkpoint before implementation, and phase readiness generally

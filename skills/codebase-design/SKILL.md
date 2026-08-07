@@ -22,7 +22,7 @@ Use these words exactly. Consistent language is most of the value — an agent t
 
 **Interface** — everything a caller must know to use the module correctly. The type signature, and also: invariants, ordering constraints, error modes, required configuration, performance characteristics. Broader than "API" or "signature", which cover only the type-level surface.
 
-**Implementation** — what is inside the module.
+**Implementation** — what is inside the module. Distinct from **adapter**: a thing can be a small adapter with a large implementation (a Postgres repository) or a large adapter with a small one (an in-memory fake). Reach for "adapter" when the seam is the topic, "implementation" otherwise.
 
 **Depth** — leverage at the interface: how much behaviour a caller or test can exercise per unit of interface it has to learn. A module is **deep** when a lot of behaviour sits behind a small interface, **shallow** when the interface is nearly as complex as what is behind it.
 
@@ -80,4 +80,4 @@ A project can follow Clean Architecture perfectly and still be built from shallo
 
 ## Completion criterion
 
-A design is settled when: each module's interface is stated in full (signature plus invariants, error modes, ordering), each seam has a named reason to exist that survives the deletion test, and every abstraction introduced has at least one real caller today.
+A design is settled when: each module's interface is stated in full, in the sense this skill gives the word — not only the signature; each seam has a named reason to exist that survives the deletion test; and every abstraction introduced has at least one real caller today.

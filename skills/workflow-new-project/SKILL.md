@@ -75,4 +75,4 @@ Ready to build features when: one user-visible path works in the deployed enviro
 - `workflow-requirements-interview` + `grilling` — settling what it must do
 - `workflow-feature` — every slice after the tracer
 - `workflow-devops` — environment, containers, deployment
-- `pattern-*` — when the shape of the problem already has a known architecture
+- `pattern-clean-architecture`, `pattern-modular-monolith` — when the shape of the problem already has a known architecture

@@ -75,4 +75,4 @@ Done when: the driver is named and still true; the strategy is chosen with the a
 - `forensic-investigation/references/research-template.md` — the investigation that precedes it
 - `workflow-legacy-analysis` — the current shape is not understood well enough to describe
 - `workflow-refactoring` — the change turns out not to alter contracts or data
-- `pattern-*` — the target shape has a known name
+- `pattern-clean-architecture`, `pattern-modular-monolith`, `pattern-multi-tenant` — the target shape has a known name

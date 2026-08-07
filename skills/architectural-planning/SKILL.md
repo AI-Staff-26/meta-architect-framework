@@ -23,7 +23,7 @@ Complexity levels, STOP gates, and FAIL routing live in `CLAUDE.md`. This skill 
 
 **Atomicity is the test of a task.** A task is atomic when, after it: the project builds, the change can be tested in isolation, reverting it leaves the tree consistent, and one sentence describes it. Failing any of the four means it is two tasks.
 
-**Order by dependency.** Build the graph before the list — for each piece, what must exist before it, and what depends on it. No task may reference something a later task creates. A cycle showing up here is a design problem surfacing at the cheapest moment; break it with an interface before delegating either side.
+**Order by dependency.** Build the graph before the list — for each piece, what must exist before it, and what depends on it. Every task references only what an earlier task has already created. A cycle showing up here is a design problem surfacing at the cheapest moment; break it with an interface before delegating either side.
 
 **Delegate a task, not an epic.** "Add JWT auth with roles and OAuth" returns a different system every run. "Add `POST /auth/login` issuing a JWT, given the existing `User` model" returns the same one.
 
