@@ -146,6 +146,20 @@ The per-week `weeks/YYYY-WNN/SUMMARY.md` is fuller: what was accomplished, key d
 
 Living documentation of the codebase. One file per module or domain, flat — no subfolders. Hierarchy is expressed in `meta.json`, not in the filesystem.
 
+### glossary.md — the project's language
+
+`repo-wiki/glossary.md` holds the domain terms, registered in `meta.json` like any other wiki file. It lives here because it grows: `PROFILE.md` changes rarely and `CONTEXT.md` is capped at ~200 words, so neither can hold a list that gains an entry every time a decision names something.
+
+One entry per term, and the third line is the one that does the work — a term with no confusable neighbour rarely needed writing down:
+
+```markdown
+## Tenant
+An organisation with its own isolated data. Billing attaches here, not to User.
+_Not_: Workspace (a UI grouping inside a tenant), Account (the billing record).
+```
+
+Write a term the moment it is resolved or sharpened, not in a pass at the end — the confusion a glossary prevents happens in the days before anyone would think to batch it. When code renames a concept, the entry changes in the same task.
+
 ### meta.json
 
 Every wiki file must be registered here. It is loaded into context on every task, so its tags are the index the agent navigates by.
@@ -220,7 +234,7 @@ Cap each wiki file at 400 lines; past that, split along a logical boundary and r
 
 ## Work reports
 
-Every completed task produces one, written **before** the completion message, which then references it.
+Every completed 🟡 or 🔴 task produces one, written **before** the completion message, which then references it. 🟢 work closes with a `CHRONICLE.md` line, or with nothing when it taught nothing.
 
 **Path:** `memory/weeks/YYYY-WNN/YYYY-MM-DD/work-report-<slug>.md`
 

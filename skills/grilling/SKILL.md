@@ -38,7 +38,7 @@ Marking is what makes an assumption reviewable. A silently invented answer looks
 
 Invoke this skill by name from any skill that needs alignment before acting — `workflow-requirements-interview`, `workflow-feature`, `workflow-architecture-change`, `checklist-ux-design`. Those skills supply the *domain* questions; this one supplies the *loop*.
 
-While grilling a codebase project, keep the domain language current as decisions land: when a term is resolved or sharpened, write it to the project glossary right then rather than batching it up.
+While grilling a codebase project, keep the domain language current as decisions land: when a term is resolved or sharpened, write it to `memory/repo-wiki/glossary.md` right then rather than batching it up. Format in `memory-keeping`.
 
 ## Completion criterion
 

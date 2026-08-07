@@ -37,7 +37,7 @@ Scope is what the prompt names. Work outside it belongs to a task that has not b
 
 **1. Validate the prompt.** Confirm you have: scope, requirements, constraints, acceptance criteria, and the files to touch. A missing piece is a question, asked now.
 
-**2. Load only what you need.** The files the prompt names, the project conventions, the domain glossary in `memory/`. Reading the whole project "for context" spends the window you need for the work.
+**2. Load only what you need.** The files the prompt names, the project conventions, `memory/repo-wiki/glossary.md`. Reading the whole project "for context" spends the window you need for the work.
 
 **3. Implement in vertical slices.** One behaviour at a time, complete through every layer it touches, rather than all of one layer and then all of the next. Where tests are in scope, invoke `tdd` and work red → green.
 

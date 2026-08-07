@@ -14,7 +14,7 @@ description: |
 
 A discipline for bugs that resist a first glance. Work the phases in order; skip one only with a stated reason.
 
-Load `memory/FACTS.md` and the project glossary before exploring — a bug in a concept you have mis-named is a bug you will not find.
+Load `memory/FACTS.md` and `memory/repo-wiki/glossary.md` before exploring — a bug in a concept you have mis-named is a bug you will not find.
 
 ## Phase 1 — Build a feedback loop
 
