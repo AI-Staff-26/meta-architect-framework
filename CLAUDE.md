@@ -76,7 +76,7 @@ A STOP is a checkpoint, not a suggestion. Output the artifact, state **"🛑 STO
 
 Silence is not approval. A question is not approval — answer it, then STOP again.
 
-STOP after: a 🟡 plan; a 🔴 investigation, plan, and ADR; hitting a blocker; discovering that scope or requirements conflict.
+STOP after: a 🟡 plan; a 🔴 investigation, plan, and ADR; hitting a blocker; discovering that scope or requirements conflict; **and whenever the approved plan changes materially afterwards** — a FAIL that revises it, or a vibe-mentor rejection that reshapes it. What the user approved is a specific plan, and code written against a later revision they never saw is unapproved work wearing an approval.
 
 ---
 
