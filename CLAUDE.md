@@ -20,13 +20,15 @@ Sections marked **[all agents]** bind every role. The **[architect]** section bi
 
 Assess before acting; the level sets what the work requires.
 
-| Level | Signals | Required before implementation |
-|---|---|---|
-| 🟢 **Simple** | One or two files, no schema or API change, one obvious reading | Clear scope. Go. |
-| 🟡 **Medium** | Several files, touches DB or API, some ambiguity | `Plan.md` → user approval → vibe-mentor checkpoint |
-| 🔴 **Complex** | Architecture, auth, migration, scaling, breaking change | Investigation → `Plan.md` + ADR → user approval → vibe-mentor checkpoint |
+| Level | Signals | Required before | Required after |
+|---|---|---|---|
+| 🟢 **Simple** | One or two files, no schema or API change, one obvious reading | You can state what *done* looks like in one sentence the user would agree with. Go. | Self-check against that sentence, with the command and its output. A `CHRONICLE` line if anything was learned |
+| 🟡 **Medium** | Several files, touches DB or API, some ambiguity | `Plan.md` → user approval → vibe-mentor checkpoint | `review` → work report → `memory/` updated |
+| 🔴 **Complex** | Architecture, auth, migration, scaling, breaking change | Investigation → `Plan.md` + ADR → user approval → vibe-mentor checkpoint | `review` → work report → `memory/` updated → ADR recorded as decided |
 
-Assessment is provisional. When 🟢 work reveals a schema change or an auth boundary, stop and re-assess out loud rather than finishing at the old level — an escalation noticed late is still cheaper than one noticed in review.
+The grade governs both halves. Uniform ceremony after a graded decision before it is how a two-line change acquires three review sub-agents and a work report, and it is the point at which the framework gets routed around rather than used.
+
+Assessment is provisional. When 🟢 work reveals a schema change or an auth boundary, stop and re-assess out loud rather than finishing at the old level — an escalation noticed late is still cheaper than one noticed in review. Re-assessment raises the *after* column too: 🟢 work that turned out to be 🟡 gets the review it would have had.
 
 ---
 
@@ -53,7 +55,7 @@ Six laws. Each states the condition and the route.
 
 1. **A plan precedes implementation** for 🟡 and 🔴 — `/docs/Plan.md`, approved. 🟢 goes straight to a clear prompt.
 2. **An unexplained cause routes to `debug`.** When you cannot say *why* it behaves this way, investigate before planning. Your own light investigation is fine; hand over the deep forensics.
-3. **Every meaningful implementation routes to `review`.**
+3. **Every 🟡🔴 implementation routes to `review`.** 🟢 work is self-checked against its one-sentence criterion — unless it touched auth, data, money, or a public contract, which makes it 🟡 by signal whatever it looked like at the start.
 4. **Two failed cycles stop the loop.** Repeating regressions, accumulating patches, or fifteen turns without progress → stop, route to `debug`, revise the plan from what it finds, restart clean. A third attempt at the same approach produces a third failure.
 5. **A FAIL gets diagnosed before it gets retried.** Classify the findings, decide whether the fault is in the plan or in the prompt, fix that, then re-delegate. Two critical failures route to `debug`.
 6. **A 🟡🔴 plan passes the vibe-mentor checkpoint** before reaching `code` — atomic scope, LLM-feasibility, production-readiness gaps. Iterate until it approves.

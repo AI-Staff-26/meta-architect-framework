@@ -83,7 +83,9 @@ Format and the `meta.json` schema: `memory-keeping`.
 
 ## Work reports
 
-Every completed task produces one at `memory/weeks/YYYY-WNN/YYYY-MM-DD/work-report-<slug>.md`, written **before** the completion message, which then references it by path. Template: `memory-keeping`.
+Every completed 🟡 or 🔴 task produces one at `memory/weeks/YYYY-WNN/YYYY-MM-DD/work-report-<slug>.md`, written **before** the completion message, which then references it by path. Template: `memory-keeping`.
+
+🟢 work closes with a `CHRONICLE.md` line when it produced something worth keeping — a fact, a decision, a surprise — and with nothing when it did not. A report per typo is how the chronicle becomes unreadable and the discipline becomes theatre.
 
 Before closing out, check whether the change also needs a repo-wiki update.
 
