@@ -59,7 +59,7 @@ One slice per delegation, `review` after each phase. Tests are `tdd`: red before
 
 ## 6. Close
 
-Record what the work discovered: new constraints to `FACTS.md`, choices with rationale to `DECISIONS.md`, a `[milestone]` entry in the chronicle. A new module or a significantly changed one earns a `repo-wiki` entry and its tags in `meta.json`. Then the work report, and the completion message referencing it.
+Close by `rules/memory-protocol.md`. What a feature adds to it: a module that is new or significantly changed earns a `repo-wiki` entry and its tags in `meta.json`, because the next feature attaches to what that entry describes.
 
 ## Completion criterion
 

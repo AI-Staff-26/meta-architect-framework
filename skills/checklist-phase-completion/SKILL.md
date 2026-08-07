@@ -21,7 +21,7 @@ The cost multiplies as it travels. A scope left vague costs a paragraph to fix d
 | **Planning → implementation** | Approved at a STOP; every acceptance criterion names how it gets checked; every file is listed or marked CREATE; the `vibe-mentor` checkpoint passed for 🟡🔴 | Criteria that read "работает корректно"; a file list that says "и связанные файлы" |
 | **Implementation → review** | Every criterion is checked off with how it was verified; the full suite and the linter were run, and you saw the output | "Должно работать"; the suite was run before the last three edits |
 | **Review → closing** | PASS; or findings classified by severity and routed — plan, prompt, or targeted fix | A FAIL retried with the same prompt because the findings looked minor |
-| **Closing → done** | The path works through the real interface, not only under test; `memory/` reflects what changed; the work report is written and referenced | The report describes what was intended rather than what landed |
+| **Closing → done** | The path works through the real interface, not only under test; `memory/` reflects what changed; the closing artifact its grade calls for exists and is referenced — a work report for 🟡🔴, a chronicle line for 🟢 | The report describes what was intended rather than what landed |
 
 ## Skipping is a decision, not a shortcut
 

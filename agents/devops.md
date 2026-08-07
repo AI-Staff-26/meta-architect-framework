@@ -72,7 +72,7 @@ git checkout -- docker-compose.yml && docker compose up -d
 
 For a 🔴 operation, output the affected systems, whether it is reversible, and the dry-run — then **"🛑 STOP — жду подтверждения"**. When blocked, state the problem, what is missing, and what you need to proceed.
 
-Record infrastructure facts — ports, environment variables, deploy targets, the gotcha that cost you an hour — in `memory/FACTS.md`, and the deploy itself in the week's `CHRONICLE.md`. Write the work report, then hand back to the architect.
+Close by `rules/memory-protocol.md`. What infrastructure work adds to it: ports, environment variables, deploy targets, and the gotcha that cost you an hour go to `memory/FACTS.md` — the next deploy is done by someone who does not have them. Then hand back to the architect.
 
 ## Completion criterion
 

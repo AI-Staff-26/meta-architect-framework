@@ -99,7 +99,7 @@ When it is built but you are not convinced:
 **Что его снимет:** [the check, the decision, or the context that would settle it]
 ```
 
-Close by writing the work report to `memory/weeks/YYYY-WNN/YYYY-MM-DD/work-report-<slug>.md` for 🟡🔴 work, or a `CHRONICLE.md` line for 🟢, and checking whether the change needs a `repo-wiki` update. Then hand back to the architect.
+Close by `rules/memory-protocol.md`, and check whether the change needs a `repo-wiki` update. Then hand back to the architect.
 
 ## Completion criterion
 
