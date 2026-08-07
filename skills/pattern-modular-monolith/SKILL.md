@@ -1,506 +1,105 @@
 ---
 name: pattern-modular-monolith
 description: |
-  Module-based architecture pattern. api/internal separation, event-based 
-  communication, shared kernel. Balance between monolith simplicity and 
-  microservices flexibility. For 3-10 dev teams. Migration path to microservices.
+  One deployable unit split into modules that own their domain, where the
+  api/internal boundary is enforced by a build rule rather than a convention.
+  Use when choosing an architecture for a codebase several teams edit, when
+  domains are bleeding into each other, or when preparing an eventual
+  extraction to services. Triggers: "модульный монолит", "как разделить на
+  модули", "готовим к микросервисам". For structure inside one module use
+  `pattern-clean-architecture`; for the extraction itself
+  `workflow-architecture-change`.
 ---
 
-# 🧱 Modular Monolith — Модульный Монолит
+# Modular Monolith
 
-<purpose>
-Паттерн организации кода с логическим разделением на модули.
-Баланс между простотой монолита и гибкостью микросервисов.
-</purpose>
+**One deploy, several owned domains, and a boundary the build enforces.** The folder layout is not the pattern — anyone can create `modules/` in an afternoon. What makes it hold is that crossing a module's boundary fails CI, because an unenforced boundary is a comment, and comments lose to deadlines.
 
----
+## api/ is the surface, internal/ is everything else
 
-## Когда Использовать
+A module exposes `api/`: the interface other modules call, the events it publishes, the DTOs those carry. Everything else — domain, use cases, repositories, controllers — lives under `internal/`. Callers depend on the api; nothing outside the module depends on internal.
 
-**Подходит для:**
+An event in `api/` is an **integration event** — a contract other modules subscribe to. The domain events a module raises about itself stay under `internal/`, where `pattern-clean-architecture` places them. The two carry different obligations: one may be reshaped freely, the other breaks subscribers.
 
-- Средние проекты (3-10 разработчиков)
-- Проекты с чёткими бизнес-доменами
-- MVP с потенциалом роста
-- Переход от монолита к микросервисам
-- Когда микросервисы — overkill
+The implementation behind an `api` is built at the single composition root and injected, which is how one module holds another's interface without importing its internal. That root is the one place that reaches inside, so the rule below allowlists it by path.
 
-**НЕ подходит для:**
+The load-bearing part is enforcement. Use the mechanism the stack already has:
 
-- Маленькие проекты (1-2 разработчика) → Clean Architecture достаточно
-- Огромные распределённые системы → Microservices
-- Проекты с разными требованиями к масштабированию модулей
+| Stack | Mechanism |
+|---|---|
+| TypeScript / JS | eslint `no-restricted-imports` on `*/internal/*` |
+| Python | import-linter contracts |
+| JVM | ArchUnit rules, or the module system |
+| Go / Rust | package visibility, `pub(crate)` — the compiler already does it |
 
-**Сложность внедрения:** 🟡 Medium
+Add the rule in the same change that creates the first module.
 
----
+## One module owns its tables
 
-## Концепция
+A module's tables are read and written by that module alone; every other module reaches that data through its `api`. This is the coupling the pattern exists to prevent — a cross-module JOIN binds two modules through a schema neither of them controls, and it is precisely what makes a later extraction impossible.
 
-### Ключевая Идея
+Start cheap: one schema, module-prefixed names, so ownership is legible in every query.
 
 ```
-Один деплой. Множество автономных модулей.
-
-┌─────────────────────────────────────────────┐
-│              Modular Monolith               │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐       │
-│  │  User   │ │  Order  │ │ Catalog │       │
-│  │ Module  │ │ Module  │ │ Module  │       │
-│  └────┬────┘ └────┬────┘ └────┬────┘       │
-│       │           │           │             │
-│  ═════╪═══════════╪═══════════╪═════════   │
-│       │    Integration Layer   │            │
-│  ═════╪═══════════╪═══════════╪═════════   │
-│       │           │           │             │
-│  ┌────┴───────────┴───────────┴────┐       │
-│  │         Shared Kernel           │       │
-│  └─────────────────────────────────┘       │
-└─────────────────────────────────────────────┘
+users_accounts    orders_orders    catalog_products
+users_profiles    orders_items     catalog_categories
 ```
 
-### Принципы
-
-1. **Модуль = Bounded Context** — чёткие границы ответственности
-2. **High Cohesion** — всё связанное внутри модуля
-3. **Low Coupling** — минимум зависимостей между модулями
-4. **Explicit Communication** — модули общаются через явные интерфейсы
-5. **Shared Kernel** — общий код минимален и стабилен
-
----
-
-## Структура Модуля
-
-### Каждый Модуль Содержит
-
-```
-/modules/[module-name]/
-├── api/                    # Публичный API модуля
-│   ├── [Module]Service.ts  # Интерфейс для внешних вызовов
-│   ├── events/             # Публикуемые события
-│   └── dtos/               # Внешние DTO
-├── internal/               # Внутренняя реализация (приватно!)
-│   ├── domain/             # Entities, Value Objects
-│   ├── application/        # Use Cases
-│   ├── infrastructure/     # Repositories, Adapters
-│   └── presentation/       # Controllers (если есть)
-└── module.ts               # Entry point, DI configuration
-```
-
-### Правила Доступа
-
-```
-✅ module/api/*          — публично, доступно другим модулям
-❌ module/internal/*     — приватно, только внутри модуля
-✅ shared/*              — общий код, доступен всем
-```
-
----
-
-## Структура Проекта
-
-```
-/src
-├── modules/
-│   ├── user/
-│   │   ├── api/
-│   │   │   ├── UserService.ts       # Публичный интерфейс
-│   │   │   ├── dtos/
-│   │   │   │   └── UserDTO.ts
-│   │   │   └── events/
-│   │   │       └── UserCreated.ts
-│   │   ├── internal/
-│   │   │   ├── domain/
-│   │   │   │   ├── User.ts
-│   │   │   │   └── IUserRepository.ts
-│   │   │   ├── application/
-│   │   │   │   ├── CreateUser.ts
-│   │   │   │   └── UserServiceImpl.ts
-│   │   │   └── infrastructure/
-│   │   │       └── PostgresUserRepository.ts
-│   │   └── module.ts
-│   │
-│   ├── order/
-│   │   ├── api/
-│   │   │   ├── OrderService.ts
-│   │   │   └── events/
-│   │   │       └── OrderPlaced.ts
-│   │   ├── internal/
-│   │   │   └── ...
-│   │   └── module.ts
-│   │
-│   └── catalog/
-│       └── ...
-│
-├── shared/
-│   ├── kernel/              # Shared Domain concepts
-│   │   ├── Money.ts
-│   │   └── Email.ts
-│   ├── infrastructure/      # Shared Infrastructure
-│   │   ├── database.ts
-│   │   └── eventBus.ts
-│   └── types/
-│       └── Result.ts
-│
-├── integration/             # Module communication
-│   ├── eventBus/
-│   │   └── InMemoryEventBus.ts
-│   └── moduleRegistry.ts
-│
-├── http/                    # Single HTTP entry point
-│   ├── routes.ts
-│   └── middleware/
-│
-└── main.ts                  # Composition Root
-```
-
----
-
-## Коммуникация Между Модулями
-
-### Способы Взаимодействия
-
-| Способ | Синхронный | Связанность | Когда использовать |
-|--------|------------|-------------|-------------------|
-| Direct Call | ✅ | Высокая | Query, быстрый response нужен |
-| Events | ❌ | Низкая | Commands, eventual consistency OK |
-| Shared DB | — | Medium | Anti-pattern, избегать |
+Schema-per-module is the stronger version — the database itself can refuse cross-module reads through grants — and costs more: migrations per schema, cross-schema queries closed off, heavier local setup. Take it when a module is on a path to extraction, or when the JOIN keeps coming back.
 
-### Direct Call (через API модуля)
+## Choosing how two modules talk
 
-```typescript
-// modules/order/internal/application/PlaceOrder.ts
+| The caller needs | Route | Why |
+|---|---|---|
+| An answer now — a query | Direct call through the other module's `api` | Synchronous and traceable; the coupling is to an interface, not to data |
+| A command or notification, eventual consistency acceptable | An event on the bus | The publisher does not know its subscribers, so a new reader is a subscription, not an edit |
 
-import { UserService } from '@/modules/user/api/UserService';
+Events have a second and less obvious job: **they break cycles.** When two modules each need to call the other, invert one direction — the module that was being called publishes, the other subscribes — and the import graph goes acyclic again.
 
-class PlaceOrder {
-  constructor(
-    private userService: UserService,  // Публичный интерфейс!
-    private orderRepo: IOrderRepository
-  ) {}
+## The shared kernel stays small because it changes everything
 
-  async execute(dto: PlaceOrderDTO): Promise<Result<Order>> {
-    // Вызов другого модуля через его публичный API
-    const user = await this.userService.getById(dto.userId);
-    
-    if (!user) {
-      return Result.fail('User not found');
-    }
+A change to the kernel is a change to every module at once, so the admission test is **rate of change, not topic**: base types, `Result`/`Option`, primitive value objects such as Money and Email, access to logging and config. Anything edited weekly belongs inside a module, however general it looks.
 
-    const order = Order.create(user, dto.items);
-    await this.orderRepo.save(order);
-    
-    return Result.ok(order);
-  }
-}
-```
+Business entities belong to the module that owns them. An `Order` in the kernel means every module now compiles against the order domain, and the pattern is gone.
 
-### Event-Based (рекомендуется для Commands)
+The cross-cutting mechanisms pass that test and belong here rather than in any module's `api/`: the authorisation service (`pattern-rbac`), the tenant context (`pattern-multi-tenant`), and the flag seam (`pattern-feature-flags`). Every module calls them and none owns them.
 
-```typescript
-// modules/order/internal/application/PlaceOrder.ts
+## Modules have owners
 
-import { EventBus } from '@/shared/infrastructure/eventBus';
-import { OrderPlaced } from '../api/events/OrderPlaced';
+A module three teams edit is a monolith wearing a folder — the boundary has no one to defend it, and the negotiations it was meant to make explicit happen in chat instead. A team owning six modules defends the two it works in.
 
-class PlaceOrder {
-  constructor(
-    private orderRepo: IOrderRepository,
-    private eventBus: EventBus
-  ) {}
+Record the owning team per module. Where that mapping comes out ugly, the split is wrong: redraw it along the lines the teams actually work, not the lines the domain diagram suggests.
 
-  async execute(dto: PlaceOrderDTO): Promise<Result<Order>> {
-    const order = Order.create(dto);
-    await this.orderRepo.save(order);
+## The payoff: a module that can leave
 
-    // Публикуем событие — другие модули реагируют
-    await this.eventBus.publish(new OrderPlaced({
-      orderId: order.id,
-      userId: dto.userId,
-      total: order.total,
-    }));
+The pattern is bought for this — when one domain needs its own scaling, cadence, or team, it leaves without a rewrite. A module is extractable when no import crosses into its `internal/`, it shares no tables, other modules already reach it through `api` or events, and its writes sit inside its own transaction boundary.
 
-    return Result.ok(order);
-  }
-}
+Keep those true continuously rather than checking on extraction day; each is cheap to hold and expensive to restore. The migration itself belongs to `workflow-architecture-change` — 🔴, phased, reversible per step.
 
-// modules/notification/internal/handlers/OrderPlacedHandler.ts
-class OrderPlacedHandler {
-  constructor(private emailService: EmailService) {}
+## Failure modes
 
-  async handle(event: OrderPlaced): Promise<void> {
-    await this.emailService.sendOrderConfirmation(event.userId, event.orderId);
-  }
-}
-```
+| Symptom | What it means | Direction of fix |
+|---|---|---|
+| An import from another module's `internal/` compiles | The boundary is convention, not rule | Add the import restriction to CI before the next module lands |
+| A query JOINs two modules' tables | Ownership was never exclusive | Move the read behind the owning api; prefix or split the schema |
+| Two modules import each other | The dependency is genuinely bidirectional | Invert one direction into an event |
+| The kernel grows every sprint | It is absorbing anything reused twice | Return the fast-changing pieces to the module that changes them |
+| Every feature touches four modules | The split follows technical layers, not domains | Redraw along bounded contexts — `codebase-design` for where the seam goes |
 
----
+## Adopting it
 
-## Shared Kernel
+🔴 — architecture, by the signals in CLAUDE.md's complexity table, which is where the gate lives. The ADR records which bounded contexts were chosen and why those lines, which module owns which tables, the enforcement mechanism, and which interactions are direct calls versus events. Format in `memory-keeping`.
 
-### Что Включать
+With one or two developers and no domain pressure, the boundary costs more than it returns — `pattern-clean-architecture` gives layering without it.
 
-✅ **Включать:**
+## Completion criterion
 
-- Базовые Value Objects (Money, Email, Address)
-- Общие типы (Result, Option)
-- Базовые классы (Entity, AggregateRoot)
-- Инфраструктурные утилиты (Logger, Config)
+Done when: every module has an `api/` others import and an `internal/` nothing outside imports; a deliberate import from another module's `internal/` has been pushed once and CI rejected it; each table is owned by exactly one module and named so the ownership is visible; each cross-module interaction is a direct api call or an event by the rule above; the module import graph is acyclic; the kernel holds nothing that changes at feature pace; every module names an owning team; and an ADR records the chosen context boundaries.
 
-❌ **НЕ включать:**
+## Related
 
-- Бизнес-сущности (они принадлежат модулям)
-- Сложную логику (разносить по модулям)
-- Часто меняющийся код
-
-### Правило
-
-```
-Shared Kernel должен быть СТАБИЛЬНЫМ.
-Изменения в нём затрагивают ВСЕ модули.
-Минимизируй его размер.
-```
-
----
-
-## Module Entry Point
-
-### Структура module.ts
-
-```typescript
-// modules/user/module.ts
-
-import { IUserRepository } from './internal/domain/IUserRepository';
-import { PostgresUserRepository } from './internal/infrastructure/PostgresUserRepository';
-import { UserServiceImpl } from './internal/application/UserServiceImpl';
-import { UserService } from './api/UserService';
-
-export interface UserModuleDeps {
-  database: Database;
-  eventBus: EventBus;
-}
-
-export function createUserModule(deps: UserModuleDeps): {
-  service: UserService;
-} {
-  const repository: IUserRepository = new PostgresUserRepository(deps.database);
-  const service: UserService = new UserServiceImpl(repository, deps.eventBus);
-
-  return { service };
-}
-
-// Регистрация event handlers
-export function registerUserEventHandlers(bus: EventBus): void {
-  bus.subscribe('OrderPlaced', new UserOrderHandler());
-}
-```
-
-### Composition Root
-
-```typescript
-// main.ts
-
-import { createUserModule, registerUserEventHandlers } from './modules/user/module';
-import { createOrderModule, registerOrderEventHandlers } from './modules/order/module';
-import { InMemoryEventBus } from './integration/eventBus/InMemoryEventBus';
-import { database } from './shared/infrastructure/database';
-
-// Shared infrastructure
-const eventBus = new InMemoryEventBus();
-
-// Create modules
-const userModule = createUserModule({ database, eventBus });
-const orderModule = createOrderModule({ 
-  database, 
-  eventBus,
-  userService: userModule.service,  // Inject dependency
-});
-
-// Register event handlers
-registerUserEventHandlers(eventBus);
-registerOrderEventHandlers(eventBus);
-
-// HTTP layer
-const app = createHttpApp({
-  userController: new UserController(userModule.service),
-  orderController: new OrderController(orderModule.service),
-});
-
-app.listen(3000);
-```
-
----
-
-## Database Strategy
-
-### Варианты
-
-| Стратегия | Описание | Trade-offs |
-|-----------|----------|------------|
-| Single Schema | Все модули в одной схеме | Простота, но coupling |
-| Schema per Module | Отдельная схема для каждого | Изоляция, сложнее joins |
-| Separate Tables | Каждый модуль владеет таблицами | Баланс |
-
-### Рекомендация
-
-```
-Начни с Separate Tables в одной схеме.
-Используй naming convention: [module]_[table]
-
-  users_accounts
-  users_profiles
-  orders_orders
-  orders_items
-  catalog_products
-```
-
-### Правило
-
-```
-Модуль владеет своими таблицами ЭКСКЛЮЗИВНО.
-Другие модули НЕ читают напрямую — только через API.
-```
-
----
-
-## Anti-Patterns
-
-### ❌ Circular Dependencies
-
-```typescript
-// WRONG
-// user/module.ts imports from order/module.ts
-// order/module.ts imports from user/module.ts
-
-// RIGHT: Используй Events для разрыва цикла
-// Order публикует OrderPlaced
-// User подписывается и обновляет статистику
-```
-
-### ❌ Прямой Доступ к Internal
-
-```typescript
-// WRONG
-import { User } from '@/modules/user/internal/domain/User';
-
-// RIGHT
-import { UserDTO } from '@/modules/user/api/dtos/UserDTO';
-```
-
-### ❌ Shared Database Queries
-
-```typescript
-// WRONG: Order модуль читает таблицу users напрямую
-const user = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
-
-// RIGHT: Order вызывает UserService
-const user = await this.userService.getById(userId);
-```
-
-### ❌ Раздутый Shared Kernel
-
-```typescript
-// WRONG: Бизнес-сущность в shared
-// shared/kernel/Order.ts — НЕЛЬЗЯ!
-
-// RIGHT: Order принадлежит модулю order
-// modules/order/internal/domain/Order.ts
-```
-
----
-
-## Migration Path
-
-### От Монолита к Modular Monolith
-
-```
-1. Identify Bounded Contexts
-         ↓
-2. Create module folders
-         ↓
-3. Move code, respect api/internal boundary
-         ↓
-4. Replace direct imports with module APIs
-         ↓
-5. Add event-based communication
-         ↓
-6. Enforce boundaries (linter rules)
-```
-
-### От Modular Monolith к Microservices
-
-```
-1. Модуль уже изолирован? → Готов к extraction
-         ↓
-2. Events уже используются? → Замени на message broker
-         ↓
-3. Отдельная БД схема? → Extract database
-         ↓
-4. Deploy отдельно
-```
-
----
-
-## Чеклист Внедрения
-
-### Структура
-
-- [ ] Модули отражают бизнес-домены
-- [ ] api/ — только публичные контракты
-- [ ] internal/ — вся реализация
-
-### Коммуникация
-
-- [ ] Модули общаются через api/ интерфейсы
-- [ ] Events для асинхронных операций
-- [ ] Нет direct imports из internal/
-
-### Database
-
-- [ ] Каждый модуль владеет своими таблицами
-- [ ] Нет cross-module SQL queries
-
-### Shared Kernel
-
-- [ ] Минимальный размер
-- [ ] Только стабильный код
-- [ ] Нет бизнес-сущностей
-
-### Boundaries
-
-- [ ] Linter rules для import restrictions
-- [ ] Нет circular dependencies
-
----
-
-## Quick Reference
-
-```
-/modules/[name]/
-├── api/        → Public interface (exported)
-├── internal/   → Private implementation
-└── module.ts   → Entry point + DI
-
-Communication:
-  Query  → Direct Call via api/Service
-  Command → Events (eventual consistency)
-
-Shared Kernel:
-  Minimal, Stable, No Business Entities
-
-Database:
-  Module owns its tables exclusively
-```
-
----
-
-**Связанные файлы:**
-
-- `patterns/clean-architecture.md` — внутренняя структура модулей
-- `templates/architecture.md` — шаблон документации
-- `workflow-new-project/SKILL.md` — применение при создании проекта
-- `workflows/architecture-change.md` — миграция архитектуры
-
----
-
-**END OF PATTERN**
+- `pattern-clean-architecture` — layering inside a single module
+- `codebase-design` — where a seam belongs, and whether it earns its keep
+- `workflow-architecture-change` — splitting an existing monolith, or extracting a module into a service
+- `workflow-new-project` — laying the modules out before there is code to move
+- `memory-keeping` — the ADR format that records the context boundaries
