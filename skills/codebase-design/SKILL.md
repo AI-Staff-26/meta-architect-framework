@@ -1,13 +1,10 @@
 ---
 name: codebase-design
 description: |
-  Shared vocabulary for designing deep modules — a lot of behaviour behind a
-  small interface, placed at a clean seam. Use when designing or improving a
-  module's interface, deciding where a seam goes, judging whether an
-  abstraction earns its keep, making code more testable, or when another skill
-  needs the words (module, interface, depth, seam, adapter, leverage,
-  locality). Triggers: "где провести границу", "стоит ли выносить", "как
-  спроектировать модуль", interface design, abstraction review.
+  Vocabulary for module design — module, interface, depth, seam, adapter,
+  leverage, locality — and the deletion test. Triggers: "где провести
+  границу", "стоит ли выносить", "как спроектировать модуль", interface
+  design, abstraction review. Other skills invoke it for the words.
 ---
 
 # Codebase Design

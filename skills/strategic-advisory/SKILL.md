@@ -1,12 +1,9 @@
 ---
 name: strategic-advisory
 description: |
-  The `consilium` agent's toolkit — the six-block output format, the mapping
-  from mode to framework, five mode definitions (СТРАТЕГ, ПЕРЕГОВОРЩИК,
-  ПСИХОЛОГ, КРИЗИС, НАСТАВНИК), and seven framework files (OODA, Cynefin,
-  Voss, Taleb, Dalio, power, psychology, stratagems). Load it when advising on
-  negotiation, conflict, crisis, business model, pricing, or personal
-  strategy — `consilium` runs the situation reading, this supplies the shape.
+  The `consilium` agent's toolkit: five modes and seven frameworks — OODA,
+  Cynefin, Voss, Taleb, Dalio, power, psychology. Use for negotiation,
+  conflict, crisis, business model, pricing, or personal strategy.
 ---
 
 # Strategic Advisory Toolkit

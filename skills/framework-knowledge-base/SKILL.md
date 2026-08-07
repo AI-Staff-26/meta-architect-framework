@@ -1,12 +1,10 @@
 ---
 name: framework-knowledge-base
 description: |
-  Answers questions about the Meta-Architect Framework itself — how it is
-  installed, why it is shaped this way, what to do when it misbehaves, and
-  which file defines what. Use when the user asks "как работает фреймворк",
-  "зачем нужен STOP", "почему агент не сработал", "как поставить в проект",
-  "чем отличается X от Y", or asks about roles, gates, delegation, memory, or
-  IDE setup. For writing or editing framework text, use `authoring-skills`.
+  Questions about the Meta-Architect Framework itself — installation, roles,
+  gates, delegation, memory, IDE setup, troubleshooting. Triggers: "как
+  работает фреймворк", "зачем нужен STOP", "почему агент не сработал", "как
+  поставить в проект". Editing framework text → `authoring-skills`.
 ---
 
 # The Framework, Documented

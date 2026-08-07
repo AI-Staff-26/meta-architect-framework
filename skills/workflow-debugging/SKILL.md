@@ -1,13 +1,10 @@
 ---
 name: workflow-debugging
 description: |
-  Diagnosis loop for bugs, regressions, and performance problems — builds a
-  tight feedback loop first, then reproduces, hypothesises, instruments, fixes,
-  and locks the fix down with a regression test. Use when something is broken,
-  throwing, failing, flaky, or slow; when a fix keeps not working; or when the
-  user says "баг", "не работает", "сломалось", "почему падает", "тормозит",
-  "debug this", "diagnose". For an unfamiliar system with no specific symptom,
-  use workflow-legacy-analysis instead.
+  Diagnose a bug, regression, flake, or slowness — feedback loop first, then
+  reproduce, hypothesise, fix, lock down with a regression test. Triggers:
+  "баг", "не работает", "сломалось", "почему падает", "тормозит", "debug
+  this". No specific symptom → `workflow-legacy-analysis`.
 ---
 
 # Diagnosing Bugs

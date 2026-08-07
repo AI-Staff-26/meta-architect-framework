@@ -1,15 +1,11 @@
 ---
 name: pattern-multi-tenant
 description: |
-  Serving many tenants from one codebase, where isolation is an invariant that
-  holds only as well as the one path that forgets it. Covers choosing between
-  database-, schema-, and row-per-tenant, deriving a tenant identity the caller
-  cannot forge, and closing the paths that silently drop the tenant — jobs,
-  caches, files, exports, logs, migrations, webhooks. Use for a SaaS or B2B
-  platform, a white-label product, or when `tenant_id` is about to enter the
-  schema; triggers: "мультиарендность", "изоляция тенантов". Per-tenant
-  entitlements are `pattern-feature-flags`; permissions inside one tenant are
-  `pattern-rbac`.
+  Multi-tenancy: isolation strategy (database, schema, or row per tenant),
+  tenant resolution, and the paths that silently drop the tenant — jobs,
+  caches, files, exports, logs, migrations. Use for SaaS, B2B, white-label,
+  or when `tenant_id` is about to enter the schema. Triggers:
+  "мультиарендность", "изоляция тенантов".
 ---
 
 # Multi-Tenancy

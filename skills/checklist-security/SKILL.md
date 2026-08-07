@@ -1,12 +1,10 @@
 ---
 name: checklist-security
 description: |
-  Security verification for a change — authentication, authorization, input
-  validation, API surface, data protection, secrets, logging, and the tests
-  that prove it. Use whenever a change touches auth or permissions, user or
-  payment data, a new or public endpoint, an external integration, file
-  uploads, or PII. The `review` agent loads it as its Security axis on every
-  diff; `checklist-release` loads it for the pre-production pass.
+  Security verification: auth, authorization, input validation, API surface,
+  data protection, secrets, logging, and the tests that prove it. Use when a
+  change touches auth, user or payment data, a public endpoint, an external
+  integration, uploads, or PII. The Security axis of `checklist-code-review`.
 ---
 
 # Проверка безопасности

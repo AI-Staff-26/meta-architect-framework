@@ -1,12 +1,9 @@
 ---
 name: checklist-release
 description: |
-  The Go / No-Go gate before production — the decision itself, not a second
-  copy of the code, security, and infrastructure checks. Use before a release,
-  before a first deploy of a new service, before a major or minor version, and
-  when the user asks "готовы ли мы к релизу". Depth comes from
-  `checklist-code-review`, `checklist-security`, and `checklist-infra`; this
-  skill decides whether to ship.
+  The Go / No-Go decision before production. Use before a release, a first
+  deploy, or a major version, and on "готовы ли мы к релизу". Depth comes
+  from `checklist-code-review`, `checklist-security`, `checklist-infra`.
 ---
 
 # Go / No-Go

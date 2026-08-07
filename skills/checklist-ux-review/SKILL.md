@@ -1,13 +1,11 @@
 ---
 name: checklist-ux-review
 description: |
-  Verification of an implemented UI by driving it — every interactive and data
-  state reached deliberately, one keyboard traversal of the real flow, contrast
-  and colour independence, the supported widths, and the copy. Use after a UI
-  feature or component lands, for a design-system change, a pre-release UI pass,
-  or an accessibility audit; the `review` agent loads it as a fourth axis for
-  user-facing diffs. Triggers: "проверь интерфейс", "UX-ревью", "доступность".
-  For the decisions that precede the code use `checklist-ux-design`.
+  Verify an implemented UI by driving it: every state, keyboard traversal,
+  contrast, supported widths, copy. Use after a UI feature lands, for a
+  design-system change, or an accessibility audit. Triggers: "проверь
+  интерфейс", "UX-ревью", "доступность". Decisions before the code →
+  `checklist-ux-design`.
 ---
 
 # UI Verification

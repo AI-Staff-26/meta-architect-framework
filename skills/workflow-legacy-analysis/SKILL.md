@@ -1,13 +1,10 @@
 ---
 name: workflow-legacy-analysis
 description: |
-  Mapping an unfamiliar codebase before changing it — the reading order, which
-  evidence to trust, where the dangerous parts are, and how the map gets
-  written into `memory/repo-wiki/`. Use for an inherited or undocumented
-  project, before a refactor or migration, when a module nobody understands
-  has to be touched, or when the user says "разберись как тут всё устроено".
-  For a specific symptom use `workflow-debugging`; for a project with no code
-  yet use `onboarding`.
+  Map an unfamiliar codebase before changing it: reading order, which
+  evidence to trust, where the dangerous files are. Use for an inherited or
+  undocumented project, or before a refactor or migration. Triggers:
+  "разберись как тут всё устроено". A specific symptom → `workflow-debugging`.
 ---
 
 # Mapping Unfamiliar Code

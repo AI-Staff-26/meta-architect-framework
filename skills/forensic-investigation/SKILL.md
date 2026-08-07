@@ -1,12 +1,10 @@
 ---
 name: forensic-investigation
 description: |
-  Diagnose an agent that keeps failing — fixes that produce new breakage,
-  patches piling on patches, constraints forgotten, the same error returning
-  for the third time. The loop is the subject here, not the bug underneath it.
-  Use after two failed implementation cycles, when a FAIL repeats, or when the
-  user says "уже третий раз", "снова сломалось", "ходим по кругу", "agent is
-  looping". For a bug where the code is the subject, use workflow-debugging.
+  Diagnose an agent that keeps failing: fixes producing new breakage, patches
+  on patches, the same error a third time. Use after two failed cycles.
+  Triggers: "уже третий раз", "снова сломалось", "ходим по кругу". A bug
+  where the code is the subject → `workflow-debugging`.
 ---
 
 # Diagnosing an Agent Loop

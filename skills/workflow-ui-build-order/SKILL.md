@@ -1,12 +1,10 @@
 ---
 name: workflow-ui-build-order
 description: |
-  The order UI gets built in — a thin shared foundation of tokens, shell, and
-  navigation first, then one vertical slice per feature, then a consistency
-  pass. Use when implementing a screen, a frontend feature, or a component
-  library, when a UI is being rebuilt, or when deciding what to build before
-  what. For the design decisions that precede the code use `checklist-ux-design`;
-  for verifying an implemented UI use `checklist-ux-review`.
+  Order UI work: thin shared foundation of tokens, shell and navigation
+  first, then one vertical slice per feature, then a consistency pass. Use
+  when implementing a screen or component library. Decisions first →
+  `checklist-ux-design`; verification → `checklist-ux-review`.
 ---
 
 # UI Build Order

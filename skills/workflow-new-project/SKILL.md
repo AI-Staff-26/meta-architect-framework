@@ -1,12 +1,10 @@
 ---
 name: workflow-new-project
 description: |
-  Starting a project from nothing — settling what it must do, choosing a stack
-  you can defend, and getting one thin path running end to end before anything
-  is built wide. Use for a greenfield project, an MVP or PoC, a new service in
-  an existing ecosystem, or a rewrite from scratch. For adding to a project
-  that exists use `workflow-feature`; for bootstrapping memory on a codebase
-  that already exists use `onboarding`.
+  Start a project from nothing: what it must do, a stack you can defend, one
+  path running end to end before anything is built wide. Use for greenfield,
+  an MVP or PoC, or a rewrite. Adding to something existing →
+  `workflow-feature`; bootstrapping memory → `onboarding`.
 ---
 
 # Starting From Nothing

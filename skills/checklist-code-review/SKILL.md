@@ -1,12 +1,9 @@
 ---
 name: checklist-code-review
 description: |
-  Three-axis review of a diff — Standards (does it follow this repo's
-  conventions?), Spec (does it do what was asked?), and Security (can it be
-  abused?) — run as parallel sub-agents so no axis masks another. Use after any
-  meaningful implementation, when reviewing a branch or PR, or when the user
-  says "проверь", "отревьюь", "review this", "посмотри код". The quality gate
-  the review agent runs.
+  Review a diff on three axes — Standards, Spec, Security — as parallel
+  sub-agents. Use after an implementation, or to review a branch or PR.
+  Triggers: "проверь", "отревьюь", "review this", "посмотри код".
 ---
 
 # Code Review

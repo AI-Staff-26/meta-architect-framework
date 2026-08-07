@@ -1,12 +1,9 @@
 ---
 name: tdd
 description: |
-  Test-driven development through a red → green loop, one vertical slice at a
-  time. Use when building a feature or fixing a bug test-first, when the user
-  mentions "TDD", "red-green", "тесты вперёд", "напиши тест", when deciding
-  where a test belongs (which seam), or when judging whether an existing test
-  is worth keeping. Also the reference for what makes a test good — reach for
-  it when reviewing tests, not only when writing them.
+  Test-driven development: the red → green loop, which seam a test belongs
+  at, and what makes a test worth keeping. Triggers: "TDD", "red-green",
+  "тесты вперёд", "напиши тест". Also the reference when reviewing tests.
 ---
 
 # Test-Driven Development

@@ -1,12 +1,10 @@
 ---
 name: workflow-requirements-interview
 description: |
-  Turn a vague request into a Requirements.md that can be planned against —
-  the coverage map of what a feature's requirements must settle, plus the
-  document template. Use when a request has several possible readings, when a
-  past attempt missed the mark, or when the user says "не уверен что именно
-  нужно", "надо обсудить", "сделай как лучше". Supplies the territory;
-  invoke grilling for the interview loop itself.
+  Turn a vague request into a Requirements.md — the coverage map of what a
+  feature's requirements must settle, plus the document template. Triggers:
+  "не уверен что именно нужно", "надо обсудить", "сделай как лучше". The
+  interview loop itself → `grilling`.
 ---
 
 # Requirements Interview

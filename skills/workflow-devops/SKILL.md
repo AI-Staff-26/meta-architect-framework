@@ -1,12 +1,10 @@
 ---
 name: workflow-devops
 description: |
-  Seven infrastructure procedures with working templates — dev environment
-  bootstrap, container setup, CI/CD pipeline, deployment, OS hardening,
-  secrets management, and observability. Use for Docker, docker-compose,
-  registries, GitHub Actions, staging and production deploys, `.env` and
-  secret stores, health checks, metrics, and alerting. The `devops` agent's
-  toolkit; `checklist-infra` verifies what it builds.
+  Infrastructure procedures with templates: dev environment, containers,
+  CI/CD, deployment, hardening, secrets, observability. Triggers: "docker",
+  "compose", "ci/cd", "github actions", "деплой", "настрой окружение",
+  "secrets", ".env", "nginx", "мониторинг".
 ---
 
 # Infrastructure Procedures

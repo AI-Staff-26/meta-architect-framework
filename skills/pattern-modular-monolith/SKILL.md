@@ -1,14 +1,10 @@
 ---
 name: pattern-modular-monolith
 description: |
-  One deployable unit split into modules that own their domain, where the
-  api/internal boundary is enforced by a build rule rather than a convention.
-  Use when choosing an architecture for a codebase several teams edit, when
-  domains are bleeding into each other, or when preparing an eventual
-  extraction to services. Triggers: "модульный монолит", "как разделить на
-  модули", "готовим к микросервисам". For structure inside one module use
-  `pattern-clean-architecture`; for the extraction itself
-  `workflow-architecture-change`.
+  Modular monolith: `api`/`internal` boundaries, module-owned tables, events
+  between modules, extraction to services later. Triggers: "модульный
+  монолит", "как разделить на модули", "готовим к микросервисам". Structure
+  inside one module → `pattern-clean-architecture`.
 ---
 
 # Modular Monolith

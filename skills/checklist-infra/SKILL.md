@@ -1,12 +1,10 @@
 ---
 name: checklist-infra
 description: |
-  Verification for infrastructure work — containers, CI/CD pipelines, secrets,
-  deployment safety, developer environment, observability, and OS hardening,
-  each item carrying a severity. Use when reviewing a Dockerfile, a compose
-  file, pipeline yaml, or a deploy script, when `devops` self-checks before
-  calling work done, and before any infrastructure change reaches staging or
-  production. `workflow-devops` builds these things; this verifies them.
+  Verify infrastructure work — containers, pipelines, secrets, deploy safety,
+  observability, hardening — each item with a severity. Use when reviewing a
+  Dockerfile, compose file, pipeline yaml, or deploy script, and before
+  infrastructure reaches staging or production.
 ---
 
 # Infrastructure Verification

@@ -1,13 +1,10 @@
 ---
 name: workflow-refactoring
 description: |
-  Changing structure while behaviour stays identical — the safety net that
-  proves it, the green-to-green loop, and the rule that tests do not change.
-  Use for duplication, unclear code, a module that resists testing, or
-  preparation before a feature lands; also when the user says "почисти",
-  "отрефактори", "надо упростить", "технический долг". For behaviour that is
-  wrong use `workflow-debugging`, for new behaviour `workflow-feature`, for a
-  change of layers or contracts `workflow-architecture-change`.
+  Change structure while behaviour stays identical — the safety net, the
+  green-to-green loop, and the rule that tests do not change. Triggers:
+  "почисти", "отрефактори", "надо упростить", "технический долг". Wrong
+  behaviour → `workflow-debugging`; new behaviour → `workflow-feature`.
 ---
 
 # Refactoring

@@ -149,19 +149,31 @@ The plan holds if: its claims trace to memory or verified project state rather t
 
 ## Skills
 
-Invoke by name. The ones that carry the framework's method:
+**This table is the routing.** Skill descriptions carry triggers only, so a skill that is not reachable from a row here is reachable only by luck. Invoke by name.
 
 | Need | Skill |
 |---|---|
 | Requirements are vague | `grilling` → `workflow-requirements-interview` |
-| Something is broken | `workflow-debugging` (feedback loop first) |
 | Building a feature | `workflow-feature` |
+| Something is broken | `workflow-debugging` (feedback loop first) |
+| The agent is looping, not the code | `forensic-investigation`, `workflow-ai-session` |
+| Structure changes, behaviour does not | `workflow-refactoring` |
+| Layers, contracts, or stored data move | `workflow-architecture-change` |
+| A project from nothing | `workflow-new-project` |
+| An unfamiliar codebase, no specific symptom | `workflow-legacy-analysis` |
+| Containers, CI/CD, deploy, secrets | `workflow-devops` |
+| Building UI | `checklist-ux-design` → `workflow-ui-build-order` → `checklist-ux-review` |
 | Writing tests | `tdd` |
-| Reviewing an implementation | `checklist-code-review` |
 | Designing a module or seam | `codebase-design` |
 | Choosing an architecture | `pattern-clean-architecture`, `pattern-modular-monolith` |
 | Access, tenant isolation, or a reversible rollout | `pattern-rbac`, `pattern-multi-tenant`, `pattern-feature-flags` |
-| The agent is looping | `workflow-ai-session`, `forensic-investigation` |
+| Turning an approved decision into delegated work | `architectural-planning` |
+| Reviewing an implementation | `checklist-code-review`, with `checklist-security` as its Security axis |
+| Shipping to production | `checklist-release`; infrastructure `checklist-infra` |
+| Is this phase actually finished? | `checklist-phase-completion` |
+| Writing anything into `memory/` | `memory-keeping`; no `PROFILE.md` yet → `onboarding` |
+| Non-technical strategy | `strategic-advisory` |
 | Writing or editing framework text | `authoring-skills` |
+| How the framework itself works | `framework-knowledge-base` |
 
-`framework-knowledge-base` documents the framework itself; `skills/README.md` indexes all of them.
+`skills/README.md` indexes all of them, including the ones outside this method.

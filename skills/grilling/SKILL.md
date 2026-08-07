@@ -1,13 +1,10 @@
 ---
 name: grilling
 description: |
-  Interview the user relentlessly about a plan, decision, or idea until every
-  branch of the decision tree is resolved. The reusable interview primitive —
-  reach for it whenever requirements are vague, a design has unexamined
-  branches, or another skill needs to align with the user before acting
-  (requirements gathering, planning, triage, architecture review). Triggers:
-  "погрилль", "grill me", "уточни требования", "задай вопросы", "давай обсудим",
-  vague or one-line feature requests.
+  Interview the user one question at a time until every branch is resolved.
+  The reusable interview primitive other skills invoke. Triggers: "погрилль",
+  "grill me", "уточни требования", "задай вопросы", "давай обсудим", vague
+  or one-line feature requests.
 ---
 
 # Grilling

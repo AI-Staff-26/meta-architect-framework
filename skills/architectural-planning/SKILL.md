@@ -1,12 +1,11 @@
 ---
 name: architectural-planning
 description: |
-  Turn an approved decision into work another agent can execute — decomposition
-  into vertical slices, an explicit scope boundary, the prompt itself, and the
-  handoff that carries context to an agent starting cold. Use when writing a
-  prompt for `code`, `review`, `debug`, or `devops`, splitting a feature into
-  tasks, drafting `/docs/Plan.md`, re-delegating after a FAIL, or deciding what
-  a delegation must carry. The architect's toolkit; any agent may load it.
+  Turn an approved decision into work another agent can execute:
+  decomposition, scope boundary, the prompt, and the handoff to an agent
+  starting cold. Use when writing a prompt for `code`, `review`, `debug`, or
+  `devops`, splitting a feature into tasks, drafting `/docs/Plan.md`, or
+  re-delegating after a FAIL.
 ---
 
 # Delegation

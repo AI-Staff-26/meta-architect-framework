@@ -1,13 +1,11 @@
 ---
 name: memory-keeping
 description: |
-  Schemas and templates for every file under memory/ — PROFILE, CONTEXT, FACTS,
-  DECISIONS, INSIGHTS, CHRONICLE, SUMMARY, the repo-wiki (meta.json and wiki
-  entries), and work reports. Use when creating or updating any memory file,
-  writing an ADR or a decision entry, adding a repo-wiki entry, running the
-  weekly rotation, or producing the work report that closes a task. The
-  reference half of the memory protocol; rules/memory-protocol.md holds the
-  protocol itself.
+  Schemas for everything under `memory/` — PROFILE, CONTEXT, FACTS,
+  DECISIONS, INSIGHTS, CHRONICLE, SUMMARY, ADRs, the repo-wiki and its
+  glossary, and work reports. Use when writing any memory file, running the
+  weekly rotation, or closing a task. Protocol itself →
+  `rules/memory-protocol.md`.
 ---
 
 # Memory Keeping

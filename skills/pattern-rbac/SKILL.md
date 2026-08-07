@@ -1,14 +1,10 @@
 ---
 name: pattern-rbac
 description: |
-  Authorisation built on permissions rather than roles: the `resource:action:scope`
-  grammar, one server-side authorisation service, deny by default, and the cache
-  invalidation that keeps a revoked role from staying live. Use when designing or
-  reworking access control for a B2B SaaS, an admin panel, or a multi-tenant
-  product, when a role's permissions must change without a deploy, when a role
-  name is being compared in a conditional, or on "роли и права",
-  "разграничение доступа". Isolation between tenants is
-  `pattern-multi-tenant`; whether a plan includes a capability at all is
+  RBAC: the `resource:action:scope` permission grammar, scopes, one
+  authorisation service, cache invalidation on revoke. Use when designing
+  access control, or on "роли и права", "разграничение доступа". Isolation
+  between tenants → `pattern-multi-tenant`; what a plan includes →
   `pattern-feature-flags`.
 ---
 

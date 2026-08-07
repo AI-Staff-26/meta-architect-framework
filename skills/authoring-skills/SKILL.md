@@ -1,13 +1,11 @@
 ---
 name: authoring-skills
 description: |
-  How to write and maintain framework text — skills, agents, and rules — so an
-  agent runs the same process every time. Use when creating a new SKILL.md,
-  editing an agent definition, writing a rule, pruning a bloated skill, writing
-  a description, or deciding whether content belongs always-on or on-demand.
-  Covers the quality discipline (predictability, completion criteria, positive
-  framing, failure modes) and the mechanics (frontmatter fields, IDE folder
-  paths for .claude/, .cursor/, .windsurf/, .kilocode/).
+  Write and maintain framework text — SKILL.md files, agent definitions,
+  rules, CLAUDE.md. Use when creating or pruning a skill, writing a
+  description, editing an agent, or deciding what belongs always-on. Covers
+  frontmatter fields and IDE paths for .claude/, .cursor/, .windsurf/,
+  .kilocode/.
 ---
 
 # Authoring Framework Text
@@ -134,22 +132,23 @@ Choose model-invoked when the agent must reach it on its own, or when another sk
 
 ### Writing the description
 
-The description does two jobs: state what the skill is, and list the branches that should trigger it.
+**The description does one job: fire the skill at the right moment.** It is a matching surface, not a summary — every word that explains rather than matches is paid on every turn forever and returns nothing, because by the time anyone reads the explanation they have already loaded the body that explains it better.
 
-- **Front-load the leading word** — the description is where it does its invocation work.
+So: **triggers, not identity.**
+
+- **Enough subject to disambiguate, then triggers.** A handful of words placing the skill, then the branches that should fire it — the phrasings a user actually types, in every language they type in, plus the concrete file names and keywords they would mention.
 - **One trigger per branch.** Synonyms renaming a single branch are duplication; collapse them.
-- **Cut identity already in the body.** Keep it to triggers plus any "when another skill needs…" reach clause.
-- **Name the concrete files and keywords** a user or agent would mention.
+- **Front-load the leading word** — the description is where it does its invocation work.
+- **Route the near miss.** One clause naming the sibling skill for the adjacent case, where confusing the two is likely.
+- **Say nothing the body says.** The thesis, the method, the rationale, the section list — all of it is body. A description that reads like an abstract has bought identity with always-on budget.
 
-```yaml
-# Too vague — will not trigger reliably
-description: Helps with flags.
+The three shapes, worst to best:
 
-# Good — concrete files and concepts to match against
-description: >
-  How to add or modify Next.js experimental feature flags end-to-end.
-  Use when editing config-shared.ts, config-schema.ts, define-env-plugin.ts.
-```
+- *Too vague, will not fire:* "Helps with flags."
+- *Bloated — an abstract of the body, priced per turn forever:* "A flag is a branch that lives in production: shipping one ships both paths and the obligation that comes with them. Covers the four flag types and their lifespans, the fallback when the store is unreachable, consistent bucketing for percentage rollouts, and cleanup as part of the work that created it…"
+- *Right — subject, triggers, one routing clause:* "Feature flags: gradual rollout, kill switch, A/B experiment, per-plan entitlements and limits, trunk-based development, making a rollback a switch. Triggers: «фича-флаг», «выкатить на часть пользователей». Whether this actor may act at all → `pattern-rbac`."
+
+**Descriptions and the routing table move together.** `CLAUDE.md`'s skills table is what makes a skill reachable deliberately; the description is what makes it reachable by accident. Trimming a description for a skill that has no row is how a skill disappears.
 
 ### File layout
 

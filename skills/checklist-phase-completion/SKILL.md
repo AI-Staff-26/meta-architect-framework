@@ -1,13 +1,9 @@
 ---
 name: checklist-phase-completion
 description: |
-  Whether a phase is actually finished or only feels finished — the checkable
-  condition for each transition from understanding to planning to
-  implementation to review to closing. Use before moving a task forward, when
-  resuming work someone else left, when a review keeps finding things the
-  previous phase should have settled, or when asking "готово ли это".
-  Catches premature completion, the failure that gets more expensive with
-  every phase it survives.
+  Check whether a phase is actually finished before moving on — one checkable
+  condition per transition. Use before advancing a task, when resuming
+  someone else's work, or on "готово ли это". Catches premature completion.
 ---
 
 # Is This Phase Actually Done

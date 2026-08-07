@@ -1,16 +1,10 @@
 ---
 name: pattern-feature-flags
 description: |
-  A flag is a branch that lives in production: shipping one ships both paths
-  and the obligation that comes with them — a removal date, or the acceptance
-  that it is now a permanent operational control. Covers the four flag types
-  and their lifespans, the fallback when the flag store is unreachable,
-  consistent bucketing for percentage rollouts, and cleanup as part of the work
-  that created the flag. Use for a gradual rollout, a kill switch, an A/B
-  experiment, per-plan entitlements and limits, trunk-based development, or
-  making a 🔴 rollout reversible; triggers "фича-флаг", "выкатить на часть
-  пользователей".
-  Whether this actor may act at all is `pattern-rbac`.
+  Feature flags: gradual rollout, kill switch, A/B experiment, per-plan
+  entitlements and limits, trunk-based development, making a rollback a
+  switch. Triggers: "фича-флаг", "выкатить на часть пользователей".
+  Whether this actor may act at all → `pattern-rbac`.
 ---
 
 # Feature Flags

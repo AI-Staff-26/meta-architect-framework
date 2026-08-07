@@ -1,13 +1,10 @@
 ---
 name: workflow-feature
 description: |
-  Adding new functionality to a system that already exists — finding where the
-  feature attaches, discovering the edges the request never mentioned, and
-  sequencing the work so the first slice runs end to end. Use when the user
-  asks for a new module, endpoint, screen, integration, or capability, or says
-  "добавь", "нужна фича", "хочу чтобы можно было". For something broken use
-  `workflow-debugging`, for structure without behaviour change
-  `workflow-refactoring`, for a project from nothing `workflow-new-project`.
+  Add functionality to a system that already exists: where it attaches, the
+  edges the request never mentioned, first slice end to end. Triggers:
+  "добавь", "нужна фича", "хочу чтобы можно было". Broken →
+  `workflow-debugging`; from nothing → `workflow-new-project`.
 ---
 
 # Adding a Feature

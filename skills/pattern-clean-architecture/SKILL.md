@@ -1,14 +1,10 @@
 ---
 name: pattern-clean-architecture
 description: |
-  The dependency rule — every import points inward, so business rules run
-  without a database, an HTTP server, or a framework, and the four layers
-  (domain, application, presentation, infrastructure) stop being folders.
-  Use when choosing an architecture for a system with real business rules,
-  answering "куда положить этот код", judging whether existing layers are
-  still intact, or planning to make the framework or ORM replaceable.
-  When the pressure is team size and feature ownership rather than
-  framework independence, use `pattern-modular-monolith`.
+  Clean Architecture: the dependency rule, layer placement, dependency
+  inversion, making the framework or ORM replaceable. Use when choosing an
+  architecture, judging whether existing layers hold, or on "куда положить
+  этот код". Team and feature ownership instead → `pattern-modular-monolith`.
 ---
 
 # Clean Architecture

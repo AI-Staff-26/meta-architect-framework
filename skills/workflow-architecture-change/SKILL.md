@@ -1,12 +1,10 @@
 ---
 name: workflow-architecture-change
 description: |
-  Changing the shape of a running system — data migrations, replacing a
-  framework or database, splitting a monolith, breaking a public contract,
-  moving infrastructure. Covers choosing the migration strategy, finding the
-  point of no return, and phasing the work so each step can be reversed. Always
-  🔴. Use before any change where rollback is not simply reverting a commit.
-  For structure without behaviour change use `workflow-refactoring`.
+  Change the shape of a running system: data migrations, replacing a
+  framework or database, splitting a monolith, breaking a public contract.
+  Always 🔴. Use when rollback is not simply reverting a commit. Structure
+  without behaviour change → `workflow-refactoring`.
 ---
 
 # Architecture Change

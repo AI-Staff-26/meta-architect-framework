@@ -1,12 +1,10 @@
 ---
 name: checklist-ux-design
 description: |
-  Six design decisions to settle before a UI is implemented — mental model,
-  information architecture, affordance, feedback, edge states, and motion.
-  Use before delegating any UI-heavy feature, when a screen is being designed
-  rather than verified, or when previous UI came back generic and stateless.
-  Produces the UX section a plan and a prompt are written from. For build
-  sequencing use `workflow-ui-build-order`, for verification `checklist-ux-review`.
+  Settle the six UI decisions before implementation: mental model,
+  information architecture, affordance, feedback, edge states, motion. Use
+  before delegating UI-heavy work, or when previous UI came back generic and
+  stateless. Verification after → `checklist-ux-review`.
 ---
 
 # UX Design Passes

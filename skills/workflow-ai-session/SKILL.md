@@ -1,13 +1,10 @@
 ---
 name: workflow-ai-session
 description: |
-  Recover a session whose context has degraded — repetition, forgotten
-  constraints, hallucinated APIs, questions already answered coming back.
-  Covers the signals, what survives a restart, and the restart prompt itself.
-  Use mid-task when quality drops rather than at the end, when a long session
-  starts contradicting its own earlier decisions, or when the user says
-  "ты забыл", "мы это уже обсуждали", "ходим по кругу", "начни заново".
-  For an agent whose fixes keep breaking things, use forensic-investigation.
+  Recover a degraded session: repetition, forgotten constraints, hallucinated
+  APIs, resolved questions returning. Triggers: "ты забыл", "мы это уже
+  обсуждали", "ходим по кругу", "начни заново". Fixes that keep breaking
+  things → `forensic-investigation`.
 ---
 
 # Session Recovery
