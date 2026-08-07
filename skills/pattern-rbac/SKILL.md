@@ -1,342 +1,101 @@
 ---
 name: pattern-rbac
 description: |
-  Role-Based Access Control pattern. Permissions hierarchy, authorization service, 
-  scope-based access (ALL/OWN/TEAM). For B2B SaaS, admin panels, multi-tenant 
-  systems. 🟡 Medium complexity. NOT for simple auth-only apps.
+  Authorisation built on permissions rather than roles: the `resource:action:scope`
+  grammar, one server-side authorisation service, deny by default, and the cache
+  invalidation that keeps a revoked role from staying live. Use when designing or
+  reworking access control for a B2B SaaS, an admin panel, or a multi-tenant
+  product, when a role's permissions must change without a deploy, when a role
+  name is being compared in a conditional, or on "роли и права",
+  "разграничение доступа". Isolation between tenants is
+  `pattern-multi-tenant`; whether a plan includes a capability at all is
+  `pattern-feature-flags`.
 ---
 
-# 🔐 RBAC — Role-Based Access Control
+# Role-Based Access Control
 
-<purpose>
-Паттерн управления доступом на основе ролей.
-Гибкая система permissions с иерархией и наследованием.
-</purpose>
+**The permission is the unit of the check; the role is only how permissions are bundled.** Code that asks about a role has hardcoded today's org chart into a conditional, and the first customer who wants a different one turns every call site into a change.
 
----
+So every check names a capability, and roles are data: a mapping from role to permissions that can be edited, granted, and audited without a deploy.
 
-## Когда Использовать
+## The naming grammar is the interface
 
-**Подходит для:**
-
-- Приложения с разными уровнями доступа
-- B2B SaaS с организационной структурой
-- Admin панели и CMS
-- Multi-tenant системы
-
-**НЕ подходит для:**
-
-- Простые приложения без разделения ролей
-- Публичные API без аутентификации
-
-**Сложность внедрения:** 🟡 Medium
-
----
-
-## Концепция
+The permission string is what every layer agrees on — route, service, UI, seed data, audit log. Settle it before code, because renaming one later touches all of them at once.
 
 ```
-Пользователь → Роль → Permissions → Доступ к ресурсам
+resource:action[:scope]
 
-┌──────────┐     ┌──────────┐     ┌──────────────┐
-│   User   │────▶│   Role   │────▶│  Permission  │
-│  (John)  │     │  (Admin) │     │ (user:create)│
-└──────────┘     └────┬─────┘     └──────────────┘
-                      │
-                      ▼
-              ┌──────────────┐
-              │  Resources   │
-              └──────────────┘
+order:read            any order
+order:update:own      only orders this actor owns
+report:export:team    anything owned by the actor's team
+user:*                every action on users
+*:read                read anything
 ```
 
-### Компоненты
+Wildcards buy brevity and cost precision. `*:*` is the one grant nobody can audit by reading it: a resource added next quarter is already granted to whoever holds it. Keep wildcards to a small set of system roles and write leaf permissions wherever a customer-visible role is defined.
 
-| Компонент | Описание | Пример |
-|-----------|----------|--------|
-| User | Субъект доступа | John Doe |
-| Role | Набор permissions | Admin, Editor |
-| Permission | Право на действие | user:create |
-| Resource | Объект доступа | User, Order |
+Actions stay a closed vocabulary — create, read, update, delete, plus the domain verbs that genuinely differ, such as `approve`, `export`, `refund`. Any verb someone might want to grant separately is its own action; folding `approve` into `update` means everyone who can edit an order can approve it.
 
----
+## Scope is the row-level half
 
-## Domain Model
+"May edit orders" and "may edit their own orders" are the same role and different permissions. The `all` / `own` / `team` axis is exactly what a role-only system cannot express.
 
-```typescript
-// domain/entities/Role.ts
-class Role extends Entity {
-  constructor(
-    public readonly id: string,
-    private _name: string,
-    private _permissions: Permission[],
-    private _parent: Role | null = null
-  ) {
-    super();
-  }
+A system without scope grows a second, informal authorisation layer inside its query filters: the endpoint checks the role, and a `WHERE owner_id = ?` buried in a repository decides the real answer. That filter *is* authorisation — invisible to a security review, and impossible to enumerate across endpoints.
 
-  get permissions(): Permission[] {
-    const inherited = this._parent?.permissions ?? [];
-    return [...new Set([...this._permissions, ...inherited])];
-  }
+The tenant filter is the exception, because it is a different kind of thing: an invariant applied by construction rather than a decision about this actor. `pattern-multi-tenant` draws that line, and the two filters stack — tenant first, then scope.
 
-  hasPermission(permission: Permission): boolean {
-    return this.permissions.some(p => p.matches(permission));
-  }
-}
+So scope resolves where the permission does. The authorisation service returns the scope it matched, and the caller either hands it the resource for the ownership check or takes the filter from it — never invents one.
 
-// domain/entities/Permission.ts
-class Permission extends ValueObject {
-  constructor(
-    public readonly resource: string,
-    public readonly action: Action,
-    public readonly scope: PermissionScope = PermissionScope.ALL
-  ) {
-    super();
-  }
+## One seam for the question
 
-  get key(): string {
-    return `${this.resource}:${this.action}`;
-  }
+Every check goes through a single authorisation service, server-side, **deny by default**: no matching permission is a refusal, and an unrecognised permission string is a refusal too.
 
-  matches(other: Permission): boolean {
-    if (this.resource === '*') return true;
-    if (this.action === Action.ALL) {
-      return this.resource === other.resource;
-    }
-    return this.resource === other.resource 
-        && this.action === other.action;
-  }
-}
+Place the check where the capability lives — in the application service that performs the action, not only in the controller. A controller-only check is bypassed the day that service is also called from a background job, a CLI command, another module, or a second transport. The controller may still check early to fail cheaply; the service is what makes it true.
 
-enum Action {
-  CREATE = 'create',
-  READ = 'read',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  ALL = '*'
-}
+What the UI hides is presentation. Hiding a button the user cannot use is good design and never enforcement, because the endpoint is reachable without the UI. The frontend reads the same permission strings so the two cannot drift.
 
-enum PermissionScope {
-  ALL = 'all',
-  OWN = 'own',
-  TEAM = 'team'
-}
-```
+## Role hierarchy
 
----
+Inheritance keeps role definitions small, and its cost is direction: a permission added to a parent lands on every leaf beneath it, immediately, without anyone editing those roles. Whoever edits a parent audits the leaves, and the change is reviewed as a grant to every role below — because that is what it is.
 
-## Permission Naming
+Past two or three levels nobody can state what a leaf role can do without walking the graph, which was the property roles existed to provide.
 
-```
-Format: {resource}:{action}[:{scope}]
+## The cache and its invariant
 
-Examples:
-  user:read           # Чтение пользователей
-  user:create         # Создание пользователей
-  order:*             # Все действия над заказами
-  *:read              # Чтение любых ресурсов
-  report:export:own   # Экспорт только своих отчётов
-```
+Resolving permissions per request means a join per request, so caching the resolved set is close to mandatory at any real size. It creates the invariant people forget: **a revoked role that stays cached is a live privilege**, for as long as the TTL.
 
----
+The invalidation event therefore exists before the cache does. A role edited, a membership changed, a permission set changed — the resolved entry for every affected actor is dropped, not left to expire. TTL is the backstop for what the event missed, not the mechanism. Key the entry so invalidation can reach it: `perm:{userId}` per actor, plus a role-version stamp when one role edit must reach thousands of actors without enumerating them.
 
-## Authorization Service
+## When RBAC stops fitting
 
-```typescript
-// application/services/AuthorizationService.ts
-class AuthorizationService {
-  constructor(
-    private userRepo: IUserRepository,
-    private cache: ICache
-  ) {}
+Three signals, and each means the model has outgrown roles: conditions start depending on the *resource's* attributes (an amount over a threshold, a document's state, the time of day) or on a *relationship* (a member of this particular project) rather than on the actor; the scope set keeps growing past all/own/team; every new customer wants a new role and the role table outgrows the customer table.
 
-  async can(
-    userId: string, 
-    permission: string,
-    resource?: { ownerId?: string }
-  ): Promise<boolean> {
-    const userPermissions = await this.getUserPermissions(userId);
-    const required = Permission.fromString(permission);
+That is ABAC or ReBAC, and the honest move is to name the escalation rather than bolt on a fifth scope. The check signature changes at every call site, so it is `workflow-architecture-change` with an ADR of its own.
 
-    const matching = userPermissions.find(p => p.matches(required));
-    if (!matching) return false;
+## Failure modes
 
-    if (matching.scope === PermissionScope.ALL) return true;
-    if (!resource) return true;
+| Symptom | What it means | Direction of fix |
+|---|---|---|
+| A role name compared in a conditional | The org chart is compiled into the code | Replace with the capability that branch actually needs |
+| Check in the controller, service reachable from a job | The seam sits at the transport, not the capability | Move it into the application service; keep the controller check as a cheap early refusal |
+| A super-admin path with no audit trail | The most powerful actor is the least observed | Log actor, permission, target, and outcome for every privileged action |
+| Lists filter by owner, writes check only the role | Scope is enforced on read and not on write | Authorise the write against the loaded resource, same permission and scope |
+| A revocation lands and access continues | A cached entry outlived its role | Invalidate on the role and membership events; TTL is only the backstop |
 
-    return this.checkScope(userId, matching.scope, resource);
-  }
+## Adopting it
 
-  async authorize(userId: string, permission: string): Promise<void> {
-    if (!await this.can(userId, permission)) {
-      throw new UnauthorizedError(`Lacks permission: ${permission}`);
-    }
-  }
+Adopt it when a role's permission set has to change without a deploy, or when a customer will define roles you did not ship. Two kinds of user separated by one `is_admin` flag do not earn a catalogue, a service, and an invalidation event — that check is a permission written early, and the catalogue arrives with the third kind.
 
-  private async getUserPermissions(userId: string): Promise<Permission[]> {
-    const cacheKey = `user:${userId}:permissions`;
-    
-    let permissions = await this.cache.get<Permission[]>(cacheKey);
-    if (permissions) return permissions;
+🔴 — auth, by the signals in CLAUDE.md's complexity table, which is where the gate lives. The change routes through `checklist-security` regardless of size, and the ADR records the permission catalogue with each action's scope semantics: every later feature is written against it. Format in `memory-keeping`.
 
-    const user = await this.userRepo.findWithRoles(userId);
-    permissions = user?.roles.flatMap(r => r.role.permissions) ?? [];
+## Completion criterion
 
-    await this.cache.set(cacheKey, permissions, { ttl: 300 });
-    return permissions;
-  }
-}
-```
+Done when: every check names a permission and no role name is compared outside the seed data; the grammar and the full permission catalogue are written down with each action's scope semantics; every wildcard grant sits in a system role, and each parent-role permission has been reviewed as a grant to every leaf beneath it; the authorisation service is the single server-side path, denies by default, and is called from the application service rather than only the controller; scope is enforced on writes as well as reads, against the loaded resource; every role and membership change invalidates the resolved cache by event; privileged use is audited with actor, permission, target, and outcome; and tests cover a denied permission, a wrong-scope denial, and a revocation taking effect immediately.
 
----
+## Related
 
-## Middleware
-
-```typescript
-// presentation/middleware/AuthorizationMiddleware.ts
-class AuthorizationMiddleware {
-  constructor(private authService: AuthorizationService) {}
-
-  requirePermission(permission: string) {
-    return async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        await this.authService.authorize(req.user.id, permission);
-        next();
-      } catch (error) {
-        if (error instanceof UnauthorizedError) {
-          return res.status(403).json({ error: 'Forbidden' });
-        }
-        next(error);
-      }
-    };
-  }
-}
-
-// Routes
-router.post('/users', 
-  authMiddleware.requirePermission('user:create'),
-  userController.create
-);
-```
-
----
-
-## Role Hierarchy
-
-```
-SUPER_ADMIN
-     │
-   ADMIN
-   ╱    ╲
-EDITOR   MANAGER
-   ╲    ╱
-   VIEWER
-```
-
-### System Roles
-
-```typescript
-const SYSTEM_ROLES = [
-  {
-    id: 'super_admin',
-    name: 'Super Admin',
-    permissions: ['*:*'],
-    isSystem: true
-  },
-  {
-    id: 'admin',
-    name: 'Admin',
-    parent: 'super_admin',
-    permissions: ['user:*', 'role:read', 'settings:*'],
-    isSystem: true
-  },
-  {
-    id: 'viewer',
-    name: 'Viewer',
-    permissions: ['content:read', 'media:read'],
-    isSystem: true
-  }
-];
-```
-
----
-
-## Frontend Integration
-
-```typescript
-// components/CanAccess.tsx
-function CanAccess({ permission, children, fallback = null }: Props) {
-  const { can } = usePermission();
-  
-  if (!can(permission)) return fallback;
-  return <>{children}</>;
-}
-
-// Usage
-function UserListPage() {
-  return (
-    <div>
-      <h1>Users</h1>
-      <CanAccess permission="user:create">
-        <Button onClick={createUser}>Create User</Button>
-      </CanAccess>
-    </div>
-  );
-}
-```
-
----
-
-## Anti-Patterns
-
-### ❌ Hardcoded Role Checks
-
-```typescript
-// WRONG
-if (user.role === 'admin') { ... }
-
-// RIGHT
-if (await authService.can(user.id, 'user:delete')) { ... }
-```
-
-### ❌ Frontend-Only Checks
-
-```typescript
-// WRONG: Security through obscurity
-// Backend must always verify permissions!
-```
-
----
-
-## Чеклист
-
-- [ ] Permission с wildcards
-- [ ] Role с иерархией
-- [ ] AuthorizationService с caching
-- [ ] Middleware / decorators
-- [ ] Cache invalidation
-- [ ] Frontend CanAccess component
-
----
-
-## Quick Reference
-
-```
-Permission: {resource}:{action}[:{scope}]
-
-Scopes: ALL, OWN, TEAM
-
-Check Flow:
-  Request → Middleware → AuthService → Cache/DB → Allow/Deny
-```
-
----
-
-**Связанные файлы:**
-
-- `pattern-multi-tenant/SKILL.md` — RBAC в multi-tenant среде
-- `pattern-feature-flags/SKILL.md` — feature access control
-
----
-
-**END OF PATTERN**
+- `checklist-security` — the verification pass this change routes through
+- `pattern-multi-tenant` — the wall between tenants; this skill draws the roles inside one
+- `pattern-feature-flags` — entitlements: whether the plan includes the capability at all
+- `codebase-design` — placing the authorisation seam so callers cannot route around it
+- `workflow-architecture-change` — the move to ABAC or ReBAC once RBAC stops fitting
