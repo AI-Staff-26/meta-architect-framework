@@ -1,695 +1,109 @@
 ---
 name: pattern-multi-tenant
 description: |
-  Multi-tenancy pattern for SaaS. Tenant isolation strategies (DB/Schema/Row-level), 
-  context resolution, per-tenant configuration. For B2B platforms, white-label 
-  solutions. 🔴 High complexity. NOT for single-tenant apps.
+  Serving many tenants from one codebase, where isolation is an invariant that
+  holds only as well as the one path that forgets it. Covers choosing between
+  database-, schema-, and row-per-tenant, deriving a tenant identity the caller
+  cannot forge, and closing the paths that silently drop the tenant — jobs,
+  caches, files, exports, logs, migrations, webhooks. Use for a SaaS or B2B
+  platform, a white-label product, or when `tenant_id` is about to enter the
+  schema; triggers: "мультиарендность", "изоляция тенантов". Per-tenant
+  entitlements are `pattern-feature-flags`; permissions inside one tenant are
+  `pattern-rbac`.
 ---
 
-# 🏢 Multi-Tenant — Мультиарендность
+# Multi-Tenancy
 
-<purpose>
-Паттерн для обслуживания нескольких клиентов (тенантов) в одном приложении.
-Изоляция данных и конфигураций при общей кодовой базе.
-</purpose>
+**Isolation is an invariant, and it holds only as well as the one path that forgets it.** Ninety-nine queries filtered by tenant and one that is not is not ninety-nine percent isolated — it is breached, and the breach is usually reported by a customer who saw someone else's data.
 
----
+So the filter is not the work — writing one is the easy part. The work is the inventory of places where the tenant is dropped by default rather than by decision, and closing each one with a mechanism instead of a habit.
 
-## Когда Использовать
+## Choose the strategy from compliance and scale
 
-**Подходит для:**
+| Strategy | Isolation | Operational cost | Migrations & backup | Cross-tenant reporting | Blast radius of one mistake |
+|---|---|---|---|---|---|
+| **Database per tenant** | Physical — the wrong connection holds nothing to leak | Highest: N databases, N pools, provisioning | N migration runs; per-tenant restore is trivial | Needs its own aggregation path | One tenant |
+| **Schema per tenant** | Strong — the search path is the boundary | Medium: one server, N schemas | N runs, one backup; restore is per schema | Possible via UNION, at a cost | One tenant |
+| **Row-level, shared schema** | Logical — a `WHERE` clause is the boundary | Lowest | One run, one backup; single-tenant restore is hard | Free, it is one query | Every tenant at once |
+| **Hybrid** — shared pool, dedicated for those who demand it | Per contract | Two code paths forever | Both of the above | Only across the shared pool | Bounded by the pool |
 
-- SaaS приложения
-- B2B платформы с множеством клиентов
-- White-label решения
-- Проекты с требованием изоляции данных
-- Централизованное управление несколькими организациями
+Regulated data, data-residency clauses, or tenants large enough to need their own scaling and SLA push toward a dedicated database. Many small tenants on one product and one price plan push toward row-level — with the database enforcing it (Postgres RLS or the equivalent) rather than the application remembering to. Row-level enforced only in application code is the cheapest option and the one with the largest blast radius. Hybrid is earned by a single enterprise contract the rest of the fleet does not need, and its price is that every leak below has to be closed twice.
 
-**НЕ подходит для:**
+## The choice is the point of no return
 
-- Однопользовательские приложения
-- B2C с единой базой пользователей
-- Приложения без требований к изоляции
-- MVP с одним клиентом
+It reaches every query, migration, backup, job, export, and report. Once tenant data exists, changing it is not a refactor — it is `workflow-architecture-change`: 🔴, phased, reversible per step, with a data migration per tenant and a cutover window.
 
-**Сложность внедрения:** 🔴 High
+So it is decided before the first table exists rather than discovered at the first enterprise contract.
 
----
+## Tenant resolution
 
-## Концепция
+| Source | Where it fits | What it costs |
+|---|---|---|
+| Subdomain — `acme.app.com` | Public entry, white-label, branded login | Wildcard DNS and certificates |
+| Path — `app.com/acme` | Simple routing, internal tools | Every route carries the segment, and one will omit it |
+| JWT claim | Authenticated app and API traffic | Works only after auth; re-issued on tenant switch |
+| Header — `X-Tenant-ID` | Service-to-service, admin tooling | Trusted on its own, it is authorisation by request header |
 
-### Ключевая Идея
+**The tenant identity comes from something the caller cannot set.** Subdomain, path, and header are routing hints; the tenant is accepted only where it matches the tenant on the authenticated principal, and a mismatch is a refusal logged as a security event rather than a redirect. Unauthenticated entry points — signup, marketing pages — resolve a tenant for presentation only and reach nothing tenant-scoped.
 
-```
-Один код. Множество клиентов. Полная изоляция.
+The resolved tenant then lives in a request-scoped ambient context every repository reads, so no call site can forget to pass it, and an absent tenant raises. Defaulting to "no tenant" or "all tenants" is how this failure becomes silent.
 
-┌─────────────────────────────────────────────────┐
-│              Multi-Tenant Application           │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐        │
-│  │ Tenant A │ │ Tenant B │ │ Tenant C │        │
-│  │  (Acme)  │ │ (Globex) │ │ (Initech)│        │
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘        │
-│       │            │            │               │
-│  ═════╪════════════╪════════════╪═══════════   │
-│       │    Tenant Resolution Layer │            │
-│  ═════╪════════════╪════════════╪═══════════   │
-│       │            │            │               │
-│  ┌────┴────────────┴────────────┴────┐         │
-│  │         Shared Application         │         │
-│  └────────────────────────────────────┘         │
-└─────────────────────────────────────────────────┘
-```
+## The leak inventory
 
-### Принципы
+Every path where the tenant is present in the request and absent by default everywhere else. Walk it against the system; a row with no answer is an open leak.
 
-1. **Tenant Isolation** — данные одного тенанта недоступны другим
-2. **Tenant Context** — текущий тенант определяется на каждый запрос
-3. **Shared Codebase** — единая кодовая база для всех
-4. **Configurable** — каждый тенант может иметь свои настройки
-5. **Scalability** — возможность независимого масштабирования
+| Path | How the tenant is lost | What holds it |
+|---|---|---|
+| Background jobs, queues | The job outlives the request; the ambient context is gone when it runs | `tenantId` is a required field of the payload, and the worker enters the tenant context before touching data |
+| Scheduled tasks | Nothing enqueued them, so there was never a request | The schedule iterates tenants explicitly, one context per tenant |
+| Cache | Two tenants collide on one key and the second reader gets the first's data | Tenant is the first key segment; invalidation and eviction are per tenant |
+| File and blob storage | Paths are built from the entity id alone | Tenant is the top path segment; signed URLs carry it and are checked on read |
+| Search indexes | One index, one query, no filter | Index per tenant, or a tenant filter the query builder adds, not the caller |
+| Exports, generated reports | Generation is async and the artefact lands in shared storage | The export inherits the requesting tenant; the download is authorised again at fetch |
+| Logs, error tracking | Records carry user data with no tenant, so an incident cannot be scoped | Every line carries `tenantId` and names subjects by id, not email |
+| Database migrations | Written against one schema, run once | Run per tenant, count reconciled against the tenant list; a partial run fails the deploy |
+| Admin and cross-tenant queries | The scoped repository is reused with its filter disabled | A separate path — see below |
+| Connection pools | A checked-out connection keeps the previous tenant's session state (search path, RLS variable) | Set on checkout, cleared on release; or a pool per tenant |
+| Webhooks, external callbacks | They arrive from outside with no session at all | Tenant encoded in the endpoint URL with a per-tenant signing secret, verified before the payload is parsed |
+| Provisioning a new tenant | It is created after the last migration ran, so its storage starts behind | Provisioning runs the full migration set and seeds, then reconciles against the tenant list |
 
----
-
-## Стратегии Изоляции
-
-### Сравнение Подходов
-
-| Стратегия | Изоляция | Сложность | Стоимость | Масштабирование |
-|-----------|----------|-----------|-----------|-----------------|
-| Database per Tenant | 🟢 Полная | 🔴 High | 🔴 High | 🟢 Независимое |
-| Schema per Tenant | 🟡 Высокая | 🟡 Medium | 🟡 Medium | 🟡 Среднее |
-| Row-Level (Shared) | 🟠 Логическая | 🟢 Low | 🟢 Low | 🔴 Общее |
-| Hybrid | 🟢 Гибкая | 🔴 High | 🟡 Variable | 🟢 Гибкое |
-
-### Database per Tenant
+The shapes that make the tenant visible at a glance in review:
 
 ```
-┌───────────────────────────────────────┐
-│           Application Layer           │
-└───────────┬───────────┬───────────────┘
-            │           │
-    ┌───────▼───┐ ┌─────▼─────┐
-    │  DB Acme  │ │ DB Globex │  ← Отдельные базы
-    └───────────┘ └───────────┘
+cache key    tenant:{tenantId}:user:{userId}
+blob path    {tenantId}/invoices/{invoiceId}.pdf
 ```
 
-**Когда использовать:**
+## Cross-tenant operations are their own path
 
-- Высокие требования к изоляции (compliance, регуляции)
-- Клиенты с большими объёмами данных
-- Разные SLA для разных клиентов
+Admin dashboards, fleet analytics, billing rollups, and support impersonation get a repository or read model of their own, reachable only behind an explicit super-admin check. Reusing the tenant-scoped repository with the filter switched off — a null tenant, a `skipTenantFilter` flag — is how an admin feature becomes a data breach: one code path now serves both cases, and a single wrong caller crosses the wall in silence.
 
-**Реализация:**
+Such a path aggregates rather than returning tenant rows wherever the question allows it, and every call is audited with actor, tenants touched, and reason. Impersonation enters one named tenant, is time-boxed, and is visible to that tenant.
 
-```typescript
-// infrastructure/database/TenantDatabaseManager.ts
+## Proving isolation
 
-class TenantDatabaseManager {
-  private connections: Map<string, Database> = new Map();
+For every repository, a test in which tenant B requests tenant A's row **by id** and receives nothing — the direct read, not a filtered list. Isolation asserted in prose is an intention, and it survives exactly until the first hand-written query.
 
-  async getConnection(tenantId: string): Promise<Database> {
-    if (!this.connections.has(tenantId)) {
-      const config = await this.loadTenantDbConfig(tenantId);
-      const db = await createConnection(config);
-      this.connections.set(tenantId, db);
-    }
-    return this.connections.get(tenantId)!;
-  }
+Extend the same shape across the inventory: a job enqueued by A and run cold, a cache read attempted across tenants, an export requested by B for A's id, a restore that brings back one tenant only. These are what keep each new surface — a job, an export, a restore — from shipping outside the wall. `tdd` holds where such a test belongs.
 
-  private async loadTenantDbConfig(tenantId: string): Promise<DbConfig> {
-    // Загрузка конфигурации из центральной БД или конфига
-    return {
-      host: `${tenantId}.db.example.com`,
-      database: `tenant_${tenantId}`,
-      // ...
-    };
-  }
-}
-```
+## Adjacent concerns
 
-### Schema per Tenant
+**Two filters stack on every query, and they are not the same kind of thing.** The tenant filter is an invariant: ambient, applied by construction, and never the caller's to supply — which is why it lives where no call site can forget it. The actor's scope filter is a decision: it comes back from the authorisation service and has to be enumerable per endpoint, because a security review must be able to list who can reach what. Tenant first, then scope. `pattern-rbac` argues against filters buried in repositories; that argument is about the second one.
 
-```
-┌───────────────────────────────────────┐
-│           Shared Database             │
-│  ┌──────────┐ ┌──────────┐            │
-│  │schema_   │ │schema_   │            │
-│  │ acme     │ │ globex   │  ← Схемы   │
-│  └──────────┘ └──────────┘            │
-└───────────────────────────────────────┘
-```
+What a plan turns on and how much of it — entitlements and per-tenant limits — is `pattern-feature-flags`, keyed by tenant. Branding, locale, and the rest of a tenant's settings belong to the tenant record itself.
 
-**Когда использовать:**
+## Adopting it
 
-- Средние требования к изоляции
-- PostgreSQL / SQL Server
-- Нужны cross-tenant queries (admin)
+🔴 — architecture and data isolation both, by the signals in CLAUDE.md's complexity table, which is where the gate lives. The ADR is written before any code and records the strategy, the compliance or scale requirement that forced it, the tenant-resolution source, and which paths get a shared-tenant exception. Format in `memory-keeping`.
 
-**Реализация:**
+## Completion criterion
 
-```typescript
-// infrastructure/database/SchemaResolver.ts
+Done when: an ADR records the isolation strategy and the requirement that forced it; tenant identity is derived from the authenticated session and a mismatch is refused and logged; every repository is tenant-scoped by construction and carries a test proving tenant B cannot read tenant A's row by id; every row of the leak inventory has a named mechanism or an explicit "not present in this system"; cross-tenant access runs through a separate audited path and the scoped one has no filter-disabling switch; and migrations, backup, and restore are per tenant, including a tenant provisioned after the last run, with the tenant count reconciled.
 
-class SchemaResolver {
-  getSchema(tenantId: string): string {
-    return `tenant_${tenantId}`;
-  }
+## Related
 
-  wrapQuery(query: string, tenantId: string): string {
-    const schema = this.getSchema(tenantId);
-    return `SET search_path TO ${schema}; ${query}`;
-  }
-}
-```
-
-### Row-Level (Shared Schema)
-
-```
-┌───────────────────────────────────────┐
-│           Shared Database             │
-│  ┌──────────────────────────────────┐ │
-│  │ users                            │ │
-│  │ id | tenant_id | email | ...     │ │
-│  │ 1  | acme      | a@a.com         │ │
-│  │ 2  | globex    | b@b.com         │ │
-│  └──────────────────────────────────┘ │
-└───────────────────────────────────────┘
-```
-
-**Когда использовать:**
-
-- Много мелких тенантов
-- Простота важнее изоляции
-- Ограниченный бюджет
-
-**Реализация:**
-
-```typescript
-// domain/repositories/TenantAwareRepository.ts
-
-abstract class TenantAwareRepository<T> {
-  constructor(
-    protected db: Database,
-    protected tenantContext: TenantContext
-  ) {}
-
-  protected addTenantFilter(query: QueryBuilder): QueryBuilder {
-    return query.where('tenant_id', this.tenantContext.getId());
-  }
-
-  async findById(id: string): Promise<T | null> {
-    return this.db
-      .select('*')
-      .from(this.tableName)
-      .where('id', id)
-      .where('tenant_id', this.tenantContext.getId())
-      .first();
-  }
-}
-```
-
----
-
-## Tenant Resolution
-
-### Способы Определения Тенанта
-
-| Способ | Пример | Плюсы | Минусы |
-|--------|--------|-------|--------|
-| Subdomain | acme.app.com | Интуитивно | DNS настройка |
-| Path | app.com/acme | Просто | Конфликты роутинга |
-| Header | X-Tenant-ID: acme | Гибко | Security concerns |
-| JWT Claim | { tenant: "acme" } | Безопасно | Только auth users |
-
-### Middleware Реализация
-
-```typescript
-// presentation/middleware/TenantMiddleware.ts
-
-class TenantMiddleware {
-  constructor(
-    private tenantResolver: TenantResolver,
-    private tenantContext: TenantContext
-  ) {}
-
-  async handle(req: Request, res: Response, next: NextFunction) {
-    const tenantId = await this.tenantResolver.resolve(req);
-    
-    if (!tenantId) {
-      return res.status(400).json({ error: 'Tenant not identified' });
-    }
-
-    const tenant = await this.tenantService.getById(tenantId);
-    
-    if (!tenant || !tenant.isActive) {
-      return res.status(403).json({ error: 'Tenant not found or inactive' });
-    }
-
-    // Устанавливаем контекст
-    this.tenantContext.set(tenant);
-    
-    next();
-  }
-}
-
-// Resolvers
-class SubdomainTenantResolver implements TenantResolver {
-  resolve(req: Request): string | null {
-    const host = req.hostname;
-    const subdomain = host.split('.')[0];
-    return subdomain !== 'www' ? subdomain : null;
-  }
-}
-
-class HeaderTenantResolver implements TenantResolver {
-  resolve(req: Request): string | null {
-    return req.headers['x-tenant-id'] as string | null;
-  }
-}
-
-class JwtTenantResolver implements TenantResolver {
-  resolve(req: Request): string | null {
-    const user = req.user; // После auth middleware
-    return user?.tenantId ?? null;
-  }
-}
-```
-
-### Tenant Context
-
-```typescript
-// shared/infrastructure/TenantContext.ts
-
-// Вариант 1: AsyncLocalStorage (Node.js)
-import { AsyncLocalStorage } from 'async_hooks';
-
-class TenantContext {
-  private storage = new AsyncLocalStorage<Tenant>();
-
-  set(tenant: Tenant): void {
-    this.storage.enterWith(tenant);
-  }
-
-  get(): Tenant {
-    const tenant = this.storage.getStore();
-    if (!tenant) {
-      throw new TenantNotSetError();
-    }
-    return tenant;
-  }
-
-  getId(): string {
-    return this.get().id;
-  }
-}
-
-// Вариант 2: Request-scoped (NestJS)
-@Injectable({ scope: Scope.REQUEST })
-class TenantContext {
-  private tenant: Tenant | null = null;
-
-  set(tenant: Tenant): void {
-    this.tenant = tenant;
-  }
-
-  get(): Tenant {
-    if (!this.tenant) {
-      throw new TenantNotSetError();
-    }
-    return this.tenant;
-  }
-}
-```
-
----
-
-## Структура Проекта
-
-```
-/src
-├── modules/
-│   ├── tenant/                   # Управление тенантами
-│   │   ├── api/
-│   │   │   ├── TenantService.ts
-│   │   │   └── dtos/
-│   │   └── internal/
-│   │       ├── domain/
-│   │       │   ├── Tenant.ts
-│   │       │   └── TenantSettings.ts
-│   │       └── infrastructure/
-│   │           └── TenantRepository.ts
-│   │
-│   ├── user/                     # Tenant-aware модули
-│   │   └── ...
-│   └── billing/
-│       └── ...
-│
-├── shared/
-│   ├── multi-tenancy/
-│   │   ├── TenantContext.ts
-│   │   ├── TenantResolver.ts
-│   │   └── TenantAwareRepository.ts
-│   └── ...
-│
-├── infrastructure/
-│   ├── database/
-│   │   ├── TenantDatabaseManager.ts
-│   │   └── ConnectionPool.ts
-│   └── ...
-│
-└── presentation/
-    └── middleware/
-        └── TenantMiddleware.ts
-```
-
----
-
-## Tenant Configuration
-
-### Модель Тенанта
-
-```typescript
-// modules/tenant/internal/domain/Tenant.ts
-
-class Tenant extends AggregateRoot {
-  constructor(
-    public readonly id: string,
-    private _name: string,
-    private _subdomain: string,
-    private _settings: TenantSettings,
-    private _subscription: Subscription,
-    private _status: TenantStatus
-  ) {
-    super();
-  }
-
-  get isActive(): boolean {
-    return this._status === TenantStatus.ACTIVE 
-        && this._subscription.isValid();
-  }
-
-  getFeatureFlag(flag: string): boolean {
-    return this._settings.features[flag] ?? false;
-  }
-
-  getConfig<T>(key: string): T | undefined {
-    return this._settings.config[key] as T;
-  }
-}
-
-// Value Objects
-class TenantSettings {
-  constructor(
-    public readonly features: Record<string, boolean>,
-    public readonly config: Record<string, unknown>,
-    public readonly limits: TenantLimits,
-    public readonly branding: TenantBranding
-  ) {}
-}
-
-class TenantLimits {
-  constructor(
-    public readonly maxUsers: number,
-    public readonly maxStorage: number, // bytes
-    public readonly apiRateLimit: number // requests per minute
-  ) {}
-}
-```
-
-### Применение Настроек
-
-```typescript
-// application/use-cases/CreateUser.ts
-
-class CreateUser {
-  constructor(
-    private userRepo: IUserRepository,
-    private tenantContext: TenantContext
-  ) {}
-
-  async execute(dto: CreateUserDTO): Promise<Result<User>> {
-    const tenant = this.tenantContext.get();
-    
-    // Проверка лимитов тенанта
-    const currentUserCount = await this.userRepo.countByTenant(tenant.id);
-    if (currentUserCount >= tenant.settings.limits.maxUsers) {
-      return Result.fail('User limit reached for this tenant');
-    }
-
-    // Применение feature flags
-    if (tenant.getFeatureFlag('require_email_verification')) {
-      // Логика верификации
-    }
-
-    const user = User.create(dto, tenant.id);
-    await this.userRepo.save(user);
-    
-    return Result.ok(user);
-  }
-}
-```
-
----
-
-## Cross-Tenant Operations
-
-### Admin / Super-Admin панель
-
-```typescript
-// modules/admin/internal/application/CrossTenantQuery.ts
-
-class CrossTenantAnalytics {
-  constructor(
-    private tenantService: TenantService,
-    private statsRepo: IStatsRepository
-  ) {}
-
-  async getGlobalStats(): Promise<GlobalStats> {
-    // Только для super-admin!
-    const tenants = await this.tenantService.getAllActive();
-    
-    const stats = await Promise.all(
-      tenants.map(async (t) => ({
-        tenantId: t.id,
-        stats: await this.statsRepo.getForTenant(t.id)
-      }))
-    );
-
-    return this.aggregateStats(stats);
-  }
-}
-
-// Middleware для super-admin
-class SuperAdminMiddleware {
-  async handle(req: Request, res: Response, next: NextFunction) {
-    if (!req.user?.isSuperAdmin) {
-      return res.status(403).json({ error: 'Super admin access required' });
-    }
-    // Не устанавливаем tenant context для cross-tenant операций
-    next();
-  }
-}
-```
-
-### Tenant Provisioning
-
-```typescript
-// modules/tenant/internal/application/ProvisionTenant.ts
-
-class ProvisionTenant {
-  constructor(
-    private tenantRepo: ITenantRepository,
-    private dbManager: TenantDatabaseManager,
-    private eventBus: EventBus
-  ) {}
-
-  async execute(dto: CreateTenantDTO): Promise<Result<Tenant>> {
-    // 1. Создание записи тенанта
-    const tenant = Tenant.create(dto);
-    await this.tenantRepo.save(tenant);
-
-    // 2. Провизионирование инфраструктуры
-    await this.dbManager.provisionDatabase(tenant.id);
-    
-    // 3. Миграции
-    await this.dbManager.runMigrations(tenant.id);
-
-    // 4. Seed данные
-    await this.seedInitialData(tenant);
-
-    // 5. Событие
-    await this.eventBus.publish(new TenantProvisioned(tenant));
-
-    return Result.ok(tenant);
-  }
-
-  private async seedInitialData(tenant: Tenant): Promise<void> {
-    // Создание admin пользователя
-    // Базовые настройки
-    // Default roles и permissions
-  }
-}
-```
-
----
-
-## Security Considerations
-
-### Data Isolation Checklist
-
-```
-✅ Все queries фильтруются по tenant_id
-✅ API endpoints проверяют tenant context
-✅ File storage изолирован по тенантам
-✅ Кэш ключи включают tenant prefix
-✅ Background jobs имеют tenant context
-✅ Logs содержат tenant_id для аудита
-```
-
-### Защита от Cross-Tenant Access
-
-```typescript
-// shared/multi-tenancy/TenantGuard.ts
-
-class TenantGuard {
-  constructor(private tenantContext: TenantContext) {}
-
-  ensureOwnership(resource: { tenantId: string }): void {
-    const currentTenant = this.tenantContext.getId();
-    if (resource.tenantId !== currentTenant) {
-      throw new UnauthorizedTenantAccessError(
-        `Resource belongs to tenant ${resource.tenantId}, ` +
-        `but current tenant is ${currentTenant}`
-      );
-    }
-  }
-}
-
-// Использование в Repository
-class UserRepository extends TenantAwareRepository<User> {
-  async findById(id: string): Promise<User | null> {
-    const user = await super.findById(id);
-    if (user) {
-      this.tenantGuard.ensureOwnership(user);
-    }
-    return user;
-  }
-}
-```
-
----
-
-## Anti-Patterns
-
-### ❌ Отсутствие Tenant Context в Background Jobs
-
-```typescript
-// WRONG
-class SendEmailJob {
-  async execute(userId: string) {
-    const user = await this.userRepo.findById(userId); // Какой тенант?
-  }
-}
-
-// RIGHT
-class SendEmailJob {
-  async execute(payload: { tenantId: string; userId: string }) {
-    await this.tenantContext.runWithTenant(payload.tenantId, async () => {
-      const user = await this.userRepo.findById(payload.userId);
-      // ...
-    });
-  }
-}
-```
-
-### ❌ Shared Cache без Tenant Prefix
-
-```typescript
-// WRONG
-await cache.set(`user:${userId}`, userData);
-
-// RIGHT
-await cache.set(`tenant:${tenantId}:user:${userId}`, userData);
-```
-
-### ❌ Cross-Tenant Data Leakage в Логах
-
-```typescript
-// WRONG
-logger.error(`User ${user.email} failed login`);
-
-// RIGHT
-logger.error(`[Tenant: ${tenantId}] User login failed`, { 
-  tenantId,
-  userId: user.id // Не email!
-});
-```
-
----
-
-## Чеклист Внедрения
-
-### Выбор Стратегии
-
-- [ ] Определены требования к изоляции
-- [ ] Выбрана стратегия: DB / Schema / Row-level
-- [ ] Учтены регуляторные требования
-
-### Tenant Resolution
-
-- [ ] Выбран способ определения тенанта
-- [ ] Реализован TenantMiddleware
-- [ ] TenantContext доступен везде
-
-### Data Layer
-
-- [ ] Все repositories tenant-aware
-- [ ] Миграции применяются ко всем тенантам
-- [ ] Backup / restore изолированы
-
-### Security
-
-- [ ] Аудит cross-tenant access
-- [ ] Cache изолирован
-- [ ] Background jobs имеют tenant context
-- [ ] Logs содержат tenant_id
-
-### Operations
-
-- [ ] Tenant provisioning автоматизирован
-- [ ] Мониторинг per-tenant
-- [ ] Rate limiting per-tenant
-
----
-
-## Quick Reference
-
-```
-Isolation Strategies:
-  Database per Tenant → Полная изоляция, высокая стоимость
-  Schema per Tenant   → Хорошая изоляция, средняя сложность
-  Row-Level (Shared)  → Логическая изоляция, простота
-
-Tenant Resolution:
-  Subdomain  → acme.app.com
-  Path       → app.com/acme
-  Header     → X-Tenant-ID
-  JWT Claim  → { tenant: "acme" }
-
-Key Components:
-  TenantMiddleware   → Определение тенанта на каждый запрос
-  TenantContext      → Хранение текущего тенанта
-  TenantAwareRepo    → Автоматическая фильтрация данных
-```
-
----
-
-**Связанные файлы:**
-
-- `pattern-rbac/SKILL.md` — авторизация в multi-tenant среде
-- `pattern-feature-flags/SKILL.md` — per-tenant feature flags
-- `workflow-new-project/SKILL.md` — применение при создании проекта
-
----
-
-**END OF PATTERN**
+- `checklist-security` — the verification pass over auth, data protection, and the tests that prove them
+- `pattern-rbac` — roles and permissions inside a single tenant
+- `pattern-feature-flags` — per-tenant entitlements, plan limits, and staged rollout
+- `workflow-architecture-change` — changing the isolation strategy once tenant data exists
+- `memory-keeping` — the ADR format that records the choice
