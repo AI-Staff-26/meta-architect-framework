@@ -5,8 +5,8 @@ description: |
   validation, API surface, data protection, secrets, logging, and the tests
   that prove it. Use whenever a change touches auth or permissions, user or
   payment data, a new or public endpoint, an external integration, file
-  uploads, or PII; the `review` agent loads it for security-critical diffs and
-  `checklist-release` for the pre-production pass.
+  uploads, or PII. The `review` agent loads it as its Security axis on every
+  diff; `checklist-release` loads it for the pre-production pass.
 ---
 
 # Проверка безопасности

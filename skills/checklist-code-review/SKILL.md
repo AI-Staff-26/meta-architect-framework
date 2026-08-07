@@ -25,14 +25,14 @@ A change can pass one axis and fail another — code that follows every conventi
 
 Take whatever the user named — a commit SHA, a branch, a tag, `main`, `HEAD~3`. When they named nothing, use the merge-base with the main branch.
 
-Capture the diff once: `git diff <fixed-point>...HEAD` (three dots, so the comparison is against the merge-base), and the commit list via `git log <fixed-point>..HEAD --oneline`.
+Fix the diff command once: `git diff <fixed-point>...HEAD` (three dots, so the comparison is against the merge-base), and the commit list via `git log <fixed-point>..HEAD --oneline`. Each sub-agent runs it itself, so all three read the same range.
 
 Confirm the ref resolves and the diff is non-empty **before** spawning anything. A bad ref should fail here, not three times inside three sub-agents.
 
 ## 2. Gather the sources
 
-- **Standards** — whatever the repo documents: `CODING_STANDARDS.md`, `CONTRIBUTING.md`, `CLAUDE.md`, lint configs. Plus the smell baseline below, which applies even when the repo documents nothing.
-- **Spec** — in order: `/docs/Plan.md` for this task, the ticket or issue referenced in the commit messages, a spec file matching the branch name. When none exists, the Spec axis reports "no spec available" rather than inventing one to grade against.
+- **Standards** — whatever the repo documents: `CODING_STANDARDS.md`, `CONTRIBUTING.md`, `CLAUDE.md`, lint configs. Plus the smell baseline below and the `codebase-design` vocabulary, which apply even when the repo documents nothing.
+- **Spec** — in order: `/docs/Plan.md` for this task, the ticket or issue referenced in the commit messages, a spec file matching the branch name. When none exists, skip the Spec sub-agent and record "no spec available" — inventing one to grade against produces findings the implementer cannot act on.
 - **Security** — `checklist-security`, weighted to what the diff actually touches.
 
 ### Smell baseline
@@ -49,23 +49,21 @@ A fixed set of Fowler smells (*Refactoring*, ch. 3), applied on top of whatever 
 | **Feature Envy** | A method reaching into another object's data more than its own | Move it onto the data it envies |
 | **Data Clumps** | The same few fields always travelling together | Bundle into one type |
 | **Primitive Obsession** | A string or number standing in for a domain concept | Give the concept its own small type |
-| **Repeated Switches** | The same switch on the same type recurring | Polymorphism, or one shared map |
+| **Repeated Switches** | The same `switch` or `if`-cascade on the same type recurring | Polymorphism, or one shared map |
 | **Shotgun Surgery** | One logical change forcing scattered edits | Gather what changes together |
 | **Divergent Change** | One module edited for several unrelated reasons | Split so each changes for one reason |
 | **Speculative Generality** | Abstraction or hooks for needs the spec does not have | Delete; inline until a real need appears |
-| **Message Chains** | Long `a.b().c().d()` navigation | Hide the walk behind one method |
+| **Message Chains** | Long `a.b().c().d()` navigation the caller should not depend on | Hide the walk behind one method |
 | **Middle Man** | A module that mostly delegates onward | Cut it; call the target directly |
 | **Refused Bequest** | A subclass ignoring most of what it inherits | Composition instead of inheritance |
 
-For depth and locality findings, use the `codebase-design` vocabulary — a shallow module is a reviewable finding, "feels over-abstracted" is not.
-
 ## 3. Run the three axes in parallel
 
-Send one message with three `Task` calls, `subagent_type: general-purpose`. Parallel sub-agents keep each axis out of the others' context, so a long Standards trawl cannot dilute the Security read.
+Send one message with three `Agent` calls, `subagent_type: general-purpose`, each with `run_in_background: false` so all three results are in hand before aggregating. Parallel sub-agents keep each axis out of the others' context, so a long Standards trawl cannot dilute the Security read.
 
 Every sub-agent gets: the diff command, the commit list, its own sources pasted in full (it has no other access to them), and a brief capped at **400 words**.
 
-- **Standards brief:** "Report, per file or hunk: (a) every place the diff breaks a documented standard — cite the standard and the rule; (b) any baseline smell — name it and quote the hunk. Documented-standard breaches can be hard findings; baseline smells are always judgement calls. Skip anything tooling enforces."
+- **Standards brief:** "Report, per file or hunk: (a) every place the diff breaks a documented standard — cite the standard and the rule; (b) any baseline smell — name it and quote the hunk; (c) any module the diff adds or reshapes whose interface is nearly as complex as what sits behind it — name it shallow and say what it hides. Documented-standard breaches can be hard findings; baseline smells and depth judgements are always judgement calls. Skip anything tooling enforces."
 - **Spec brief:** "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour present in the diff that was not asked for; (c) requirements that look implemented but wrong. Quote the spec line for each finding."
 - **Security brief:** "Report exploitable weaknesses reachable through this diff: unvalidated input, missing authorisation, injection, secrets or PII in code or logs, unsafe deserialisation, path traversal. For each, state the reachable path from an untrusted input to the weakness. Flag anything you can only reach by assuming a caller behaves badly as such."
 
