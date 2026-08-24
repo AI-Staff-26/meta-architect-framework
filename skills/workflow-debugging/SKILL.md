@@ -79,6 +79,8 @@ Each must be **falsifiable** — state the prediction it makes:
 
 A hypothesis with no stated prediction is a vibe: sharpen it or drop it.
 
+**Where the symptom has a searchable fingerprint** — an exact error string, a stack frame, a symbol from a dependency — someone has usually hit it already, in an issue tracker or in code that works around it. `prior-art` holds the search technique. A hypothesis that arrives with someone else's diagnosis attached still needs its own prediction and its own probe: their cause is a candidate, not a finding.
+
 Show the ranked list to the user before testing. They often re-rank it instantly — "we deployed a change to number three yesterday" — or name ones they have already ruled out. Proceed with your own ranking if they are away.
 
 ## Phase 4 — Instrument
@@ -128,5 +130,6 @@ Done means all of:
 ## Related
 
 - `tdd` — the red-green loop the regression test is written in
+- `prior-art` — searching an error string or symbol across public code, in Phase 3
 - `forensic-investigation` — when the agent, not the code, is the thing looping
 - `codebase-design` — vocabulary for a "no correct seam" finding

@@ -23,6 +23,8 @@ Name the first user-visible thing that would count as working. That sentence bec
 
 ## 2. Choose the stack, and defend it
 
+First, the question underneath it: does the thing itself already exist? A stack decision assumes you are building, and the most expensive version of this step is choosing carefully between frameworks for something that ships as an existing project plus a configuration file. `prior-art` settles which of three outcomes this is; only *build it* leads to the rest of this step.
+
 Two or three real options, each with what it costs and what it buys, and a recommendation with the reason. Not a survey — a decision presented for approval.
 
 The reasons that hold: the team already knows it, it fits the shape of the problem, its failure modes are understood, and it will still be maintained in three years. The reasons that do not: it is new, it is fast in a benchmark nobody ran on this workload, or the alternative was fashionable last year.
@@ -69,6 +71,7 @@ Ready to build features when: one user-visible path works in the deployed enviro
 
 ## Related
 
+- `prior-art` — whether it needs building at all
 - `references/tech-stack-selection.md` — how the stack decision gets made
 - `workflow-requirements-interview` + `grilling` — settling what it must do
 - `workflow-feature` — every slice after the tracer

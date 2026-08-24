@@ -57,6 +57,8 @@ Scope firms as the work moves: open while requirements are still forming, clarif
 
 **Show, where style matters.** Point at a file in this repo that already does the thing — "follow the shape of `UserService`" — instead of describing conventions in prose. One existing example transfers more than three paragraphs.
 
+Where the example is external, it travels in `## Reference`: a URL pinned to a tag or commit, plus the specific decisions being copied. A reference implementation `prior-art` found and the prompt never mentions is a search that changed nothing.
+
 **Revise by adding.** When a result misses, add the constraint or example that was missing; rewriting the prompt from scratch drops the constraints that were already doing their job.
 
 ## The handoff
@@ -90,6 +92,7 @@ To `code`:
 ## Reference
 - `/docs/Plan.md` — the approved plan
 - `memory/repo-wiki/[entry].md` — how this area works
+- `https://github.com/[owner]/[repo]/blob/[tag]/[path]` — reference implementation; take [the specific decision], not the file
 
 ## Output
 Code + report against the acceptance criteria.

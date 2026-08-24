@@ -154,6 +154,7 @@ The plan holds if: its claims trace to memory or verified project state rather t
 | Need | Skill |
 |---|---|
 | Requirements are vague | `grilling` → `workflow-requirements-interview` |
+| Building something that may already exist | `prior-art` |
 | Building a feature | `workflow-feature` |
 | Something is broken | `workflow-debugging` (feedback loop first) |
 | The agent is looping, not the code | `forensic-investigation`, `workflow-ai-session` |

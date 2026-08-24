@@ -47,7 +47,7 @@ Escalate the moment the feature touches an auth boundary, changes the schema, al
 
 ## 4. Plan (🟡🔴)
 
-`architectural-planning` holds decomposition, scope, and the prompt; its `references/plan-template.md` holds the document. Reach for `codebase-design` when the feature needs a new module or a seam, and the matching pattern skill when it needs an architecture, access model, or tenant isolation that already has a name — `pattern-clean-architecture`, `pattern-modular-monolith`, `pattern-rbac`, `pattern-multi-tenant`, `pattern-feature-flags`.
+`architectural-planning` holds decomposition, scope, and the prompt; its `references/plan-template.md` holds the document. Run `prior-art` before decomposing where the feature is a self-contained capability — a parser, a scheduler, a rate limiter, a signature check — because taking a package reshapes the decomposition rather than following from it. Reach for `codebase-design` when the feature needs a new module or a seam, and the matching pattern skill when it needs an architecture, access model, or tenant isolation that already has a name — `pattern-clean-architecture`, `pattern-modular-monolith`, `pattern-rbac`, `pattern-multi-tenant`, `pattern-feature-flags`.
 
 **Sequence the slices so the first one runs end to end.** The thinnest possible path through every layer the feature touches — one field, one route, one screen — proves the attachment before any breadth is built on top of it. Widen from there. Slices cut per layer hide the integration risk until the last one lands, which is exactly when it is most expensive.
 
@@ -68,6 +68,7 @@ Shipped when: every acceptance criterion is verified by running something; every
 ## Related
 
 - `workflow-requirements-interview` + `grilling` — the request has more than one reading
+- `prior-art` — the slice is a capability that may already exist as a package
 - `architectural-planning` — decomposition, scope, prompts, handoff
 - `checklist-ux-design` — UI features, before implementation
 - `tdd` — the red → green loop per slice
