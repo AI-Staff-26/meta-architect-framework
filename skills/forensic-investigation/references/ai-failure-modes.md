@@ -1,245 +1,245 @@
-# 🔧 AI Failure Modes — Диагностика Сбоев AI
+# 🔧 AI Failure Modes
 
 <purpose>
-Справочник по распознаванию и устранению типичных режимов отказа AI-агентов.
-Используй при зацикливании, деградации качества или неожиданном поведении.
+A reference for recognising and clearing the common failure modes of AI agents.
+Use it when the agent loops, degrades, or behaves unexpectedly.
 </purpose>
 
 ---
 
-## Быстрая Диагностика
+## Quick Diagnosis
 
-| Симптом | Вероятная Причина | Действие |
+| Symptom | Likely cause | Action |
 |---------|-------------------|----------|
-| Повторяет одни и те же ошибки | Context Overflow | → Session Restart |
-| Забывает ограничения | Lost in the Middle | → Переместить в начало/конец |
-| Игнорирует требования | Prompt Overload | → Сократить промпт |
-| Добавляет лишнее | Scope Drift | → Явные ❌ запреты |
-| Галлюцинирует API/функции | Knowledge Cutoff | → Явный контекст |
-| Зацикливается на патчах | Patch Loop | → `debug` + Restart |
+| Repeats the same mistakes | Context Overflow | → Session restart |
+| Forgets constraints | Lost in the Middle | → Move them to the start and the end |
+| Ignores requirements | Prompt Overload | → Shorten the prompt |
+| Adds things nobody asked for | Scope Drift | → Explicit ❌ boundaries |
+| Hallucinates APIs and functions | Knowledge Cutoff | → Supply the context explicitly |
+| Loops on patches | Patch Loop | → `debug` + restart |
 
 ---
 
-## 🔴 Критические Режимы Отказа
+## 🔴 Critical Failure Modes
 
-### 1. Context Overflow (Переполнение контекста)
+### 1. Context Overflow
 
-**Симптомы:**
-- Забывает информацию из начала сессии
-- Путает файлы, переменные, имена
-- Противоречит сам себе
-- >10-15 шагов в сессии
+**Symptoms:**
+- Forgets information from the start of the session
+- Confuses files, variables, names
+- Contradicts itself
+- More than 10–15 steps into the session
 
-**Корневая причина:**
-Контекстное окно заполнено, LLM "вытесняет" старую информацию.
+**Root cause:**
+The context window is full and the model is evicting the older material.
 
-**Решение:**
+**Remedy:**
 ```
-1. STOP текущую работу
-2. Создать Context.md snapshot
-3. Начать новую сессию
-4. Загрузить только Context.md + целевые файлы
-5. Продолжить с чистого состояния
+1. STOP the current work
+2. Write a Context.md snapshot
+3. Start a new session
+4. Load only Context.md and the target files
+5. Continue from a clean state
 ```
 
-**Профилактика:**
-- [ ] Правило 10-15 шагов
-- [ ] Держать контекст <50% заполненности
-- [ ] Регулярные Context.md snapshots
+**Prevention:**
+- [ ] The 10–15 step rule
+- [ ] Keep the context under 50% full
+- [ ] Regular Context.md snapshots
 
 ---
 
-### 2. Lost in the Middle (Потеря в середине)
+### 2. Lost in the Middle
 
-**Симптомы:**
-- Соблюдает ограничения из начала промпта
-- Соблюдает ограничения из конца промпта
-- ИГНОРИРУЕТ ограничения из середины
+**Symptoms:**
+- Honours the constraints at the start of the prompt
+- Honours the constraints at the end of the prompt
+- IGNORES the constraints in the middle
 
-**Корневая причина:**
-Архитектурная особенность Transformer — внимание сильнее на краях.
+**Root cause:**
+A property of the Transformer architecture — attention is strongest at the edges.
 
-**Решение:**
+**Remedy:**
 ```
-Структура промпта:
+Prompt structure:
 
 ┌─────────────────────────────┐
-│ 🔴 КРИТИЧНОЕ (начало)       │
+│ 🔴 CRITICAL (start)         │
 ├─────────────────────────────┤
-│ 🟡 Контекст (середина)      │
+│ 🟡 Context (middle)         │
 ├─────────────────────────────┤
-│ 🔴 КРИТИЧНОЕ (конец)        │
-│ ❌ ЗАПРЕТЫ (последние)      │
+│ 🔴 CRITICAL (end)           │
+│ ❌ BOUNDARIES (last)        │
 └─────────────────────────────┘
 ```
 
-**Профилактика:**
-- [ ] Критичные ограничения — дублировать
-- [ ] ❌ Запреты — всегда в конце
-- [ ] Acceptance Criteria — перед Output Format
+**Prevention:**
+- [ ] Repeat the critical constraints in both positions
+- [ ] ❌ boundaries always last
+- [ ] Acceptance criteria before the output format
 
 ---
 
-### 3. Patch Loop (Цикл костылей)
+### 3. Patch Loop
 
-**Симптомы:**
-- Исправление одного ломает другое
-- Накапливаются workarounds
-- >2 итерации без прогресса
-- Код становится всё сложнее
+**Symptoms:**
+- Fixing one thing breaks another
+- Workarounds accumulate
+- More than two iterations with no progress
+- The code keeps getting more complicated
 
-**Корневая причина:**
-Фундаментальное непонимание проблемы, попытка лечить симптомы.
+**Root cause:**
+The problem is not understood, so the symptoms are being treated.
 
-**Решение:**
+**Remedy:**
 ```
-1. STOP — прекратить патчи
-2. Вызвать `debug` для root cause analysis
-3. Создать Research.md с findings
-4. Пересмотреть Plan.md на основе findings
-5. Restart чистая сессия
-6. `code` с новым пониманием
-7. `review` для верификации
+1. STOP — no more patches
+2. Call `debug` for root cause analysis
+3. Produce Research.md with the findings
+4. Revise Plan.md from those findings
+5. Restart in a clean session
+6. `code` with the new understanding
+7. `review` to verify
 ```
 
-**Профилактика:**
-- [ ] Понять "почему" перед "как"
-- [ ] Не более 2 попыток исправления
-- [ ] При неясной причине → `debug`
+**Prevention:**
+- [ ] Understand the "why" before the "how"
+- [ ] At most two attempts at a fix
+- [ ] Cause unclear → `debug`
 
 ---
 
-### 4. Scope Drift (Расползание scope)
+### 4. Scope Drift
 
-**Симптомы:**
-- Добавляет "улучшения" не по заданию
-- Меняет несвязанные файлы
-- Предлагает рефакторинг "заодно"
-- Делает больше, чем просили
+**Symptoms:**
+- Adds "improvements" nobody asked for
+- Touches unrelated files
+- Offers to refactor "while we are here"
+- Does more than was requested
 
-**Корневая причина:**
-AI пытается быть "полезным", оптимизируя за пределами scope.
+**Root cause:**
+The agent trying to be helpful, optimising past the edge of the scope.
 
-**Решение:**
+**Remedy:**
 ```markdown
-❌ Что НЕ делать:
-- НЕ менять файлы за пределами scope
-- НЕ добавлять функционал без запроса
-- НЕ рефакторить "заодно"
-- НЕ улучшать то, что не сломано
+❌ Out of bounds:
+- Changing files outside the scope
+- Adding functionality that was not requested
+- Refactoring "while we are here"
+- Improving what is not broken
 ```
 
-**Профилактика:**
-- [ ] Явный список файлов для изменения
-- [ ] Явная секция ❌ в каждом промпте
-- [ ] "ТОЛЬКО следующие изменения" в промпте
+**Prevention:**
+- [ ] An explicit list of files to change
+- [ ] An explicit ❌ section in every prompt
+- [ ] "ONLY the following changes" in the prompt
 
 ---
 
-### 5. Hallucination (Галлюцинации)
+### 5. Hallucination
 
-**Симптомы:**
-- Использует несуществующие API/функции
-- Ссылается на несуществующие файлы
-- "Придумывает" библиотеки/методы
-- Уверенно врёт
+**Symptoms:**
+- Uses APIs and functions that do not exist
+- Cites files that do not exist
+- Invents libraries and methods
+- Is confidently wrong
 
-**Корневая причина:**
-Knowledge cutoff, отсутствие актуального контекста.
+**Root cause:**
+Knowledge cutoff, and no current context to correct it.
 
-**Решение:**
+**Remedy:**
 ```
-1. Предоставить явный контекст (файлы, API docs)
-2. Указать версии библиотек
-3. Дать примеры существующего кода
-4. Запросить проверку перед использованием
+1. Supply the context explicitly (files, API docs)
+2. State the library versions
+3. Give examples of the existing code
+4. Ask for verification before use
 ```
 
-**Профилактика:**
-- [ ] Загружать актуальные файлы проекта
-- [ ] Явно указывать версии зависимостей
-- [ ] "Используй ТОЛЬКО существующие API" в промпте
+**Prevention:**
+- [ ] Load the project's current files
+- [ ] State dependency versions explicitly
+- [ ] "Use ONLY existing APIs" in the prompt
 
 ---
 
-### 6. Prompt Overload (Перегрузка промпта)
+### 6. Prompt Overload
 
-**Симптомы:**
-- Выполняет частично
-- Пропускает требования
-- Путает приоритеты
-- Делает не то, что главное
+**Symptoms:**
+- Completes part of the work
+- Skips requirements
+- Confuses the priorities
+- Does something other than the main thing
 
-**Корневая причина:**
-Слишком много требований в одном промпте.
+**Root cause:**
+Too many requirements in a single prompt.
 
-**Решение:**
+**Remedy:**
 ```
-Декомпозиция:
-1. Разбить на 2-3 подзадачи
-2. Каждая подзадача — отдельный промпт
-3. 5-7 требований максимум на промпт
-4. Чёткий приоритет (1. главное, 2. важное, 3. желательное)
+Decompose:
+1. Split into 2–3 subtasks
+2. One prompt per subtask
+3. At most 5–7 requirements per prompt
+4. Explicit priority (1. essential, 2. important, 3. desirable)
 ```
 
-**Профилактика:**
-- [ ] One prompt — one focused task
-- [ ] Max 5-7 конкретных требований
-- [ ] Нумерация по приоритету
+**Prevention:**
+- [ ] One prompt, one focused task
+- [ ] Max 5–7 concrete requirements
+- [ ] Numbered by priority
 
 ---
 
-## 🟠 Умеренные Режимы Отказа
+## 🟠 Moderate Failure Modes
 
 ### 7. Eager Execution
 
-**Симптом:** Начинает действовать до полного понимания задачи.
+**Symptom:** Starts acting before the task is fully understood.
 
-**Решение:** Добавить явный этап "Before implementation, confirm understanding..."
+**Remedy:** Add an explicit step — "Before implementation, confirm understanding…"
 
 ---
 
 ### 8. Overconfidence
 
-**Симптом:** Не спрашивает при неоднозначности, делает предположения.
+**Symptom:** Assumes rather than asking when something is ambiguous.
 
-**Решение:** "If unclear, STOP and ask. Do NOT assume."
+**Remedy:** "If unclear, STOP and ask. Do NOT assume."
 
 ---
 
 ### 9. Verbosity Explosion
 
-**Симптом:** Объясняет очевидное, раздувает ответы.
+**Symptom:** Explains the obvious, inflates the answer.
 
-**Решение:** "Be concise. Code only. No explanations unless asked."
+**Remedy:** "Be concise. Code only. No explanations unless asked."
 
 ---
 
 ### 10. Tool Fumbling
 
-**Симптом:** Неправильно использует инструменты, неверные аргументы.
+**Symptom:** Uses tools incorrectly, passes wrong arguments.
 
-**Решение:** Явные примеры вызовов инструментов в промпте.
+**Remedy:** Explicit examples of the tool calls in the prompt.
 
 ---
 
-## Протокол Диагностики
+## Diagnostic Protocol
 
-При подозрении на AI failure:
+On suspicion of an AI failure:
 
 ```
-1. ИДЕНТИФИЦИРОВАТЬ симптом
+1. IDENTIFY the symptom
    ↓
-2. НАЙТИ режим отказа в таблице
+2. FIND the failure mode in the table
    ↓
-3. ПРИМЕНИТЬ решение
+3. APPLY the remedy
    ↓
-4. Если 🔴 Critical → обязательный RESTART
-   Если 🟠 Moderate → fix в текущей сессии
+4. 🔴 Critical → restart is mandatory
+   🟠 Moderate → fix in the current session
    ↓
-5. ДОКУМЕНТИРОВАТЬ в Context.md / Research.md
+5. DOCUMENT it in Context.md / Research.md
    ↓
-6. Продолжить с учётом профилактики
+6. Continue, with the prevention in place
 ```
 
 ---
@@ -247,25 +247,25 @@ Knowledge cutoff, отсутствие актуального контекста
 ## Decision Tree
 
 ```
-Проблема с AI?
+Trouble with the agent?
     │
-    ├─ Забывает/путает → Context Overflow
-    │   └→ RESTART + Context.md
+    ├─ Forgets or confuses things → Context Overflow
+    │   └→ Restart + Context.md
     │
-    ├─ Игнорирует часть требований → Lost in the Middle
-    │   └→ Реструктурировать промпт
+    ├─ Ignores some requirements → Lost in the Middle
+    │   └→ Restructure the prompt
     │
-    ├─ Патч→регрессия→патч → Patch Loop
+    ├─ Patch → regression → patch → Patch Loop
     │   └→ `debug` + Research.md
     │
-    ├─ Делает лишнее → Scope Drift
-    │   └→ Явные ❌ запреты
+    ├─ Does more than asked → Scope Drift
+    │   └→ Explicit ❌ boundaries
     │
-    ├─ Использует несуществующее → Hallucination
-    │   └→ Явный контекст
+    ├─ Uses things that do not exist → Hallucination
+    │   └→ Supply the context
     │
-    └─ Выполняет частично → Prompt Overload
-        └→ Декомпозиция
+    └─ Completes only part → Prompt Overload
+        └→ Decompose
 ```
 
 ---
@@ -273,31 +273,27 @@ Knowledge cutoff, отсутствие актуального контекста
 ## Quick Reference
 
 ```
-AI Failure Triage:
+AI failure triage:
 
-🔴 RESTART Required:
+🔴 Restart required:
    - Context Overflow (>15 turns)
    - Patch Loop (>2 failed fixes)
    - Complete confusion
 
-🟠 Fix In-Session:
+🟠 Fix in-session:
    - Lost in the Middle → restructure
-   - Scope Drift → add ❌ section
+   - Scope Drift → add an ❌ section
    - Hallucination → add context
    - Prompt Overload → decompose
 
-Golden Rule:
-Лучше 3 чистых сессии по 5 шагов,
-чем 1 грязная на 15.
+Golden rule:
+Three clean sessions of five steps
+beat one dirty session of fifteen.
 ```
 
 ---
 
-**Связанные файлы:**
-- `../../architectural-planning/SKILL.md` — промпты, декомпозиция, передача контекста
-- `../../workflow-ai-session/SKILL.md` — протокол AI-сессии
-- `../SKILL.md` — антипаттерны разработки
-
----
-
-**END OF DIAGNOSTIC**
+**Related files:**
+- `../../architectural-planning/SKILL.md` — prompts, decomposition, context passthrough
+- `../../workflow-ai-session/SKILL.md` — the session recovery protocol
+- `../SKILL.md` — diagnosing an agent that keeps failing

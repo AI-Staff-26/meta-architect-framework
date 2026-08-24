@@ -1,451 +1,447 @@
-# 🚫 Common Antipatterns — Антипаттерны Разработки
+# 🚫 Common Antipatterns
 
 <purpose>
-Каталог антипаттернов, распознаваемых в проекте и процессе.
-Используй для выявления проблем и их предотвращения.
+A catalogue of antipatterns to recognise in the project and in the process.
+Use it to spot problems and to prevent them.
 </purpose>
 
 ---
 
-## Быстрый Обзор
+## Quick Overview
 
-| Категория | Количество | Критичность |
+| Category | Count | Severity |
 |-----------|------------|-------------|
-| 🏗️ Архитектурные | 8 | 🔴 Высокая |
-| 💻 Кодовые | 7 | 🟠 Средняя |
-| 🤖 AI-Процессные | 6 | 🔴 Высокая |
-| 📋 Планировочные | 5 | 🟠 Средняя |
+| 🏗️ Architectural | 8 | 🔴 High |
+| 💻 Code | 7 | 🟠 Medium |
+| 🤖 AI process | 6 | 🔴 High |
+| 📋 Planning | 5 | 🟠 Medium |
 
 ---
 
-## 🏗️ Архитектурные Антипаттерны
+## 🏗️ Architectural Antipatterns
 
 ### 1. Big Ball of Mud
 
-**Описание:** Отсутствие структуры, всё связано со всем.
+**Description:** No structure — everything is connected to everything.
 
-**Признаки:**
-- Нет чётких границ модулей
-- Circular dependencies повсюду
-- Любое изменение ломает несвязанные части
-- Невозможно понять, где что находится
+**Signs:**
+- No clear module boundaries
+- Circular dependencies everywhere
+- Any change breaks unrelated parts
+- Impossible to tell where anything lives
 
-**Последствия:**
-- Экспоненциально растущая сложность
-- Невозможность масштабирования команды
-- Каждый фикс создаёт новые баги
+**Consequences:**
+- Complexity growing exponentially
+- The team cannot be scaled
+- Every fix creates new bugs
 
-**Решение:**
+**Remedy:**
 ```
-1. Определить bounded contexts
-2. Ввести слои с чёткими границами
-3. Dependency Inversion для разрыва связей
-4. Постепенный рефакторинг (strangler pattern)
+1. Identify the bounded contexts
+2. Introduce layers with clear boundaries
+3. Dependency Inversion to break the couplings
+4. Refactor incrementally (strangler pattern)
 ```
 
 ---
 
 ### 2. God Object / God Class
 
-**Описание:** Один класс/модуль знает и делает слишком много.
+**Description:** One class or module knows and does too much.
 
-**Признаки:**
-- Класс >500 строк
-- >10 зависимостей
-- Все изменения проходят через него
-- Имя `Manager`, `Helper`, `Util`, `Service` без уточнения
+**Signs:**
+- Class over 500 lines
+- More than 10 dependencies
+- Every change passes through it
+- Named `Manager`, `Helper`, `Util`, `Service` with nothing qualifying it
 
-**Последствия:**
-- Невозможно тестировать изолированно
-- Merge conflicts постоянно
+**Consequences:**
+- Cannot be tested in isolation
+- Constant merge conflicts
 - Single point of failure
 
-**Решение:**
+**Remedy:**
 ```
 1. Single Responsibility Principle
-2. Extract class по доменной логике
-3. Композиция вместо агрегации всего
+2. Extract class along the domain logic
+3. Composition instead of aggregating everything
 ```
 
 ---
 
 ### 3. Leaky Abstraction
 
-**Описание:** Детали реализации протекают через абстракцию.
+**Description:** Implementation details seep through the abstraction.
 
-**Признаки:**
-- Вызывающий код знает о внутренностях
-- Абстракция требует понимания реализации для использования
-- Приходится обходить абстракцию "для производительности"
+**Signs:**
+- Calling code knows the internals
+- Using the abstraction requires understanding its implementation
+- People route around it "for performance"
 
-**Последствия:**
-- Нельзя заменить реализацию
-- Изменения каскадом распространяются
-- Ложное чувство изоляции
+**Consequences:**
+- The implementation cannot be replaced
+- Changes cascade
+- A false sense of isolation
 
-**Решение:**
+**Remedy:**
 ```
-1. Переосмыслить контракт абстракции
-2. Скрыть детали за интерфейсом
-3. Принцип "Tell, don't ask"
+1. Rethink the abstraction's contract
+2. Hide the details behind the interface
+3. Tell, don't ask
 ```
 
 ---
 
 ### 4. Distributed Monolith
 
-**Описание:** Микросервисы с монолитным мышлением.
+**Description:** Microservices built with monolithic thinking.
 
-**Признаки:**
-- Синхронные вызовы между сервисами
+**Signs:**
+- Synchronous calls between services
 - Shared database
-- Deploy всех сервисов вместе
-- Изменение одного требует изменения многих
+- All services deploy together
+- Changing one requires changing many
 
-**Последствия:**
-- Сложность микросервисов + связанность монолита
-- Network latency + distributed failures
-- Худшее из двух миров
+**Consequences:**
+- The complexity of microservices plus the coupling of a monolith
+- Network latency plus distributed failures
+- The worst of both worlds
 
-**Решение:**
+**Remedy:**
 ```
-1. Пересмотреть границы сервисов
+1. Revisit the service boundaries
 2. Async communication (events)
 3. Database per service
-4. Или вернуться к модульному монолиту
+4. Or go back to a modular monolith
 ```
 
 ---
 
 ### 5. Premature Optimization
 
-**Описание:** Оптимизация без измерений и реальной необходимости.
+**Description:** Optimising without measurement or a real need.
 
-**Признаки:**
-- "На всякий случай" кэширование
-- Сложные паттерны "для масштабируемости"
-- Микрооптимизации вместо решения задачи
-- Нет метрик, подтверждающих проблему
+**Signs:**
+- Caching "just in case"
+- Elaborate patterns "for scalability"
+- Micro-optimisations instead of solving the problem
+- No metric confirming the problem exists
 
-**Последствия:**
-- Избыточная сложность
-- Реальные проблемы игнорируются
-- Время потрачено впустую
+**Consequences:**
+- Complexity nobody needed
+- The real problems stay ignored
+- Time spent for nothing
 
-**Решение:**
+**Remedy:**
 ```
-1. Make it work → Make it right → Make it fast
-2. Measure before optimize
-3. 80/20: оптимизируй только bottlenecks
+1. Make it work → make it right → make it fast
+2. Measure before optimising
+3. 80/20: optimise the bottlenecks only
 ```
 
 ---
 
 ### 6. Copy-Paste Architecture
 
-**Описание:** Дублирование кода вместо абстракции.
+**Description:** Duplication in place of abstraction.
 
-**Признаки:**
-- Одинаковый код в нескольких местах
-- "Немного отличается" как оправдание
-- Баг фиксится в одном месте, остаётся в копиях
+**Signs:**
+- The same code in several places
+- "It is slightly different" as the justification
+- A bug fixed in one place survives in the copies
 
-**Последствия:**
+**Consequences:**
 - Inconsistency
-- Умножение багов
-- Невозможность рефакторинга
+- Bugs multiplied
+- Refactoring becomes impossible
 
-**Решение:**
+**Remedy:**
 ```
-1. Выделить общую абстракцию
-2. DRY с умом (не фанатично)
-3. Rule of Three: дублируй 2 раза, на 3-й абстрагируй
+1. Extract the shared abstraction
+2. DRY with judgement, not as dogma
+3. Rule of Three: duplicate twice, abstract on the third
 ```
 
 ---
 
 ### 7. Golden Hammer
 
-**Описание:** Использование одного инструмента/паттерна для всего.
+**Description:** One tool or pattern used for everything.
 
-**Признаки:**
-- "Мы всегда используем X"
-- Паттерн применяется где применим и где нет
-- Технология выбирается по знакомости, не по задаче
+**Signs:**
+- "We always use X"
+- The pattern applied where it fits and where it does not
+- Technology chosen by familiarity rather than by the problem
 
-**Последствия:**
-- Неоптимальные решения
-- Избыточная сложность там, где не нужна
-- Недостаток там, где нужна
+**Consequences:**
+- Suboptimal solutions
+- Complexity where none is needed
+- Too little where it is
 
-**Решение:**
+**Remedy:**
 ```
-1. "Правильный инструмент для задачи"
-2. Изучать альтернативы
-3. Оценивать trade-offs
+1. The right tool for the problem
+2. Study the alternatives
+3. Weigh the trade-offs
 ```
 
 ---
 
 ### 8. Anemic Domain Model
 
-**Описание:** Доменные объекты без логики, только данные.
+**Description:** Domain objects with no logic, only data.
 
-**Признаки:**
-- Entities — только getters/setters
-- Вся логика в Services
-- "Доменная модель" = DTO
-- Нарушение Tell, don't ask
+**Signs:**
+- Entities are getters and setters
+- All the logic sits in services
+- The "domain model" is a DTO
+- Tell, don't ask, violated
 
-**Последствия:**
-- Процедурный код под OOP оболочкой
-- Бизнес-логика размазана
-- Нельзя гарантировать инварианты
+**Consequences:**
+- Procedural code in an OOP shell
+- Business logic smeared across the system
+- Invariants cannot be guaranteed
 
-**Решение:**
+**Remedy:**
 ```
-1. Логика → внутрь доменных объектов
-2. Инварианты → в конструкторе/методах
-3. Rich Domain Model
+1. Move the logic inside the domain objects
+2. Enforce invariants in the constructor and the methods
+3. Rich domain model
 ```
 
 ---
 
-## 💻 Кодовые Антипаттерны
+## 💻 Code Antipatterns
 
 ### 1. Magic Numbers/Strings
 
-**Описание:** Литералы без объяснения смысла.
+**Description:** Literals with nothing explaining what they mean.
 
-**Решение:** Константы с говорящими именами.
+**Remedy:** Named constants that say it.
 
 ---
 
 ### 2. Long Method
 
-**Описание:** Метод делает слишком много.
+**Description:** A method that does too much.
 
-**Признаки:** >20 строк, multiple responsibilities.
+**Signs:** Over 20 lines, multiple responsibilities.
 
-**Решение:** Extract Method по шагам логики.
+**Remedy:** Extract Method along the steps of the logic.
 
 ---
 
 ### 3. Primitive Obsession
 
-**Описание:** Использование примитивов вместо доменных типов.
+**Description:** Primitives standing in for domain types.
 
-**Пример:** `string email` вместо `Email email`.
+**Example:** `string email` instead of `Email email`.
 
-**Решение:** Value Objects для доменных концепций.
+**Remedy:** Value objects for domain concepts.
 
 ---
 
 ### 4. Feature Envy
 
-**Описание:** Метод больше использует данные другого класса.
+**Description:** A method uses another class's data more than its own.
 
-**Решение:** Переместить метод к данным.
+**Remedy:** Move the method to the data.
 
 ---
 
 ### 5. Shotgun Surgery
 
-**Описание:** Одно изменение требует правок во многих местах.
+**Description:** One change requires edits in many places.
 
-**Решение:** Группировать связанную логику.
+**Remedy:** Group the related logic together.
 
 ---
 
 ### 6. Dead Code
 
-**Описание:** Код, который не выполняется.
+**Description:** Code that never runs.
 
-**Признаки:** Закомментированный код, unreachable branches.
+**Signs:** Commented-out code, unreachable branches.
 
-**Решение:** Удалить. Git помнит.
+**Remedy:** Delete it. Git remembers.
 
 ---
 
 ### 7. Speculative Generality
 
-**Описание:** Абстракции "на будущее", которое не наступит.
+**Description:** Abstractions for a future that never arrives.
 
-**Признаки:** Unused interfaces, empty hooks, "TODO: extend later".
+**Signs:** Unused interfaces, empty hooks, "TODO: extend later".
 
-**Решение:** YAGNI — You Aren't Gonna Need It.
+**Remedy:** YAGNI — You Aren't Gonna Need It.
 
 ---
 
-## 🤖 AI-Процессные Антипаттерны
+## 🤖 AI Process Antipatterns
 
 ### 1. Context Dump
 
-**Описание:** Загрузка всего "на всякий случай".
+**Description:** Loading everything "just in case".
 
-**Последствия:** Context Overflow, Lost in the Middle.
+**Consequences:** Context overflow, lost in the middle.
 
-**Решение:** Загружать только для ТЕКУЩЕГО шага.
+**Remedy:** Load only what the CURRENT step needs.
 
 ---
 
 ### 2. Session Marathon
 
-**Описание:** Сессия >15 шагов без restart.
+**Description:** A session running past 15 steps with no restart.
 
-**Последствия:** Деградация качества, циклы.
+**Consequences:** Quality degrades, the agent starts looping.
 
-**Решение:** 10-15 шагов → mandatory restart.
+**Remedy:** 10–15 steps, then a mandatory restart.
 
 ---
 
 ### 3. Patch Spiral
 
-**Описание:** Патч → регрессия → патч → регрессия.
+**Description:** Patch → regression → patch → regression.
 
-**Последствия:** Накопление костылей, никогда не работает.
+**Consequences:** Workarounds pile up and it never works.
 
-**Решение:** STOP → `debug` → Research.md → clean restart.
+**Remedy:** STOP → `debug` → Research.md → clean restart.
 
 ---
 
 ### 4. Hope-Driven Prompts
 
-**Описание:** Нечёткие промпты в надежде, что AI поймёт.
+**Description:** Vague prompts, in the hope the AI will work it out.
 
-**Признаки:** "Сделай хорошо", "Улучши код", "Исправь баги".
+**Signs:** «Сделай хорошо», «Улучши код», «Исправь баги».
 
-**Решение:** Конкретные Acceptance Criteria, измеримые требования.
+**Remedy:** Concrete acceptance criteria, measurable requirements.
 
 ---
 
 ### 5. Delegation Without Plan
 
-**Описание:** Вызов `code` без Plan.md для 🟡/🔴 задач.
+**Description:** Calling `code` with no Plan.md on a 🟡/🔴 task.
 
-**Последствия:** Неверное направление, переделки.
+**Consequences:** Wrong direction, work redone.
 
-**Решение:** No Plan = No `code` (кроме 🟢).
+**Remedy:** No plan, no `code` — 🟢 excepted.
 
 ---
 
 ### 6. Skipping `review`
 
-**Описание:** Сразу к следующей задаче после `code`.
+**Description:** Moving to the next task straight after `code`.
 
-**Последствия:** Баги/уязвимости проходят в код.
+**Consequences:** Bugs and vulnerabilities reach the codebase.
 
-**Решение:** ВСЕГДА `review` после `code`.
+**Remedy:** `review` after `code`, every time.
 
 ---
 
-## 📋 Планировочные Антипаттерны
+## 📋 Planning Antipatterns
 
 ### 1. Analysis Paralysis
 
-**Описание:** Бесконечный анализ без действия.
+**Description:** Endless analysis, no action.
 
-**Признаки:** Research.md растёт, Plan.md не появляется.
+**Signs:** Research.md keeps growing, Plan.md never appears.
 
-**Решение:** Timeboxed research → decision → Plan.md.
+**Remedy:** Timeboxed research → decision → Plan.md.
 
 ---
 
 ### 2. Scope Creep
 
-**Описание:** Постоянное расширение scope.
+**Description:** The scope keeps widening.
 
-**Признаки:** "А ещё давайте...", "Заодно можно...".
+**Signs:** «А ещё давайте…», «Заодно можно…».
 
-**Решение:** Явные границы, ❌ Out of Scope секция.
+**Remedy:** Explicit boundaries and an ❌ Out of Scope section.
 
 ---
 
 ### 3. Bikeshedding
 
-**Описание:** Обсуждение мелочей вместо важного.
+**Description:** Debating trivia instead of what matters.
 
-**Признаки:** Часы на naming, минуты на архитектуру.
+**Signs:** Hours on naming, minutes on architecture.
 
-**Решение:** Приоритизация по impact.
+**Remedy:** Prioritise by impact.
 
 ---
 
 ### 4. Planning Without Research
 
-**Описание:** План без понимания текущего состояния.
+**Description:** A plan written without knowing the current state.
 
-**Последствия:** План невыполним, неверные предположения.
+**Consequences:** The plan cannot be executed; the assumptions are wrong.
 
-**Решение:** Обязательный Research для 🟡/🔴.
+**Remedy:** Research is mandatory for 🟡/🔴.
 
 ---
 
 ### 5. Invisible Dependencies
 
-**Описание:** Игнорирование зависимостей между задачами.
+**Description:** Dependencies between tasks left unexamined.
 
-**Последствия:** Блокеры в середине работы.
+**Consequences:** Blockers surface mid-work.
 
-**Решение:** Dependency mapping в Research.md.
+**Remedy:** Map the dependencies in Research.md.
 
 ---
 
 ## Detection Checklist
 
-### Архитектурный Health Check
-- [ ] Есть ли чёткие границы модулей?
-- [ ] Направлены ли зависимости внутрь?
-- [ ] Можно ли развернуть модуль независимо?
-- [ ] Легко ли понять структуру проекта?
+### Architectural Health Check
+- [ ] Are the module boundaries clear?
+- [ ] Do the dependencies point inward?
+- [ ] Can a module be deployed independently?
+- [ ] Is the project structure easy to follow?
 
-### Кодовый Health Check
-- [ ] Методы <20 строк?
-- [ ] Классы <300 строк?
-- [ ] Нет magic numbers/strings?
-- [ ] Нет dead code?
+### Code Health Check
+- [ ] Methods under 20 lines?
+- [ ] Classes under 300 lines?
+- [ ] No magic numbers or strings?
+- [ ] No dead code?
 
-### Процессный Health Check
-- [ ] Сессии <15 шагов?
-- [ ] Plan.md перед `code` для 🟡/🔴?
-- [ ] `review` после каждого `code`?
-- [ ] Research перед Plan для 🟡/🔴?
+### Process Health Check
+- [ ] Sessions under 15 steps?
+- [ ] Plan.md before `code` for 🟡/🔴?
+- [ ] `review` after every `code`?
+- [ ] Research before the plan for 🟡/🔴?
 
 ---
 
 ## Quick Reference
 
 ```
-Red Flags (немедленный STOP):
+Red flags (STOP immediately):
 
-🏗️ Архитектура:
+🏗️ Architecture:
    - Circular dependencies
    - God objects
-   - Изменение ломает несвязанное
+   - A change breaking something unrelated
 
-💻 Код:
-   - Copy-paste >2 раз
+💻 Code:
+   - Copy-paste more than twice
    - Magic literals
-   - >500 LOC в файле
+   - Over 500 LOC in a file
 
-🤖 Процесс:
-   - >15 шагов сессии
-   - Патч→регрессия цикл
-   - `code` без Plan.md
+🤖 Process:
+   - Session past 15 steps
+   - Patch → regression loop
+   - `code` with no Plan.md
 
-📋 Планирование:
-   - Scope растёт постоянно
-   - Research без deadline
-   - Игнорирование зависимостей
+📋 Planning:
+   - Scope growing continuously
+   - Research with no deadline
+   - Dependencies left unexamined
 ```
 
 ---
 
-**Связанные файлы:**
-- `../../forensic-investigation/references/ai-failure-modes.md` — диагностика AI-сбоев
-- `../../architectural-planning/SKILL.md` — скоуп, декомпозиция, делегирование
-- `../SKILL.md` — чеклист ревью
-
----
-
-**END OF REFERENCE**
+**Related files:**
+- `../../forensic-investigation/references/ai-failure-modes.md` — diagnosing AI failures
+- `../../architectural-planning/SKILL.md` — scope, decomposition, delegation
+- `../SKILL.md` — the review checklist
