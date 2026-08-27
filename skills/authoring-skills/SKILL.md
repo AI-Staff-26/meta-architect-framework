@@ -181,6 +181,41 @@ For maximum portability use `.claude/` — Cursor and Windsurf read it directly.
 | `model` | ✅ | ⚠️ | ⚠️ | ✅ |
 | `context` | ✅ | ❌ | ❌ | ✅ |
 
+## Framework improvement patterns from external sources
+
+When researching external skill frameworks (Superpowers, Matt Pocock skills)
+for ideas to integrate into our Meta-Architect Framework:
+
+**Superpowers (obra/superpowers, 267k★):**
+- **Iron Law pattern** — short unconditional rule in code block at top of each
+  key skill: `NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST`. Models see it
+  and cannot "forget". Stronger than our completion criterion.
+- **Verification before completion** — separate gate: evidence before claims.
+  Table: claim → requires → not-sufficient. Solves "models say 'done' without checking".
+- **Subagent prompt templates** — concrete implementer/reviewer/re-review
+  templates, not abstract "delegation laws"
+- **Fix loop with escalation** — R≤3 resume, R≥4 fresh agent, R=5 BLOCKED
+
+**Matt Pocock skills (mattpocock/skills, 41 skills, 2823 lines):**
+- Radical minimalism (average skill ~69 lines)
+- Positive framing instead of NEVER rules
+- Completion criteria instead of step counters
+- Grilling pattern (one question at a time, recommended answer)
+- Deep modules vocabulary
+
+When giving these to Claude Code for framework improvement, provide the
+**analysis document path** and let Claude Code read it — don't summarize the
+findings into the task prompt (it constrains rather than informs).
+
+Detailed analyses (2026-07/08): ByteRover context tree under
+`development/skills/` (meta_architect_vs_matt_pocock_comparison,
+skill_improvements_to_adopt_from_matt_pocock, matt_pocock_skills_repository)
+and `agent_frameworks/agency_agents/operations/superpowers_matt_pocock_meta_architect`.
+Original cache files `cache/skills-analysis/superpowers-vs-meta-architect.md`
+and `mattpocock-skills-analysis.md` were pruned; the git commit
+`264bcb3` of the profile repo holds the deleted ultracode skill with this block
+inline if the raw text is ever needed.
+
 ## Related
 
 - `skill-creator` — creating skills with evals and measured performance
