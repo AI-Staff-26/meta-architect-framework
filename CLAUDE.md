@@ -153,6 +153,7 @@ The plan holds if: its claims trace to memory or verified project state rather t
 
 | Need | Skill |
 |---|---|
+| Deciding whether to build it at all | `idea-teardown` |
 | Requirements are vague | `grilling` → `workflow-requirements-interview` |
 | Building something that may already exist | `prior-art` |
 | Building a feature | `workflow-feature` |
