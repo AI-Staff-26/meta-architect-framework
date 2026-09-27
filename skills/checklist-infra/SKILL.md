@@ -192,7 +192,17 @@ Severity governs what blocks: 🔴 and 🟠 must be clear before anything ships.
 ### Updates & Patches
 - [ ] OS security updates applied 🟠
 - [ ] Automatic security updates enabled or scheduled 🟡
+
+### Service Sandbox (a service handling untrusted input on a shared host)
+- [ ] Runs as its own user, not root 🔴
+- [ ] Filesystem visibility is an allowlist (bind in what it needs), not a denylist of known secrets 🟠
+- [ ] Proven by a full scan from inside a copy of the unit — everything readable, writable and connectable — not by a list of probes 🟠
+- [ ] Outbound network restricted by port, not just by address: on a shared host "localhost" reaches every local service, including proxies to the internet 🔴
+- [ ] DNS closed if the service does not need it (exfiltration channel); relays by IP, name only for TLS 🟡
+- [ ] The service cannot start without its filter, and a watchdog restores a removed filter 🟠
 ```
+
+A reference implementation with templates and a verification script: `/opt/hermes-paperclip/profiles/ai-staff/pipelines/service-sandbox-egress/`.
 
 ---
 

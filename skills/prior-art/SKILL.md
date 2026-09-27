@@ -16,6 +16,8 @@ Most of what you are about to build has been built. The useful question is not *
 
 Both ways of getting that wrong are expensive. A week spent on what one package already solves is the obvious one. The quieter one is a dependency on a repository with fourteen stars and no commits since 2023, which becomes someone's maintenance burden long after the person who chose it has moved on.
 
+**Start at home.** Methods already proven in our own projects — with working examples and the traps they hit — are indexed in `/opt/hermes-paperclip/profiles/ai-staff/pipelines/AGENTS.md`. Read the index before searching outside; a match there is the "Read it" outcome with the edge cases already paid for.
+
 ## The three outcomes
 
 | Outcome | When it is the right one | What you carry forward |

@@ -31,7 +31,7 @@ One failed attempt is not a loop — it is a failed attempt. The second one carr
 
 **4. Name the failure mode.** `references/ai-failure-modes.md` holds the taxonomy — context overflow, lost-in-the-middle, patch loop, scope drift, hallucinated API, prompt overload, and the moderate modes — each with its signature and its repair. Match against it rather than inventing a description.
 
-**5. Locate the cause in the input.** Four candidates, and the repair differs for each:
+**5. Locate the cause.** Five candidates, and the repair differs for each:
 
 | Where it lives | How it shows up | What repairs it |
 |---|---|---|
@@ -39,8 +39,9 @@ One failed attempt is not a loop — it is a failed attempt. The second one carr
 | **The context** | Early instructions forgotten, APIs hallucinated, the same question asked twice | Snapshot and restart clean with only what this task needs |
 | **The complexity call** | Every fix breaks something adjacent | Re-classify — 🟢 work that keeps rippling was 🟡🔴 all along, and needs a plan |
 | **The architecture** | Changing A always breaks B, and no seam holds a regression test | Stop implementing; this is a refactor or an architecture change, and no prompt will fix it |
+| **The problem space** — unmapped | Each fix closes the path the review found, and the next review finds a sibling reaching the same effect: another way to set the flag, create the session, grant the access, spend the quota | Map every path to the effect and every consumer of the trust it confers (`references/path-map-template.md`); turn the map into invariants, each enforced at one choke point with negative tests; restart with a fresh implementer holding the map |
 
-The fourth is the one most often missed, because the first three all have cheap repairs and this one does not. When the evidence points there, say so plainly — three more prompt revisions will not move it.
+The fourth is the one most often missed, because the first three all have cheap repairs and this one does not. When the evidence points there, say so plainly — three more prompt revisions will not move it. The fifth looks like the first — the prompt "missed a case" — but adding the missed case to the prompt only moves the next finding one path over.
 
 **6. Exit.** Repair the input, then restart with clean context. `workflow-ai-session` holds the restart mechanics and the snapshot format. The revised prompt names what previously went wrong, so the fresh session does not rediscover it.
 
@@ -60,7 +61,7 @@ The fourth is the one most often missed, because the first three all have cheap 
 [по references/ai-failure-modes.md]
 
 ## Причина
-[в промпте / в контексте / в оценке сложности / в архитектуре] — с доказательством из таблицы итераций
+[в промпте / в контексте / в оценке сложности / в архитектуре / в неразмеченной области] — с доказательством из таблицы итераций
 
 ## Выход
 1. [что меняем во входных данных]
@@ -74,7 +75,7 @@ Record the root cause in `memory/FACTS.md` and the pattern in `memory/INSIGHTS.m
 
 ## Completion criterion
 
-Done when: every iteration is in the record with what broke; the accumulating quantity is named; the cause is placed in the prompt, the context, the complexity call, or the architecture, and supported by the iteration record rather than by impression; and the exit is either a revised prompt ready to run or an explicit statement that the fault is architectural and implementation stops here.
+Done when: every iteration is in the record with what broke; the accumulating quantity is named; the cause is placed in the prompt, the context, the complexity call, the architecture, or an unmapped problem space, and supported by the iteration record rather than by impression; and the exit is a revised prompt ready to run, a path map with invariants for a fresh implementer, or an explicit statement that the fault is architectural and implementation stops here.
 
 ## Related
 
@@ -82,3 +83,4 @@ Done when: every iteration is in the record with what broke; the accumulating qu
 - `workflow-ai-session` — the clean restart: what carries over, and the prompt that opens it
 - `references/ai-failure-modes.md` — the failure-mode taxonomy with repairs
 - `references/research-template.md` — template for a written research document
+- `references/path-map-template.md` — the map of paths to a sensitive effect, when the problem space is unmapped

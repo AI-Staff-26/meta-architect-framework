@@ -34,6 +34,14 @@ Each test is a **tracer bullet**: it cuts a narrow but complete path and tells y
 
 Refactoring is not part of this loop — it is its own task, run green to green, and `workflow-refactoring` holds it. Folding it into a cycle means a green bar that proves nothing, because the code under it changed after the test passed.
 
+## Properties a plain test misses
+
+Three properties go green by accident unless the test is built for them.
+
+- **A fix is red on the old code.** The regression test for a found defect must fail against the commit before the fix. Show it: check out that commit into a temporary copy, run the test there, paste the failure. A test written after the fix that would also pass without it proves nothing.
+- **A race is made deterministic.** Open the window on purpose instead of hoping to hit it: inject a gate into the slow step (password hashing, a remote call) through the seam that step already has, hold it until the test has performed the competing action, then release. The test passes or fails every run, not one run in five.
+- **"Only here" is locked by a static test.** When an invariant says an effect happens at one choke point only — one function writes the trust flag, one module issues a grant — a test reads the source tree and fails when the effect appears anywhere else, including shorthand, casts and aliased imports. Behavioural tests cannot see the path nobody has written a test for yet; this one can.
+
 ## Anti-patterns
 
 - **Implementation-coupled** — the test mocks internal collaborators, exercises private methods, or verifies through a side channel (querying the database rather than reading the interface's answer). Test through the seam you agreed on.

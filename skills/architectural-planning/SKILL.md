@@ -24,7 +24,9 @@ Complexity levels, STOP gates, and FAIL routing live in `CLAUDE.md`. This skill 
 
 **Order by dependency.** Build the graph before the list — for each piece, what must exist before it, and what depends on it. Every task references only what an earlier task has already created. A cycle showing up here is a design problem surfacing at the cheapest moment; break it with an interface before delegating either side.
 
-The graph is a sequence, not a fan-out: implementation runs one agent at a time. Two agents editing a shared tree produce conflicts nobody planned and a diff nobody can review. Parallel dispatch belongs to review, where the axes share no files.
+The graph is a sequence, not a fan-out: implementation runs one agent at a time. Two agents editing the same files produce conflicts nobody planned and a diff nobody can review. The one exception is tasks with **disjoint file sets** — say, infrastructure in `deploy/` beside a feature in `src/` — run in parallel when each prompt names the other's files as off-limits and every agent commits only its own paths (`CLAUDE.md`, Quality).
+
+**Map before the first prompt when the area is auth, access, money or a sandbox.** Delegate a path map to `debug` first — every path to the sensitive effect and every consumer of the trust it confers (`forensic-investigation/references/path-map-template.md`) — and decide its invariants before decomposing. Without the map, each review finds the neighbouring path the last fix missed, and the part goes round review after review.
 
 **Delegate a task, not an epic.** "Add JWT auth with roles and OAuth" returns a different system every run. "Add `POST /auth/login` issuing a JWT, given the existing `User` model" returns the same one.
 
@@ -117,6 +119,9 @@ To `review` — the fixed point it reviews against:
 **Что реализовано:** [scope]
 **Спека:** `/docs/Plan.md` — [section] / the prompt given to `code`
 **Особое внимание:** [area, if any — auth boundary, migration, external input]
+**Проверить запуском:** [test instance: port, database, how to start it, test users — never production] — for auth, access, money, sandbox
+**Принятые риски:** [decision ids, one line each] — do not re-flag unless worse than stated
+**История:** [previous review verdicts and what they found — on a re-review]
 ```
 
 To `devops` — the target state and what must keep working:

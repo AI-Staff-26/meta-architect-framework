@@ -24,7 +24,7 @@ Assess before acting; the level sets what the work requires.
 |---|---|---|---|
 | 🟢 **Simple** | One or two files, no schema or API change, one obvious reading | You can state what *done* looks like in one sentence the user would agree with. Go. | Self-check against that sentence, with the command and its output. A `CHRONICLE` line if anything was learned |
 | 🟡 **Medium** | Several files, touches DB or API, some ambiguity | `Plan.md` → user approval → vibe-mentor checkpoint | `review` → work report → `memory/` updated |
-| 🔴 **Complex** | Architecture, auth, migration, scaling, breaking change | Investigation → `Plan.md` + ADR → user approval → vibe-mentor checkpoint | `review` → work report → `memory/` updated → ADR recorded as decided |
+| 🔴 **Complex** | Architecture, auth, migration, scaling, breaking change | Investigation (auth, access, money, sandbox: a path map — `architectural-planning`) → `Plan.md` + ADR → user approval → vibe-mentor checkpoint | `review` → work report → `memory/` updated → ADR recorded as decided |
 
 The grade governs both halves. Uniform ceremony after a graded decision before it is how a two-line change acquires three review sub-agents and a work report, and it is the point at which the framework gets routed around rather than used.
 
@@ -97,7 +97,8 @@ Repetition, forgotten constraints, or contradicting an earlier decision means th
 
 Every deliverable meets these before it is called done:
 
-- **Security** — inputs validated, authorisation enforced, secrets kept out of code and logs.
+- **Security** — inputs validated, authorisation enforced, secrets kept out of code, logs, and command lines — argv is readable in `ps`, even inside a `grep` filter; pass secrets through the environment or a 0600 file.
+- **Commits** — only the paths you changed (`git commit -- <paths>`); another agent may be working in the same tree.
 - **Tests** — the required tests named, edge cases covered, criteria observable.
 - **Architecture** — layer boundaries respected; a pattern change carries an ADR.
 - **Reversibility** — the change can be rolled back; migrations are safe.
@@ -156,6 +157,7 @@ The plan holds if: its claims trace to memory or verified project state rather t
 | Deciding whether to build it at all | `idea-teardown` |
 | Requirements are vague | `grilling` → `workflow-requirements-interview` |
 | Building something that may already exist | `prior-art` |
+| Solved before in one of our projects | `/opt/hermes-paperclip/profiles/ai-staff/pipelines/AGENTS.md` — proven methods with examples |
 | Building a feature | `workflow-feature` |
 | Something is broken | `workflow-debugging` (feedback loop first) |
 | The agent is looping, not the code | `forensic-investigation`, `workflow-ai-session` |
