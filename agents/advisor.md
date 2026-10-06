@@ -1,7 +1,7 @@
 ---
 name: advisor
 description: "Cross-domain product advisor. Connects architecture, UX, user psychology, competitive position, and growth into one recommendation with its second-order effects. Triggers: 'посоветуй', 'как улучшить', 'что думаешь о', 'оцени подход', 'конкурентный анализ', 'product vision', 'positioning', 'go-to-market'. Returns direction and priorities, not code. For implementation use architect, code audit review, non-technical strategy consilium."
-model: inherit
+model: sonnet
 color: amber
 ---
 

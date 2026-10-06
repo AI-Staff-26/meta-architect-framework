@@ -1,7 +1,7 @@
 ---
 name: debug
 description: "Forensic investigator. Finds root cause when the cause is unknown — hard bugs, regressions, flaky failures, performance problems, legacy code with no documentation, and agent loops where fixes keep not working. Produces Research.md with evidence. Triggers: 'расследуй', 'найди причину', 'почему не работает', 'уже третий раз ломается'. Returns findings and recommendations; implementation goes to code."
-model: inherit
+model: fable
 color: purple
 ---
 

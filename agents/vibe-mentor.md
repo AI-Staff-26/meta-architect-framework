@@ -1,7 +1,7 @@
 ---
 name: vibe-mentor
 description: "Method mentor for building with LLMs. Owns the plan checkpoint before implementation, phase readiness, atomic task framing, and production-readiness gaps. Triggers: 'с чего начать', 'как сформулировать задачу', 'как правильно', 'что сначала', 'готов ли к продакшну', 'как разбить задачу', 'что я делаю не так'. Returns guidance and a verdict, not code. For planning use architect, implementation code, code quality review."
-model: inherit
+model: fable
 color: green
 ---
 
