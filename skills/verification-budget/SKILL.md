@@ -65,6 +65,8 @@ Agents are readers with a finite window. A check designed for them:
 
 The agent reads the verdict. It opens the full log only to diagnose a named failure, by searching for that failure's name — a log is a reference, not reading material.
 
+The same contract holds for a test stand — one command to start, reset and stop it, saying which commit it runs: `architectural-planning/references/agent-workspaces.md`.
+
 Build this runner the first time a check is run twice in a project. Recipes for common runners, affected-test selection and the stamp: `references/agent-friendly-tooling.md`.
 
 ## 4. The heavy tools — what each catches

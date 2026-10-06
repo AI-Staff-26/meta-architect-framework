@@ -70,7 +70,7 @@ A finding that names no reachable path is a hypothesis; label it as one.
 
 ### Verify by running — when the diff touches auth, access, money, a sandbox, or untrusted input
 
-Reading finds what is visible in the diff; the defects that reach production sit on neighbouring paths, in races, and inside correctly configured libraries. For these diffs the Security sub-agent also **attacks a running test instance** — its own port and database, named in its brief, never production — using `checklist-security/references/attack-techniques.md`, and its brief grows by: "Reproduce each finding and mark it reproduced or hypothesis. List what you attacked and what held."
+Reading finds what is visible in the diff; the defects that reach production sit on neighbouring paths, in races, and inside correctly configured libraries. For these diffs the Security sub-agent also **attacks a running test instance** — its own port and database, named in its brief, never production (`architectural-planning/references/agent-workspaces.md`) — using `checklist-security/references/attack-techniques.md`, and its brief grows by: "Reproduce each finding and mark it reproduced or hypothesis. List what you attacked and what held."
 
 **Re-reviews run the control:** for each blocking finding the implementer claims fixed, revert the fix (or disable the check) on a temporary copy, rerun its test, and confirm it goes red; then restore. A regression test that stays green without the fix proves nothing.
 

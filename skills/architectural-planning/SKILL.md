@@ -5,7 +5,8 @@ description: |
   decomposition, scope boundary, the prompt, and the handoff to an agent
   starting cold. Use when writing a prompt for `code`, `review`, `debug`, or
   `devops`, splitting a feature into tasks, drafting `/docs/Plan.md`, or
-  re-delegating after a FAIL.
+  re-delegating after a FAIL. Also parallel lanes: worktree, «рабочее
+  дерево», test stand, «стенд», port per lane, cleanup after agents.
 ---
 
 # Delegation
@@ -24,7 +25,7 @@ Complexity levels, STOP gates, and FAIL routing live in `CLAUDE.md`. This skill 
 
 **Order by dependency.** Build the graph before the list — for each piece, what must exist before it, and what depends on it. Every task references only what an earlier task has already created. A cycle showing up here is a design problem surfacing at the cheapest moment; break it with an interface before delegating either side.
 
-The graph is a sequence, not a fan-out: implementation runs one agent at a time. Two agents editing the same files produce conflicts nobody planned and a diff nobody can review. The one exception is tasks with **disjoint file sets** — say, infrastructure in `deploy/` beside a feature in `src/` — run in parallel when each prompt names the other's files as off-limits and every agent commits only its own paths (`CLAUDE.md`, Quality).
+The graph is a sequence, not a fan-out: implementation runs one agent at a time. Two agents editing the same files produce conflicts nobody planned and a diff nobody can review. The one exception is tasks with **disjoint file sets** — say, infrastructure in `deploy/` beside a feature in `src/` — run in parallel when each prompt names the other's files as off-limits and every agent commits only its own paths (`CLAUDE.md`, Quality). When a lane needs its own tree, stand or database — and who removes them — `references/agent-workspaces.md`.
 
 **Map before the first prompt when the area is auth, access, money or a sandbox.** Delegate a path map to `debug` first — every path to the sensitive effect and every consumer of the trust it confers (`forensic-investigation/references/path-map-template.md`) — and decide its invariants before decomposing. Without the map, each review finds the neighbouring path the last fix missed, and the part goes round review after review.
 
@@ -119,7 +120,7 @@ To `review` — the fixed point it reviews against:
 **Что реализовано:** [scope]
 **Спека:** `/docs/Plan.md` — [section] / the prompt given to `code`
 **Особое внимание:** [area, if any — auth boundary, migration, external input]
-**Проверить запуском:** [test instance: port, database, how to start it, test users — never production] — for auth, access, money, sandbox
+**Проверить запуском:** [test instance: port, database, how to start it, test users — never production; `references/agent-workspaces.md` §3] — for auth, access, money, sandbox
 **Принятые риски:** [decision ids, one line each] — do not re-flag unless worse than stated
 **История:** [previous review verdicts and what they found — on a re-review]
 ```

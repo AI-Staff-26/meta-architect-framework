@@ -4,7 +4,7 @@ Each section: what the tool proves, where it pays, and how to run it at the smal
 
 ## Regression test red on the old code
 
-**Proves** the fix is what turned the test green. **Cheap form:** run only that test file against the previous commit in a temporary worktree, paste the failure line. Not the whole suite on the old commit.
+**Proves** the fix is what turned the test green. **Cheap form:** run only that test file against the previous commit in a temporary worktree (`architectural-planning/references/agent-workspaces.md`), paste the failure line. Not the whole suite on the old commit.
 
 ## Deterministic race gate
 

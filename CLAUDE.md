@@ -172,7 +172,7 @@ The plan holds if: its claims trace to memory or verified project state rather t
 | Designing a module or seam | `codebase-design` |
 | Choosing an architecture | `pattern-clean-architecture`, `pattern-modular-monolith` |
 | Access, tenant isolation, or a reversible rollout | `pattern-rbac`, `pattern-multi-tenant`, `pattern-feature-flags` |
-| Turning an approved decision into delegated work | `architectural-planning` |
+| Turning an approved decision into delegated work; parallel lanes, worktrees, test stands | `architectural-planning` |
 | Reviewing an implementation | `checklist-code-review`, with `checklist-security` as its Security axis |
 | Shipping to production | `checklist-release`; infrastructure `checklist-infra` |
 | Is this phase actually finished? | `checklist-phase-completion` |
