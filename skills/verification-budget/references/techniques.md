@@ -23,11 +23,13 @@ Each section: what the tool proves, where it pays, and how to run it at the smal
 - shrinking, or at least the seed printed on failure, so the case replays;
 - one property per rule, not one per scenario.
 
+Two ways it proves nothing: a generator or filter that discards nearly every input passes without exercising the rule — count the interesting worlds it produced and assert there were some; and code with no rule-shaped property gets example tests instead — saying so is a valid outcome.
+
 Libraries: fast-check (JS/TS), Hypothesis (Python), proptest / quickcheck (Rust), rapid (Go).
 
 ## Targeted mutation
 
-**Proves** a test depends on the guard it claims to cover. **Where it pays:** the guards of a tier-A invariant and the fixes a review called blocking — not the whole codebase. **Cheap form:** for each guard, remove or invert it, run only the test file that should catch it, expect red, restore. A handful of mutations per invariant answers the question; a full mutation-testing run is a periodic audit, not a per-change gate.
+**Proves** a test depends on the guard it claims to cover. **Where it pays:** the guards of a tier-A invariant and the fixes a review called blocking — not the whole codebase. **Cheap form:** first a free pass on paper — for each guard, name the test that would fail if it were removed or inverted; mutate for real only where no test comes to mind or the answer is doubtful. Then, for each such guard, remove or invert it in a temporary worktree (other agents may share the tree), run only the test file that should catch it, expect red, discard the worktree. A handful of mutations per invariant answers the question; a full mutation-testing run is a periodic audit, not a per-change gate.
 
 Tools when the manual form grows: Stryker (JS/TS — limit with `--mutate` to the guard files, use incremental mode), mutmut (Python), cargo-mutants (Rust), gremlins (Go).
 

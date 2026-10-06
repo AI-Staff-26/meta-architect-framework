@@ -25,7 +25,14 @@ Grade each change by what a defect in it would do. A stage about access control 
 | **B — visible behaviour** | breaks a flow someone will notice | business rules, state, async continuations, error handling | Tests at the seam, a regression test red on the old code, one end-to-end path |
 | **C — presentation** | looks or reads wrong | layout, styles, copy, docs | Look at it: screenshots at the widths that matter, the owner's eye; a test only where the regression is likely and cheap to pin |
 
-Write the tier into the plan next to each item. **A tier is a claim about consequences** — when an item turns out to touch a tier-A surface, re-grade it out loud.
+Write the tier into the plan next to each item. **A tier is a claim about consequences**, not about diff size — a two-line change to a guard can be the worst defect of the year:
+
+- unsure between two tiers → the higher one, until the change shows otherwise;
+- removing or loosening a check, a validation or a limit is tier A whatever it sits in;
+- a «just a refactor» of a tier-A module stays tier A until its tests prove behaviour unchanged;
+- in tier A at least one check comes from outside the implementer — a reference model, the spec's worked example, the reviewer's attack — so the code cannot pass by agreeing with itself.
+
+When an item turns out to touch a tier-A surface, re-grade it out loud.
 
 ## 2. The run ladder
 
@@ -34,12 +41,15 @@ Climb only as high as the question needs. Each rung answers something the rung b
 | Rung | Question it answers | When it runs | Feels like |
 |---|---|---|---|
 | **The file** | Does the thing I just changed work? | After each edit | seconds |
+| **The failures** | Did my fix fix what was red? | After a red run — rerun only what failed | seconds |
 | **The affected set** | Did I break what depends on it? | After each slice | a minute or two |
 | **The full suite** | Is the whole commit green? | Once, on the final commit of a delegation, clean tree | minutes |
 | **The release gate** | Does the *artifact* build, install, migrate and boot? | Once per release candidate | minutes |
 | **Slow suites** — full e2e, generated worlds at full size, perf | Do the long paths still hold? | At a milestone or nightly; the affected scenarios in between | as long as they take, off the inner loop |
 
-**One commit, one run.** Running the same check on the same commit and the same tree again is a lottery ticket, not evidence: it can only add a flaky failure. The release gate proves what the suite cannot — a clean checkout, a lockfile install, migrations on a copy, a live boot — and reuses the suite's verdict for that exact commit through a stamp instead of rerunning it. `references/agent-friendly-tooling.md` holds the stamp.
+Stop at the first failure on the lower rungs (`-x`, `--bail`, `-failfast`) — one failure at a time is all the inner loop can use; the full suite reports every failure at once.
+
+**One commit, one run.** Rerunning the same check on the same commit and tree *to get a green* is a lottery ticket, not evidence. A flaky failure is evidence — often of a race; repeating the suspicious test on purpose is diagnosis and belongs to `workflow-debugging`. The release gate proves what the suite cannot — a clean checkout, a lockfile install, migrations on a copy, a live boot — and reuses the suite's verdict for that exact commit through a stamp instead of rerunning it. `references/agent-friendly-tooling.md` holds the stamp.
 
 **Speed is a deliverable.** When the inner loop stops being seconds or the full suite stops being minutes, the fix is a task on the list — profile the slowest tests, cheapen deliberate slowness outside the test that verifies it, parallelise by isolated databases — not a cost the agents quietly absorb.
 
@@ -78,7 +88,9 @@ A tool used outside its row costs its full price and catches nothing new.
 Agents are the most expensive check. Size them like the rest.
 
 - **Reviews follow the tier.** Tier A: a review of that change, by running. Tier B: one reviewer per milestone, reading the diff and running its tests. Tier C: no reviewer — screenshots and the owner.
-- **A re-review checks the fixes, not the world.** It verifies each blocking finding is fixed and its test is red without the fix; the rest of the diff was already reviewed.
+- **A reviewer reruns nothing it was handed.** The implementer's report carries the command and its output; the reviewer runs focused tests for what it doubts, not the whole suite again.
+- **Findings go back as one list to one fixer.** One agent per finding re-reads the same code N times and collides in the same files.
+- **A re-review checks the fixes, not the world.** It verifies each blocking finding is fixed and its test is red without the fix; the rest of the diff was already reviewed. A small fix diff is reviewed on a cheaper model tier.
 - **One check of a plan or prompt.** A second only when the plan materially changed.
 - **One agent per question.** Parallel sub-agents earn their cost when the questions are independent and each would crowd the others' context; a small diff needs one reader.
 - **Prompts point, agents read.** Name the files and the decision; the agent can open them. A prompt longer than the change it asks for is a smell.
@@ -90,6 +102,7 @@ Agents are the most expensive check. Size them like the rest.
 | The same commit tested twice with nothing changed between | A defect in production a cheap test would have caught |
 | A tier-C change waiting on a reviewer | A tier-A change without an invariant test |
 | An agent reading a log longer than the code it changed | «Выглядит правильно» in place of a command and its output |
+| A reviewer rerunning the suite the implementer already ran | A diff that goes green by adding `.skip`, deleting an assertion, lowering a threshold or an `ignore` comment — the cheapest road to green |
 | Process text — prompts, reviews, registers — growing faster than code | A review that only read code which runs |
 | Most of a delegation's wall-clock spent waiting on checks | A flaky gate everyone reruns until it passes |
 
