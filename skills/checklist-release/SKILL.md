@@ -18,7 +18,7 @@ Each is answered by naming evidence — a command, a run, a person — never by 
 
 **1. Is the code actually finished?** Everything planned is in, everything in got a PASS from `review`, no blocking defect is open, and the feature flags are set the way production needs them rather than the way the last test left them.
 
-**2. Do the gates pass on the artifact being shipped?** The full suite, the linter, the build — run on the commit that is deploying, not on one from earlier in the day. Depth: `checklist-code-review`.
+**2. Do the gates pass on the artifact being shipped?** The full suite, the linter, the build — run on the commit that is deploying, not on one from earlier in the day. A recorded green run of that exact commit on a clean tree is that run; the release gate spends its own time on build, install, migrations and boot (`verification-budget`). Depth: `checklist-code-review`.
 
 **3. Has security been looked at, for these changes?** Anything touching auth, permissions, user data, external input, or dependencies gets `checklist-security`. Dependencies scanned, nothing new and known-vulnerable, no secret anywhere in the repository or the image.
 

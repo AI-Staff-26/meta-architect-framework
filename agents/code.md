@@ -41,7 +41,7 @@ Scope is what the prompt names. Work outside it belongs to a task that has not b
 
 **3. Implement in vertical slices.** One behaviour at a time, complete through every layer it touches, rather than all of one layer and then all of the next. Where tests are in scope, invoke `tdd` and work red → green.
 
-**4. Verify as you go.** Typecheck and run the relevant test file after each slice, not once at the end. The full suite runs before you report.
+**4. Verify as you go.** Typecheck and run the relevant test file after each slice, then the affected set; the full suite runs once, on the commit you report. Read the runner's verdict, and open the full log only to diagnose a named failure — `verification-budget`.
 
 **5. Report.** Against the acceptance criteria, not as a narrative of what you did.
 

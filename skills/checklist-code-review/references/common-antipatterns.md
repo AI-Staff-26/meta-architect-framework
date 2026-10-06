@@ -329,13 +329,13 @@ Use it to spot problems and to prevent them.
 
 ---
 
-### 6. Skipping `review`
+### 6. Review out of proportion
 
-**Description:** Moving to the next task straight after `code`.
+**Description:** Moving on after `code` that touched auth, access, money or stored data without a review — or the opposite: a reviewer, a re-review and a second plan check for a layout fix.
 
-**Consequences:** Bugs and vulnerabilities reach the codebase.
+**Consequences:** The first lets vulnerabilities reach the codebase; the second spends days of agent time where a screenshot would do.
 
-**Remedy:** `review` after `code`, every time.
+**Remedy:** Size the review by the tier of the change — `verification-budget`.
 
 ---
 
@@ -408,7 +408,7 @@ Use it to spot problems and to prevent them.
 ### Process Health Check
 - [ ] Sessions under 15 steps?
 - [ ] Plan.md before `code` for 🟡/🔴?
-- [ ] `review` after every `code`?
+- [ ] Review sized by tier — tier A reviewed on its own, the rest once per milestone?
 - [ ] Research before the plan for 🟡/🔴?
 
 ---

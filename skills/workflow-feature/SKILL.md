@@ -55,7 +55,7 @@ Then STOP for approval, and pass the plan through the `vibe-mentor` checkpoint b
 
 ## 5. Build
 
-One slice per delegation, `review` after each phase. Tests are `tdd`: red before green, at the seam the slice actually crosses. A FAIL gets classified before it is retried — `CLAUDE.md` law 5 — and a second failed cycle on the same slice routes to `debug` rather than a third attempt.
+One slice per delegation; review sized by `verification-budget` — on its own for a slice that touches auth, access, money or stored data, once per milestone for the rest. Tests are `tdd`: red before green, at the seam the slice actually crosses. A FAIL gets classified before it is retried — `CLAUDE.md` law 5 — and a second failed cycle on the same slice routes to `debug` rather than a third attempt.
 
 ## 6. Close
 
@@ -63,7 +63,7 @@ Close by `rules/memory-protocol.md`. What a feature adds to it: a module that is
 
 ## Completion criterion
 
-Shipped when: every acceptance criterion is verified by running something; every edge dimension is answered or explicitly out of scope; `review` returned PASS on each phase; the feature works end to end through the real interface, not only in tests; and `memory/` reflects what changed.
+Shipped when: every acceptance criterion is verified by running something; every edge dimension is answered or explicitly out of scope; the reviews `verification-budget` sized returned PASS; the feature works end to end through the real interface, not only in tests; and `memory/` reflects what changed.
 
 ## Related
 
@@ -72,5 +72,6 @@ Shipped when: every acceptance criterion is verified by running something; every
 - `architectural-planning` — decomposition, scope, prompts, handoff
 - `checklist-ux-design` — UI features, before implementation
 - `tdd` — the red → green loop per slice
-- `checklist-code-review` — the gate after each phase
+- `checklist-code-review` — the review procedure
+- `verification-budget` — which checks a slice earns, and how to run them once
 - `workflow-architecture-change` — the feature turns out to require a different architecture

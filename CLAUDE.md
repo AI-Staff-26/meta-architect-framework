@@ -55,7 +55,7 @@ Six laws. Each states the condition and the route.
 
 1. **A plan precedes implementation** for 🟡 and 🔴 — `/docs/Plan.md`, approved. 🟢 goes straight to a clear prompt.
 2. **An unexplained cause routes to `debug`.** When you cannot say *why* it behaves this way, investigate before planning. Your own light investigation is fine; hand over the deep forensics.
-3. **Every 🟡🔴 implementation routes to `review`.** 🟢 work is self-checked against its one-sentence criterion — unless it touched auth, data, money, or a public contract, which makes it 🟡 by signal whatever it looked like at the start.
+3. **Review is sized to the blast radius — `verification-budget`.** A change touching auth, access, money, stored data, or a public contract routes to `review` on its own; the rest of a 🟡🔴 plan is reviewed once per milestone. 🟢 work is self-checked against its one-sentence criterion — unless it touched one of those surfaces, which makes it 🟡 by signal whatever it looked like at the start.
 4. **Two failed cycles stop the loop.** Repeating regressions, accumulating patches, or fifteen turns without progress → stop, route to `debug`, revise the plan from what it finds, restart clean. A third attempt at the same approach produces a third failure.
 5. **A FAIL gets diagnosed before it gets retried.** Classify the findings, decide whether the fault is in the plan or in the prompt, fix that, then re-delegate. Two critical failures route to `debug`.
 6. **A 🟡🔴 plan passes the vibe-mentor checkpoint** before reaching `code` — atomic scope, LLM-feasibility, production-readiness gaps. Iterate until it approves.
@@ -99,7 +99,7 @@ Every deliverable meets these before it is called done:
 
 - **Security** — inputs validated, authorisation enforced, secrets kept out of code, logs, and command lines — argv is readable in `ps`, even inside a `grep` filter; pass secrets through the environment or a 0600 file.
 - **Commits** — only the paths you changed (`git commit -- <paths>`); another agent may be working in the same tree.
-- **Tests** — the required tests named, edge cases covered, criteria observable.
+- **Tests** — the required tests named, edge cases covered, criteria observable; each check runs once per commit, through one command that prints the failures and keeps the full log on disk (`verification-budget`).
 - **Architecture** — layer boundaries respected; a pattern change carries an ADR.
 - **Reversibility** — the change can be rolled back; migrations are safe.
 - **Documentation** — `memory/` updated; comments explain *why*.
@@ -168,6 +168,7 @@ The plan holds if: its claims trace to memory or verified project state rather t
 | Containers, CI/CD, deploy, secrets | `workflow-devops` |
 | Building UI | `checklist-ux-design` → `workflow-ui-build-order` → `checklist-ux-review` |
 | Writing tests | `tdd` |
+| How much to check: tiers, test runs, reviews, gates; slow or noisy checks | `verification-budget` |
 | Designing a module or seam | `codebase-design` |
 | Choosing an architecture | `pattern-clean-architecture`, `pattern-modular-monolith` |
 | Access, tenant isolation, or a reversible rollout | `pattern-rbac`, `pattern-multi-tenant`, `pattern-feature-flags` |

@@ -56,6 +56,8 @@ A fixed set of Fowler smells (*Refactoring*, ch. 3), applied on top of whatever 
 
 ## 3. Run the three axes in parallel
 
+Size the review first (`verification-budget` §5). A diff with no tier-A surface — no auth, access, money, stored data, untrusted input or public contract — is read by one sub-agent covering Standards and Spec; the Security axis and the running instance are for tier-A diffs.
+
 Send one message with three `Agent` calls, `subagent_type: general-purpose`, each with `run_in_background: false` so all three results are in hand before aggregating. Parallel sub-agents keep each axis out of the others' context, so a long Standards trawl cannot dilute the Security read.
 
 Every sub-agent gets: the diff command, the commit list, its own sources pasted in full (it has no other access to them), and a brief capped at **400 words**.

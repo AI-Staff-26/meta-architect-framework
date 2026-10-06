@@ -53,7 +53,7 @@ Scope firms as the work moves: open while requirements are still forming, clarif
 
 **The middle is where instructions go to die.** Models recall the start and the end of a prompt most reliably. Goal at the top, constraints and acceptance criteria at the bottom, reference material in between. A constraint that must hold appears in both positions.
 
-**Make criteria checkable by running something.** "Works correctly" is unverifiable and gets self-certified. "`npm test` passes, and `POST /auth/login` with a wrong password returns 401" gets verified.
+**Make criteria checkable by running something.** "Works correctly" is unverifiable and gets self-certified. "`npm test` passes, and `POST /auth/login` with a wrong password returns 401" gets verified. Name the rung, not just the command: affected tests while working, the full suite once on the final commit, heavy tools only for the tier that earns them (`verification-budget`).
 
 **State constraints as the bounded behaviour**, so the unwanted action is never named: "Implement the design as specified; architectural changes come back here" beats "don't change the architecture". Keep a bare prohibition only where you cannot phrase it positively — and pair it with what to do instead. `authoring-skills` holds the reasoning.
 

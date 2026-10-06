@@ -42,6 +42,8 @@ Three properties go green by accident unless the test is built for them.
 - **A race is made deterministic.** Open the window on purpose instead of hoping to hit it: inject a gate into the slow step (password hashing, a remote call) through the seam that step already has, hold it until the test has performed the competing action, then release. The test passes or fails every run, not one run in five.
 - **"Only here" is locked by a static test.** When an invariant says an effect happens at one choke point only — one function writes the trust flag, one module issues a grant — a test reads the source tree and fails when the effect appears anywhere else, including shorthand, casts and aliased imports. Behavioural tests cannot see the path nobody has written a test for yet; this one can.
 
+Generated worlds and targeted mutation — where they pay and how to keep them cheap: `verification-budget`.
+
 ## Anti-patterns
 
 - **Implementation-coupled** — the test mocks internal collaborators, exercises private methods, or verifies through a side channel (querying the database rather than reading the interface's answer). Test through the seam you agreed on.
