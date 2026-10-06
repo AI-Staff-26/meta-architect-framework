@@ -1,7 +1,7 @@
 ---
 name: review
 description: "Quality gate. Reviews an implementation on three axes — Standards, Spec, Security — and returns PASS or FAIL with actionable findings. Use after any meaningful implementation, or to review a branch or PR against a fixed point. Triggers: 'проверь', 'отревьюь', 'review this', 'посмотри код'. Returns control with a verdict. For fixing what it finds use code, for root cause debug."
-model: inherit
+model: sonnet
 color: yellow
 ---
 
