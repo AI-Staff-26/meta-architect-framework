@@ -181,6 +181,18 @@ For maximum portability use `.claude/` — Cursor and Windsurf read it directly.
 | `model` | ✅ | ⚠️ | ⚠️ | ✅ |
 | `context` | ✅ | ❌ | ❌ | ✅ |
 
+### Versioning
+
+A change to framework text that changes behaviour bumps `VERSION` and adds a `CHANGELOG.md` entry **in the same commit**. Choose the level by what projects must do about it:
+
+- **MAJOR** — roles, gates, laws or the memory format change in a way projects must adapt to: a memory migration, a new mandatory step.
+- **MINOR** — a new or extended skill, agent or rule that stays backward compatible.
+- **PATCH** — wording or fixes with no change in behaviour.
+
+The release workflow tags the commit and publishes the `CHANGELOG.md` section as the release; it warns when framework files changed without a bump.
+
+**Completion criterion:** `VERSION` equals the newest `## [x.y.z]` heading in `CHANGELOG.md`.
+
 ## Framework improvement patterns from external sources
 
 When researching external skill frameworks (Superpowers, Matt Pocock skills)

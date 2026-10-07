@@ -13,3 +13,8 @@
 !rules/**
 !skills/
 !skills/**
+!VERSION
+!CHANGELOG.md
+!README.md
+!.github/
+!.github/**

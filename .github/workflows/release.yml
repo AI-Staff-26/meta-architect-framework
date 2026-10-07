@@ -1,0 +1,91 @@
+name: Release
+
+# Tags and publishes a release when VERSION names a version that has no tag yet.
+# CHANGELOG.md must carry a "## [<VERSION>]" section; its body becomes the release notes.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - VERSION
+      - CHANGELOG.md
+      - CLAUDE.md
+      - agents/**
+      - skills/**
+      - rules/**
+
+permissions:
+  contents: write
+
+# One release at a time: two pushes in a row must not race for the same tag.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out with history and tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Warn when the framework changed without a version bump
+        env:
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # A new branch or a force push leaves "before" empty or unreachable; compare with the parent instead.
+          if [[ "$BEFORE" =~ ^0+$ ]] || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            BEFORE="${SHA}^"
+          fi
+          changed="$(git diff --name-only "$BEFORE" "$SHA")"
+          if grep -Eq '^(CLAUDE\.md|agents/|skills/|rules/)' <<<"$changed" && ! grep -qx 'VERSION' <<<"$changed"; then
+            echo "::warning title=MAF version::framework changed without a version bump"
+          fi
+
+      - name: Validate VERSION and CHANGELOG
+        run: |
+          set -euo pipefail
+          version="$(tr -d '[:space:]' < VERSION)"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error file=VERSION::VERSION must be MAJOR.MINOR.PATCH, got '$version'"
+            exit 1
+          fi
+          # Body of the "## [<version>]" section: up to the next "## [" heading.
+          awk -v heading="## [$version]" '
+            index($0, heading) == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if ! grep -qF "## [$version]" CHANGELOG.md; then
+            echo "::error file=CHANGELOG.md::CHANGELOG.md has no '## [$version]' section"
+            exit 1
+          fi
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error file=CHANGELOG.md::the '## [$version]' section is empty"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          tag="v${VERSION}"
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "Tag ${tag} already exists; nothing to release."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" "$SHA" -m "Meta-Architect Framework ${VERSION}"
+          git push origin "refs/tags/${tag}"
+          gh release create "$tag" \
+            --verify-tag \
+            --title "Meta-Architect Framework ${VERSION}" \
+            --notes-file release-notes.md
