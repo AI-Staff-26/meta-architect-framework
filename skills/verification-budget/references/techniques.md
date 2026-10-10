@@ -29,7 +29,7 @@ Libraries: fast-check (JS/TS), Hypothesis (Python), proptest / quickcheck (Rust)
 
 ## Targeted mutation
 
-**Proves** a test depends on the guard it claims to cover. **Where it pays:** the guards of a tier-A invariant and the fixes a review called blocking — not the whole codebase. **Cheap form:** first a free pass on paper — for each guard, name the test that would fail if it were removed or inverted; mutate for real only where no test comes to mind or the answer is doubtful. Then, for each such guard, remove or invert it in a temporary worktree (other agents may share the tree), run only the test file that should catch it, expect red, discard the worktree. A handful of mutations per invariant answers the question; a full mutation-testing run is a periodic audit, not a per-change gate.
+**Proves** a test depends on the guard it claims to cover. **Where it pays:** the guards of a tier-A invariant and the fixes a review called blocking — not the whole codebase. **Cheap form:** first a free pass on paper — for each guard, name the test that would fail if it were removed or inverted; mutate for real only where no test comes to mind or the answer is doubtful. Then, for each such guard, remove or invert it in a temporary worktree (other agents may share the tree, and the live system may run from it), run only the test file that should catch it, expect red, discard the worktree. A handful of mutations per invariant answers the question; a full mutation-testing run is a periodic audit, not a per-change gate.
 
 Tools when the manual form grows: Stryker (JS/TS — limit with `--mutate` to the guard files, use incremental mode), mutmut (Python), cargo-mutants (Rust), gremlins (Go).
 

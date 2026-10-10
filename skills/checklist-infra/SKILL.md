@@ -147,6 +147,7 @@ Severity governs what blocks: 🔴 and 🟠 must be clear before anything ships.
 - [ ] .editorconfig present 🟡
 - [ ] .gitignore covers: .env, *.log, build outputs, IDE files 🟠
 - [ ] No dev-only tools required globally (use local installs) 🟡
+- [ ] Every install in the diff or the agent's report went into the project's environment — none into the system interpreter, a global package manager or system packages, none with `--break-system-packages` 🟠
 - [ ] Containerized services used for DB / cache / queue 🟡
 ```
 

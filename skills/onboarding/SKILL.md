@@ -23,6 +23,7 @@ Invoke `grilling`. It supplies the loop — one question at a time, facts looked
 | **Goal** | What success looks like, and how anyone would know it arrived |
 | **State** | Greenfield, existing codebase, migration, or mid-flight — and what has been done |
 | **Stack** | Languages, frameworks, data stores, hosting, external services. Skip for non-technical projects |
+| **Runtime** | Whether production runs straight from this tree or host, which live paths the code writes by default, where dependencies install. Skip for non-technical projects |
 | **People** | Solo or team; who decides what; who else has a stake |
 | **Constraints** | Deadlines, budget, legacy that cannot move, compliance |
 | **Communication** | Language, level of detail, how they want to be told bad news |
@@ -30,6 +31,8 @@ Invoke `grilling`. It supplies the loop — one question at a time, facts looked
 Adapt the depth to the kind of project — a business plan needs the goal and the constraints and almost none of the stack. Where the user does not know, mark `TBD` and move on; onboarding never blocks on an unknown.
 
 **Read before you ask.** When a codebase exists, `package.json`, the lockfile, the CI config, and the directory layout answer most of the stack questions. Arriving with "I see this is Next.js on Postgres — is that current?" spends one question where seven would have gone.
+
+The runtime mode is read the same way, on whatever host the project lives: a service unit, launchd job, cron line, process-manager config or compose bind mount whose path points into the repository; a wrapper that executes its sources; default paths in the code that point outside it. Any hit makes `live-from-tree` the recommended answer, which the user confirms.
 
 ## Phase 2 — Classify, and confirm
 

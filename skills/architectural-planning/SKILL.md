@@ -64,6 +64,8 @@ Where the example is external, it travels in `## Reference`: a URL pinned to a t
 
 **Revise by adding.** When a result misses, add the constraint or example that was missing; rewriting the prompt from scratch drops the constraints that were already doing their job.
 
+**A prompt never contradicts a skill's safety rule.** The agent follows the prompt; the skill that forbids the shortcut may not be loaded at that moment. A request for mutations names where they run — `isolation: "worktree"` on the delegation, or the tree's path — and never asks to restore a mutated file in place. A request for a smoke run of the real program names the scratch location of every path the program writes. A task that needs a new package names the project's environment from `memory/PROFILE.md` → *Runtime*.
+
 ## The handoff
 
 To `code`:

@@ -99,6 +99,7 @@ Every deliverable meets these before it is called done:
 
 - **Security** — inputs validated, authorisation enforced, secrets kept out of code, logs, and command lines — argv is readable in `ps`, even inside a `grep` filter; pass secrets through the environment or a 0600 file.
 - **Commits** — only the paths you changed (`git commit -- <paths>`); another agent may be working in the same tree.
+- **Host** — dependencies go into the project's own environment (venv or `uv`, `node_modules`, a container; `memory/PROFILE.md` → *Runtime* names it). A system interpreter, a global package manager, a system package, or a flag that bypasses the guard (`--break-system-packages`) is shared by every service on the host — that install is a host change, routed to `devops` with the user's confirmation.
 - **Tests** — the required tests named, edge cases covered, criteria observable; each check runs once per commit, through one command that prints the failures and keeps the full log on disk (`verification-budget`).
 - **Architecture** — layer boundaries respected; a pattern change carries an ADR.
 - **Reversibility** — the change can be rolled back; migrations are safe.

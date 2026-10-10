@@ -61,13 +61,14 @@ Agents are readers with a finite window. A check designed for them:
 - **prints a verdict** — counts, then each failure as name, `file:line`, the assertion, the first lines of the stack, and the slowest few tests;
 - **saves the full log** to a known path and prints that path;
 - **exits non-zero** on failure, so the verdict is machine-checkable;
-- **waits safely** — a lock or an isolated database, so two runs do not corrupt each other.
+- **waits safely** — a lock or an isolated database, so two runs do not corrupt each other;
+- **writes nowhere but its scratch** — where the code under test also runs live from the same tree or host (`memory/PROFILE.md` → *Runtime*), the run is fenced: live paths read-only for its duration, so a forgotten override fails loudly instead of writing into production. Path defaults in the code resolve per call, not at import, or no test can redirect them. Fence mechanisms per platform: `references/agent-friendly-tooling.md`.
 
 The agent reads the verdict. It opens the full log only to diagnose a named failure, by searching for that failure's name — a log is a reference, not reading material.
 
 The same contract holds for a test stand — one command to start, reset and stop it, saying which commit it runs: `architectural-planning/references/agent-workspaces.md`.
 
-Build this runner the first time a check is run twice in a project. Recipes for common runners, affected-test selection and the stamp: `references/agent-friendly-tooling.md`.
+Build this runner the first time a check is run twice in a project, and record its command in `memory/PROFILE.md` → *Runtime* — the next session looks there before building another. Recipes for common runners, affected-test selection and the stamp: `references/agent-friendly-tooling.md`.
 
 ## 4. The heavy tools — what each catches
 

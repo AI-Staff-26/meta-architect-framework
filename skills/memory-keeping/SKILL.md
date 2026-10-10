@@ -49,6 +49,12 @@ memory/
 ## Stack & Tools
 Languages, frameworks, databases, infrastructure, dev tools
 
+## Runtime
+- **Mode**: `separate` (stands and production apart from this tree) | `live-from-tree` (production runs straight from this working tree or host) | `n/a`
+- **Live paths**: state, config, logs and wrappers the code reaches by default — `TBD` until checked
+- **Dependency environment**: where packages install (`.venv`, `uv run`, `node_modules`, container)
+- **Check command**: the one runner (`verification-budget` §3), and its fence when the mode is `live-from-tree`
+
 ## Team & Roles
 Who is involved, and what each is responsible for
 

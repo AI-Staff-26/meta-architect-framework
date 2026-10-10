@@ -10,6 +10,25 @@ All notable changes to the Meta-Architect Framework (MAF) are recorded here, new
 - **MINOR** — a new or extended skill, agent or rule that is backward compatible.
 - **PATCH** — wording or fixes with no change in behaviour.
 
+## [2.1.0] - 2026-10-10
+
+Lessons from two incidents: a test run that wrote into a live system running from the same tree, and a package install into the system Python that broke the host's certificate renewal.
+
+### Added
+
+- `CLAUDE.md` Quality: **Host** — dependencies install into the project's environment; system interpreter, global managers, system packages and guard-bypass flags are a host change routed to `devops` with the user's confirmation.
+- `memory-keeping`: PROFILE section `## Runtime` — mode (`separate` / `live-from-tree` / `n/a`), live paths, dependency environment, check command. Optional: an absent section means "not yet determined".
+- `onboarding`: the Runtime area, read from the host (service units, cron, process managers, bind mounts, wrappers, default paths) before asking.
+- `verification-budget` §3: the runner writes nowhere but its scratch — live paths read-only when the code also runs live; path defaults resolve per call; the runner's command is recorded in PROFILE → *Runtime*.
+- `verification-budget/references/agent-friendly-tooling.md`: the fence per platform, with a before/after tripwire where no sandbox exists.
+- `agent-workspaces` §3: the stand when the repository is the deployment.
+- `architectural-planning`: a prompt never contradicts a skill's safety rule — mutations name their worktree, smoke runs name every path, installs name the project's environment.
+- `checklist-infra`: no install outside the project's environment.
+
+### Changed
+
+- `verification-budget/references/techniques.md`: targeted mutation names the second reason for a worktree — the live system may run from the shared tree.
+
 ## [2.0.0] - 2026-10-07
 
 First versioned release. Everything since the initial commit.

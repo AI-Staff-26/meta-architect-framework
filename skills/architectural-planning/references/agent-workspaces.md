@@ -30,6 +30,7 @@ A stand is a running instance of the product for checks that need a live server:
 - **Its own port and its own database or schema** per lane; the ports of production, the stand and the release rehearsal are written down once in the project's memory and never shared.
 - **Test accounts** live in a known file with mode 0600, seeded by the stand's command — never typed into prompts or command lines.
 - **Production is never a stand.** Probes, attacks and screenshots go to the stand; production gets only the release gate's smoke check and the architect's look after a deploy.
+- **When the repository is the deployment** — `memory/PROFILE.md` → *Runtime* says `live-from-tree` — there is no separate stand to send checks to. The stand is then the runner's fence (`verification-budget` §3): state in scratch directories, live paths read-only. A smoke run of the real program sets every path override explicitly, and the report lists them. *Runtime* empty → read the mode from the host as `onboarding` describes, and record it.
 - **Restart from the commit under check**, and say which one in the report — a stand running an older build has produced many false greens.
 - **Stop it when nobody is using it.** It starts in seconds; idle, it holds memory on a shared machine.
 - **Runs that share a database wait on a lock**, not on luck: two full suites or two e2e runs against one database corrupt each other's state.

@@ -11,7 +11,7 @@ The contract from `SKILL.md` §3, made concrete: one command, a short verdict on
   → exit 0 only when everything selected passed
 ```
 
-Keep it a script in the repo (`scripts/test.sh`, a `package.json` script, a `Makefile` target), named in the project's README and in `memory/` — an agent that has to rediscover the command each session pays for it every session.
+Keep it a script in the repo (`scripts/test.sh`, a `package.json` script, a `Makefile` target), named in the project's README and in `memory/PROFILE.md` → *Runtime* — an agent that has to rediscover the command each session pays for it every session.
 
 ## Short verdict, full log — per runner
 
@@ -29,6 +29,21 @@ Most runners can emit two reports at once: a terse one to the terminal and a com
 Some runners already switch to terse output when they detect an AI agent (recent Vitest, Bun under `CLAUDECODE=1`); an explicitly configured reporter overrides that detection, so check which one wins.
 
 When the runner cannot split its output, the wrapper does it: run with the full reporter into the log, then print only the summary and the failure blocks (`grep -A` on the runner's failure marker, or parse the JUnit XML).
+
+## The fence — when the code also runs live
+
+Where *Runtime* says `live-from-tree`, the runner makes the live paths read-only for the run. Pick the first mechanism the host supports:
+
+| Host | Fence |
+|---|---|
+| Linux with systemd, root | `systemd-run --pipe --wait -p ReadOnlyPaths=<live dirs> <runner>` |
+| Linux without systemd, or unprivileged | `bwrap --dev-bind / / --ro-bind <dir> <dir> … <runner>`, or `unshare -rm` with read-only bind mounts |
+| Container | the live paths mounted `:ro`, or not mounted at all |
+| Any host | a user without write permission on the live paths runs the suite |
+
+Where none applies — macOS without a sandbox tool, a shared CI runner — the runner falls back to a tripwire: hash or `stat` the live paths before and after the run, and exit non-zero on any difference. It catches the write instead of preventing it, so it says so in the verdict.
+
+Either way, the runner sets every path override the code knows (state, config, log, audit, socket) to its scratch directory, and the fence catches the one it missed.
 
 ## Affected tests
 
