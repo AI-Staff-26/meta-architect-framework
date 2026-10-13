@@ -22,3 +22,4 @@
 # Скиллы этого сервера: лежат в skills/, чтобы их видели все аккаунты Claude Code,
 # но к фреймворку не относятся. Правило стоит после !skills/** — побеждает последнее.
 skills/telegram-send-file/
+skills/cc-telegram-bridge/
