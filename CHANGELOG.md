@@ -10,6 +10,23 @@ All notable changes to the Meta-Architect Framework (MAF) are recorded here, new
 - **MINOR** — a new or extended skill, agent or rule that is backward compatible.
 - **PATCH** — wording or fixes with no change in behaviour.
 
+## [2.2.0] - 2026-10-14
+
+From a review of MAF against vendor guidance (Anthropic prompting guides for Opus 5/5.5, Sonnet 5.5, Fable 5.1; Anthropic's harness-design article; Claude Code subagent docs; OpenAI's GPT-6 Astra guidance), the affaan-m/ECC project, and the experience of two long-running projects (cc-telegram, MD Share) that reviewed every proposal before it landed.
+
+### Added
+
+- `tdd`: anti-patterns *carried by something else* (a library, second guard, precondition or the stand makes the test green), *measures the wrong quantity*, and *teaching to the test*; a slice is done only when removing the code that makes it pass turns its test red.
+- `verification-budget` §3 and the runner contract: the verdict counts skipped tests separately — a skip never counts as a pass.
+- `verification-budget` targeted mutation: mutate the call site and each condition of a guard, not only its body.
+- `code` agent: when a test the prompt names cannot run as written or contradicts the prompt, its assertion is kept and only its setup changes, reported under *Отклонения* (never in a refactor); an existing test the prompt does not name that turns red stops the run; the same check failing with the same assertion after two different fixes stops the run and hands back to the architect (the third guess belongs to `debug`), while a loop that finds something new each round, with earlier findings still fixed, is progress. New *Отклонения* block in the report; doubts keep their own ⚠️ report.
+- `authoring-skills` pruning: every instruction encodes an assumption about what the model cannot do alone; re-run the no-op pass when the default model changes; evidence behind a done-claim, independent review and STOP gates are kept by it.
+
+### Changed
+
+- `CLAUDE.md` context passthrough: roles are invoked by `subagent_type`; a fork runs on the main session's prompt and model, so the role's definition and model never load and a reviewer loses independence; resuming an agent keeps its context. `architectural-planning` re-delegation follows suit.
+- Agent definitions carry an explicit model and effort: `code` opus/xhigh, `review` opus/high, `debug` fable/xhigh, `vibe-mentor` fable/xhigh, `advisor` sonnet/max, `consilium` sonnet/max, `devops` opus/xhigh. Previously, without effort: `review` and `advisor` sonnet, `debug` and `vibe-mentor` fable, `code`, `devops` and `consilium` inherit.
+
 ## [2.1.0] - 2026-10-10
 
 Lessons from two incidents: a test run that wrote into a live system running from the same tree, and a package install into the system Python that broke the host's certificate renewal.

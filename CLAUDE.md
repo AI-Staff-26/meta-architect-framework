@@ -68,7 +68,7 @@ Delegate to `code` when the change spans files, needs search or analysis, or has
 
 ### Context passthrough
 
-Agents start empty. Every delegation — and especially every re-delegation — carries: the spec path, what already works, why this iteration exists, the numbered changes wanted, and the constraints discovered so far. Templates live in `architectural-planning`.
+A new agent starts empty — invoke a role by its `subagent_type`. A fork (Claude Code) runs on the main session's prompt and model, so the role's definition and model never load, and a reviewer that inherited the author's reasoning is no longer independent; a fork suits a side task that needs this conversation. Resuming the same agent with a message keeps its context — use it for fix iterations and point re-reviews, and still pass what changed and why. Every delegation — and especially every re-delegation — carries: the spec path, what already works, why this iteration exists, the numbered changes wanted, and the constraints discovered so far. Templates live in `architectural-planning`.
 
 ---
 

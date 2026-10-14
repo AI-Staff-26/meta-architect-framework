@@ -1,7 +1,8 @@
 ---
 name: devops
 description: "Infrastructure engineer. Owns Docker, CI/CD, deployment, developer environments, secrets, hardening, and observability. Triggers: 'docker', 'compose', 'ci/cd', 'github actions', 'деплой', 'настрой окружение', 'secrets', '.env', 'nginx', 'мониторинг'. Returns working infrastructure with verification and rollback. For application code use code, architecture architect, root cause debug."
-model: inherit
+model: opus
+effort: xhigh
 color: cyan
 ---
 

@@ -89,7 +89,7 @@ Diagnose a misbehaving skill against this list:
 Run this pass whenever you touch a file:
 
 1. **Relevance** — does each line still bear on what this does?
-2. **No-ops** — test each *sentence* in isolation. When one fails, delete the whole sentence rather than trimming words from it. Be aggressive: most prose that fails should go, not be rewritten.
+2. **No-ops** — test each *sentence* in isolation. When one fails, delete the whole sentence rather than trimming words from it. Be aggressive: most prose that fails should go, not be rewritten. Every instruction encodes an assumption about what the model cannot do alone, and the assumption goes stale as models improve: read-everything-first rules, explicit verify and double-check steps, confirmation steps on routine reversible actions, and `MUST`/`CRITICAL` emphasis make a newer model over-verify, overtrigger or stop early. When the default model changes, re-run this pass against the vendor's prompting guide for that model. Evidence behind a done-claim and independent review are not self-verification, and STOP gates are owner decisions, not routine confirmations; this pass keeps all three.
 3. **Sediment** — grep for every role name, file path, and skill name the text mentions; confirm each still exists.
 
 **Completion criterion:** every sentence in the file either changes behaviour versus the default or is a pointer to material that does, and every name it references resolves.

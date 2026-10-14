@@ -11,7 +11,7 @@ description: |
 
 # Delegation
 
-A delegated agent starts **cold** — empty context, no memory of the conversation that produced the decision. Everything it needs travels in the prompt, or it does not arrive.
+A newly delegated agent starts **cold** — empty context, no memory of the conversation that produced the decision. Everything it needs travels in the prompt, or it does not arrive.
 
 That one fact drives everything here: decompose so a cold agent can hold the task, bound the scope so it knows where to stop, write the prompt so nothing it needs stays implicit, and carry the history forward on every re-delegation.
 
@@ -140,7 +140,7 @@ To `devops` — the target state and what must keep working:
 
 ### Context passthrough
 
-Re-delegation is where context is lost most often — the agent that failed is gone, and its replacement knows nothing about the attempt. Every re-delegation carries five things:
+Re-delegation to a new agent is where context is lost most often — the replacement knows nothing about the attempt; resuming the same agent keeps it (`CLAUDE.md`, Context passthrough), and the five things below still travel either way. Every re-delegation carries five things:
 
 ```markdown
 # Task: [title] — iteration N

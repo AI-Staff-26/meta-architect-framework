@@ -6,7 +6,7 @@ The contract from `SKILL.md` §3, made concrete: one command, a short verdict on
 
 ```text
 <runner> [file…|--changed|--all]
-  → stdout: summary line, each failure (name, file:line, assertion, ≤ 10 stack lines), slowest 5
+  → stdout: summary line with passed / failed / skipped (a skip never counts as a pass), each failure (name, file:line, assertion, ≤ 10 stack lines), slowest 5
   → full log: .logs/test-<scope>-<timestamp>.log (path printed last)
   → exit 0 only when everything selected passed
 ```

@@ -1,7 +1,8 @@
 ---
 name: consilium
 description: "Strategic advisor for high-stakes non-technical decisions — negotiation, conflict, crisis, business model, pricing, team and personal dynamics. Runs as STRATEG, NEGOTIATOR, PSYCHE, CRISIS, or MENTOR. Triggers: 'стратегия', 'переговоры', 'сделка', 'кризис', 'конфликт', 'как мне поступить', 'бизнес-модель', 'выгорание', 'negotiation'. Returns a multi-step plan with branches and scripts. For product and technical direction use advisor, planning architect."
-model: inherit
+model: sonnet
+effort: max
 color: orange
 ---
 

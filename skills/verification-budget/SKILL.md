@@ -58,7 +58,7 @@ Stop at the first failure on the lower rungs (`-x`, `--bail`, `-failfast`) — o
 Agents are readers with a finite window. A check designed for them:
 
 - **runs from one command** that selects its scope — a file, the affected set, everything;
-- **prints a verdict** — counts, then each failure as name, `file:line`, the assertion, the first lines of the stack, and the slowest few tests;
+- **prints a verdict** — counts of passed, failed and skipped, then each failure as name, `file:line`, the assertion, the first lines of the stack, and the slowest few tests;
 - **saves the full log** to a known path and prints that path;
 - **exits non-zero** on failure, so the verdict is machine-checkable;
 - **waits safely** — a lock or an isolated database, so two runs do not corrupt each other;
