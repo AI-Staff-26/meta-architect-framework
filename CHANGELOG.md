@@ -10,6 +10,27 @@ All notable changes to the Meta-Architect Framework (MAF) are recorded here, new
 - **MINOR** — a new or extended skill, agent or rule that is backward compatible.
 - **PATCH** — wording or fixes with no change in behaviour.
 
+## [2.6.0] - 2026-10-14
+
+A map of the machine in always-on context, kept as pointers. Living documents get the same discipline as the repo wiki.
+
+### Added
+
+- `rules/host.md`, the host map: a machine-local file of pointers. It covers machine-local skills, where secrets and configs live, worked setups and pitfalls.
+  - `CLAUDE.md` imports it.
+  - It stays out of git.
+  - A machine without one skips the import silently; this was checked by a run.
+- `rules/memory-protocol.md` «Host map»: whoever changes the machine, finds where something on it lives, or hits a pitfall with a known fix adds a line. Each line is a pointer: the detail stays where it lives. A credential appears by its path; its value stays in its file.
+- `rules/memory-protocol.md` «Blueprint»: a change to a flow the project's blueprint describes follows `living-blueprint` step 10.
+
+### Changed
+
+- `rules/memory-protocol.md`:
+  - closing out checks the repo wiki, the blueprint and the host map;
+  - hygiene drops host-map lines whose target is gone;
+  - per agent: the architect and `code` update the blueprint.
+- `.gitignore` keeps `rules/host.md` out of the framework, next to the two machine-local skills.
+
 ## [2.5.0] - 2026-10-14
 
 The blueprint stays living after the spec. The skill now says when to make one, and the implementation keeps it in step.

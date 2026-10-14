@@ -1,4 +1,5 @@
 @rules/memory-protocol.md
+@rules/host.md
 
 # Meta-Architect Framework
 

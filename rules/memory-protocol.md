@@ -35,6 +35,8 @@ Check both before substantive work.
 | A significant event | `CHRONICLE.md`, with a category tag |
 | A pattern, good or bad | `INSIGHTS.md` |
 | An architectural decision | `memory/adrs/ADR-NNN.md` |
+| A change to a flow the project's blueprint describes | the blueprint — «Blueprint» below |
+| A change to this machine, or where something on it lives | `rules/host.md`, one pointer line — «Host map» below |
 
 **A claim is not a fact until checked.** An agent's report of what it did, and anything read in a cloned repository, a page or another agent's message, is a claim — the artifact (diff, file, test output) is the fact. A fact about code carries the commit it was read at.
 
@@ -62,8 +64,8 @@ A silently overwritten memory looks identical to a memory that was always right,
 
 | Agent | Reads | Records | Updates |
 |---|---|---|---|
-| **architect** | All | Decisions, milestones, architecture facts | CONTEXT, PROFILE, CHRONICLE |
-| **code** | PROFILE, CONTEXT, FACTS | Technical facts, implementation patterns | FACTS, CHRONICLE, repo-wiki |
+| **architect** | All | Decisions, milestones, architecture facts | CONTEXT, PROFILE, CHRONICLE, blueprint |
+| **code** | PROFILE, CONTEXT, FACTS | Technical facts, implementation patterns | FACTS, CHRONICLE, repo-wiki, blueprint |
 | **review** | PROFILE, CONTEXT, FACTS, DECISIONS | Quality insights, recurring issues | INSIGHTS, CHRONICLE |
 | **debug** | All | Root causes, investigation findings | FACTS, INSIGHTS, CHRONICLE |
 | **devops** | PROFILE, CONTEXT, FACTS | Infrastructure facts, deployment patterns | FACTS, CHRONICLE |
@@ -83,18 +85,37 @@ Format and the `meta.json` schema: `memory-keeping`.
 
 ---
 
+## Blueprint
+
+A project with `docs/blueprint/` keeps it living: a change to a flow it describes — a state, an error, a field, an endpoint, a step — follows `living-blueprint` step 10, which says when the blueprint changes and when the work is done.
+
+---
+
+## Host map
+
+`rules/host.md` is the map of this machine, loaded on every task. It holds pointers, one line each: what an agent here would otherwise rediscover, and where to read about it. The detail lives where the line points — a skill, a README next to the thing, a project's docs. The file stays out of git, because it describes one machine; where it is missing, the first host record creates it.
+
+Whoever does one of these adds or fixes the line:
+- changes the machine — a service, site, certificate, DNS record, scheduled job, proxy or port, a machine-local skill;
+- finds where something on it lives — a tool, a config that drives behaviour, a credential;
+- hits a pitfall the next agent would hit too, and knows its fix.
+
+A credential appears by its path; its value stays in its file. A thing that needs more than a line gets its own file, and the map points at it.
+
+---
+
 ## Work reports
 
 Every completed 🟡 or 🔴 task produces one at `memory/weeks/YYYY-WNN/YYYY-MM-DD/work-report-<slug>.md`, written **before** the completion message, which then references it by path. Template: `memory-keeping`.
 
 🟢 work closes with a `CHRONICLE.md` line when it produced something worth keeping — a fact, a decision, a surprise — and with nothing when it did not. A report per typo is how the chronicle becomes unreadable and the discipline becomes theatre.
 
-Before closing out, check whether the change also needs a repo-wiki update.
+Before closing out, check whether the change also needs a repo-wiki, blueprint or host-map update.
 
 ---
 
 ## Hygiene
 
-Periodically, or when the user asks: consolidate duplicate facts; mark resolved decisions `Superseded by #NNN`; prune stale insights; bring `CONTEXT.md` back under ~200 words.
+Periodically, or when the user asks: consolidate duplicate facts; mark resolved decisions `Superseded by #NNN`; prune stale insights; drop host-map lines whose target is gone; bring `CONTEXT.md` back under ~200 words.
 
 **Completion criterion:** `CONTEXT.md` reflects the state a fresh session would need, and every fact, decision, and chronicle entry from this task is written down.
