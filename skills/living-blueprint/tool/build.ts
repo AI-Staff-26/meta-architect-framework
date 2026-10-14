@@ -22,7 +22,7 @@ import { agentView, BuildError } from "./src/agent-view.ts";
 import { humanView, readRenderer } from "./src/human-view.ts";
 import { lint, Lint } from "./src/lint.ts";
 import { CONFIG_FILE, load } from "./src/load.ts";
-import { agentOutputs, lexists, realPathEscapes, symlinks } from "./src/paths.ts";
+import { agentOutputs, DEFAULT_HTML, entryRefusals, isFolder, lexists, realPathEscapes, removalRefusals } from "./src/paths.ts";
 import { promptsDoc } from "./src/prompts-doc.ts";
 import type { Blueprint } from "./src/model.ts";
 import { dataModelJsonSchema } from "./src/schema.ts";
@@ -32,7 +32,6 @@ const TOOL_DIR = import.meta.dirname;
 const RENDERER_DIR = join(TOOL_DIR, "renderer");
 const STARTER_DIR = join(TOOL_DIR, "starter");
 const SCHEMA_DOC = resolve(TOOL_DIR, "..", "references", "schema.md");
-const DEFAULT_HTML = "blueprint.html";
 /** agent/ subdirectories regenerated whole, so a renamed step leaves no stale file behind. */
 const GENERATED_DIRS = ["fixtures", "calls", "prompts"];
 const GENERATED_EXTENSIONS = [".json", ".md"];
@@ -122,24 +121,25 @@ function build(root: string): number {
   const agentDir = join(root, "agent");
   const generatedDirs = GENERATED_DIRS.map((sub) => join(agentDir, sub));
   // A symlink would carry the clean-up or a write to wherever it points: refuse the build before touching anything —
-  // a link at the path itself, or a symlinked folder on the way that takes the real path out of bounds.
-  const touched = [agentDir, ...generatedDirs, ...outputs.keys()];
+  // a link at the path itself, or a symlinked folder on the way that takes the real path out of bounds. A folder where
+  // a file goes, a file where a folder goes or stands on the way, a symlink loop on the way: each would fail the write
+  // halfway, so each is refused here too.
+  const folders = [agentDir, ...generatedDirs];
+  const touched = [...folders, ...outputs.keys()];
+  // The clean-up removes exactly what was checked here: a folder among the old generated files is refused, not met
+  // halfway through the removal.
+  const old = generatedOnDisk(root);
   const refusals = [
-    ...symlinks(touched).map((link) => `${relative(root, link)} is a symlink — the build neither deletes nor writes through one`),
-    ...realPathEscapes(root, touched),
+    ...entryRefusals(root, folders, outputs.keys()), ...realPathEscapes(root, touched), ...removalRefusals(root, old),
   ];
   if (refusals.length) {
     for (const refusal of refusals) console.log("ERROR", refusal);
     console.log(`${refusals.length} errors, ${warnings} warnings — nothing written`);
     return EXIT_ERRORS;
   }
-  for (const dir of generatedDirs) {
-    mkdirSync(dir, { recursive: true });
-    // rmSync on a symlinked file removes the link, never its target.
-    for (const old of readdirSync(dir)) {
-      if (isGenerated(old)) rmSync(join(dir, old));
-    }
-  }
+  for (const dir of generatedDirs) mkdirSync(dir, { recursive: true });
+  // rmSync on a symlinked file removes the link, never its target.
+  for (const path of old) rmSync(path);
   for (const [path, text] of outputs) {
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, text, "utf8");
@@ -152,18 +152,23 @@ function build(root: string): number {
   return EXIT_OK;
 }
 
-/** Generated files a build removes: those in agent/'s generated directories it does not write again. */
-function leftovers(root: string, outputs: ReadonlyMap<string, string>): string[] {
+/** Every entry with a generated name in agent/'s generated directories: what a build removes before it writes, so a
+ * renamed step leaves nothing behind. A directory that is missing or not a folder holds none. */
+function generatedOnDisk(root: string): string[] {
   const out: string[] = [];
   for (const sub of GENERATED_DIRS) {
     const dir = join(root, "agent", sub);
-    if (!existsSync(dir)) continue;
+    if (!isFolder(dir)) continue;
     for (const name of readdirSync(dir)) {
-      const path = join(dir, name);
-      if (isGenerated(name) && !outputs.has(path)) out.push(path);
+      if (isGenerated(name)) out.push(join(dir, name));
     }
   }
   return out;
+}
+
+/** Generated files a build removes for good: those it does not write again. */
+function leftovers(root: string, outputs: ReadonlyMap<string, string>): string[] {
+  return generatedOnDisk(root).filter((path) => !outputs.has(path));
 }
 
 /** --check: the paths a build would change — create (missing), rewrite (stale) or remove (extra). */

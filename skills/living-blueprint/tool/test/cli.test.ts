@@ -237,6 +237,40 @@ test("an absolute html is rejected: L0, exit 1, nothing written at that path", (
   }, writeBlueprint(b));
 });
 
+test("html or prompts_md naming an existing folder: L0, exit 1, agent/ and the rest left as they were", () => {
+  const b = baseBlueprint();
+  withDir((dir) => {
+    assert.equal(run(dir).status, 0);
+    mkdirSync(join(dir, "out"));
+    for (const [field, value] of [["html", "."], ["prompts_md", "out"]] as const) {
+      writeSources(dir, { ...b, config: { ...b.config, [field]: value } });
+      const before = snapshot(dir);
+      const r = run(dir);
+      assert.equal(r.status, 1, `${field}: ${r.stdout}${r.stderr}`);
+      assert.match(r.stdout, new RegExp(`^ERROR L0 blueprint\\.config\\.yaml: ${field} '${value}' is an existing folder`, "m"));
+      assert.match(r.stdout, /errors, 0 warnings — nothing written$/m);
+      assert.equal(r.stderr, "", `${field}: no stack trace`);
+      assert.deepEqual(snapshot(dir), before, `${field}: nothing written`);
+    }
+  }, writeBlueprint(b));
+});
+
+test("html or prompts_md naming blueprint.config.yaml: L0, exit 1, the config left as it was", () => {
+  const b = baseBlueprint();
+  withDir((dir) => {
+    assert.equal(run(dir).status, 0);
+    for (const [field, value] of [["html", "blueprint.config.yaml"], ["prompts_md", "./blueprint.config.yaml"]] as const) {
+      writeSources(dir, { ...b, config: { ...b.config, [field]: value } });
+      const before = snapshot(dir);
+      const r = run(dir);
+      assert.equal(r.status, 1, `${field}: ${r.stdout}${r.stderr}`);
+      assert.match(r.stdout, new RegExp(`^ERROR L0 blueprint\\.config\\.yaml: ${field} '${value.replaceAll(".", "\\.")}' is blueprint\\.config\\.yaml`, "m"));
+      assert.match(r.stdout, /errors, 0 warnings — nothing written$/m);
+      assert.deepEqual(snapshot(dir), before, `${field}: nothing written`);
+    }
+  }, writeBlueprint(b));
+});
+
 // A symlinked folder in the middle of an output path: the write would land wherever it points.
 
 /** A project directory: the blueprint in docs/blueprint, and a victim folder — at `victimAt` in the project — with one
@@ -308,6 +342,98 @@ test("a symlink above the outputs is followed: a linked blueprint directory stil
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.ok(existsSync(join(blueprint, "blueprint.html")) && existsSync(join(blueprint, "agent", "SPEC.md")));
   }, dir);
+});
+
+/** The ERROR lines of a build's output. */
+const errorLines = (stdout: string) => stdout.split("\n").filter((line) => line.startsWith("ERROR "));
+
+test("an output path through a symlink loop is refused in one line: exit 1, no stack trace, nothing written", () => {
+  const b = baseBlueprint();
+  b.config.html = "loop1/page.html";
+  withDir((dir) => {
+    symlinkSync("loop2", join(dir, "loop1"));
+    symlinkSync("loop1", join(dir, "loop2"));
+    const r = run(dir);
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.equal(r.stderr, "", "no stack trace");
+    const errors = errorLines(r.stdout);
+    assert.equal(errors.length, 1, r.stdout);
+    assert.match(errors[0] ?? "", /^ERROR loop1\/page\.html cannot be resolved — .*symlink loop on the way/);
+    assert.match(r.stdout, /^1 errors, 0 warnings — nothing written$/m);
+    assert.ok(!existsSync(join(dir, "agent")), "nothing written");
+  }, writeBlueprint(b));
+});
+
+test("an output path through a regular file is refused in one line that names the file: exit 1, nothing written", () => {
+  const b = baseBlueprint();
+  Object.assign(b.config, { html: "out/page.html", prompts_md: "out/docs/prompts.md" });
+  withDir((dir) => {
+    writeFileSync(join(dir, "out"), "owner data");
+    const r = run(dir);
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.equal(r.stderr, "", "no stack trace");
+    assert.deepEqual(errorLines(r.stdout), ["ERROR out is a file, not a folder — the build cannot write below it"], r.stdout);
+    assert.match(r.stdout, /^1 errors, 0 warnings — nothing written$/m);
+    assert.equal(readFileSync(join(dir, "out"), "utf8"), "owner data");
+    assert.ok(!existsSync(join(dir, "agent")), "nothing written");
+  }, writeBlueprint(b));
+});
+
+test("a folder where a generated agent/ file goes is refused in one line: exit 1, agent/ left as it was", () => withDir((dir) => {
+  assert.equal(run(dir).status, 0);
+  rmSync(join(dir, "agent", "SPEC.md"));
+  mkdirSync(join(dir, "agent", "SPEC.md"));
+  const before = snapshot(dir);
+  const r = run(dir);
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  assert.equal(r.stderr, "", "no stack trace");
+  assert.deepEqual(errorLines(r.stdout), ["ERROR agent/SPEC.md is a folder — the build writes a file there"], r.stdout);
+  assert.match(r.stdout, /^1 errors, 0 warnings — nothing written$/m);
+  assert.deepEqual(snapshot(dir), before, "nothing written");
+}));
+
+test("a file where a generated agent/ folder goes is refused, even with no output below it: agent/ left as it was", () => {
+  // No prompts and no calls: agent/prompts gets no file, so no output path runs through it.
+  const b = baseBlueprint();
+  b.prompts = {};
+  b.calls.calls = {};
+  const s2 = b.journey.steps.find((step) => step.id === "s2");
+  assert.ok(s2);
+  delete s2.prompts;
+  delete s2.detail;
+  withDir((dir) => {
+    assert.equal(run(dir).status, 0);
+    rmSync(join(dir, "agent", "prompts"), { recursive: true });
+    writeFileSync(join(dir, "agent", "prompts"), "owner data");
+    const before = snapshot(dir);
+    const r = run(dir);
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.equal(r.stderr, "", "no stack trace");
+    assert.deepEqual(errorLines(r.stdout), ["ERROR agent/prompts is a file, not a folder — the build cannot write below it"], r.stdout);
+    assert.deepEqual(snapshot(dir), before, "nothing written");
+  }, writeBlueprint(b));
+});
+
+test("a folder with a generated name in agent/'s generated folders is refused before the clean-up: agent/ left as it was", () => {
+  const b = baseBlueprint();
+  withDir((dir) => {
+    assert.equal(run(dir).status, 0);
+    mkdirSync(join(dir, "agent", "fixtures", "zzz.json"));
+    mkdirSync(join(dir, "agent", "prompts", "zzz.md"));
+    // A data edit, so the build has something to rewrite.
+    transitionOf(b, "order", "O04").says = "Время на оплату вышло";
+    writeSources(dir, b);
+    const before = snapshot(join(dir, "agent"));
+    const r = run(dir);
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.equal(r.stderr, "", "no stack trace");
+    assert.deepEqual(errorLines(r.stdout), [
+      "ERROR agent/fixtures/zzz.json is a folder — the build would remove it with the old generated files; move it out of agent/fixtures/",
+      "ERROR agent/prompts/zzz.md is a folder — the build would remove it with the old generated files; move it out of agent/prompts/",
+    ], r.stdout);
+    assert.match(r.stdout, /^2 errors, 0 warnings — nothing written$/m);
+    assert.deepEqual(snapshot(join(dir, "agent")), before, "agent/ untouched");
+  }, writeBlueprint(b));
 });
 
 test("--init refuses a src or blueprint.config.yaml that is a dangling symlink: one line, exit 1, nothing created", () => {

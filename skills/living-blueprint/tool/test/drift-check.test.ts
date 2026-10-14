@@ -55,7 +55,16 @@ function missingLines(stdout: string): string[] {
 
 /** The id at the head of each line of the Stale list. */
 function staleIds(stdout: string): string[] {
-  const section = stdout.split(/^Stale\b/m)[1] ?? '';
+  const section = (stdout.split(/^Stale\b/m)[1] ?? '').split(/^Moved\b/m)[0] ?? '';
+  return section
+    .split('\n')
+    .filter((line) => line.startsWith('  '))
+    .map((line) => line.trim().split(/\s+/)[0] ?? '');
+}
+
+/** The id at the head of each line of the Moved list. */
+function movedIds(stdout: string): string[] {
+  const section = stdout.split(/^Moved\b/m)[1] ?? '';
   return section
     .split('\n')
     .filter((line) => line.startsWith('  '))
@@ -373,6 +382,129 @@ describe('stale ids when the lock is new', () => {
 
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.match(result.stdout, /^Stale: 0 \(no lock at /m);
+  });
+});
+
+describe('moved ids (--base): a changed test on an unchanged hash', () => {
+  let root = '';
+  before(() => {
+    root = tempDir();
+  });
+  after(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  const K_LOCK: LockInput = {
+    ids: ['BP:k1', 'BP:k1:happy', 'BP:k2'],
+    steps: { k1: { hash: '777777777777' }, k2: { hash: '888888888888' } },
+  };
+
+  /** A repository with one commit: K_LOCK and a test file carrying each of its ids. */
+  function repoWithK(name: string): { repo: string; base: string; bp: string; tests: string } {
+    const repo = join(root, name);
+    const bp = join(repo, 'docs', 'blueprint');
+    const tests = join(repo, 'tests');
+    mkdirSync(repo, { recursive: true });
+    git(repo, 'init', '-q');
+    writeLock(bp, K_LOCK);
+    writeText(join(tests, 'k.test.ts'), K_LOCK.ids.map((id) => `test('${id}', () => {});`).join('\n') + '\n');
+    return { repo, base: commitAll(repo, 'base'), bp, tests };
+  }
+
+  const movedHeader = (base: string, n: number) => `Moved: ${n} blueprint entries unchanged since ${base} have changed tests`;
+  const ADVICE = ' — if the behaviour changed, update the blueprint (living-blueprint step 10)';
+  const lineOf = (stdout: string, prefix: string) => stdout.split('\n').find((line) => line.startsWith(prefix));
+
+  test('a changed test carrying BP:k1 while the hash of BP:k1 is unchanged: Moved 1, listed, exit 0', () => {
+    const { base, bp, tests } = repoWithK('v1');
+    writeText(join(tests, 'k1-more.test.ts'), "test('BP:k1 refuses an empty name', () => {});\n");
+
+    const result = run([bp, tests, '--base', base]);
+
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lineOf(result.stdout, 'Moved'), movedHeader(base, 1) + ADVICE);
+    assert.deepEqual(movedIds(result.stdout), ['BP:k1']);
+    assert.match(result.stdout, /^ {2}BP:k1 {2}step k1$/m);
+    assert.deepEqual(staleIds(result.stdout), []);
+    assert.match(result.stdout, /\b0 stale, 1 moved \(warning\); 3 ids\b/);
+  });
+
+  test('the hash of BP:k1 changed too: not Moved, and Stale as before', () => {
+    const { repo, base, bp, tests } = repoWithK('v2');
+    writeLock(bp, { ...K_LOCK, steps: { ...K_LOCK.steps, k1: { hash: '999999999999' } } });
+    commitAll(repo, 'plan change');
+    writeText(join(tests, 'k1-more.test.ts'), "test('BP:k1 follows the new plan', () => {});\n");
+
+    const result = run([bp, tests, '--base', base]);
+
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lineOf(result.stdout, 'Moved'), movedHeader(base, 0));
+    assert.deepEqual(movedIds(result.stdout), []);
+    assert.match(result.stdout, /^Stale: 0 of 1 hashes changed since /m);
+    assert.match(result.stdout, /\b0 stale\b/);
+  });
+
+  test('--only that excludes BP:k1: not Moved', () => {
+    const { base, bp, tests } = repoWithK('v3');
+    writeText(join(tests, 'k1-more.test.ts'), "test('BP:k1 refuses an empty name', () => {});\n");
+    assert.deepEqual(movedIds(run([bp, tests, '--base', base]).stdout), ['BP:k1'], 'unscoped, it is Moved');
+
+    const result = run([bp, tests, '--base', base, '--only', 'BP:k2']);
+
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lineOf(result.stdout, 'Moved'), movedHeader(base, 0));
+    assert.deepEqual(movedIds(result.stdout), []);
+  });
+
+  test('no --base: Moved is not checked', () => {
+    const { bp, tests } = repoWithK('v4');
+    writeText(join(tests, 'k1-more.test.ts'), "test('BP:k1 refuses an empty name', () => {});\n");
+
+    const result = run([bp, tests]);
+
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lineOf(result.stdout, 'Moved'), 'Moved: not checked (no --base)');
+  });
+
+  test('a lock absent at the base: Moved 0, nothing to compare', () => {
+    const repo = join(root, 'v5');
+    const bp = join(repo, 'docs', 'blueprint');
+    const tests = join(repo, 'tests');
+    mkdirSync(repo, { recursive: true });
+    git(repo, 'init', '-q');
+    writeText(join(tests, 'k.test.ts'), K_LOCK.ids.map((id) => `test('${id}', () => {});`).join('\n') + '\n');
+    const base = commitAll(repo, 'tests before the blueprint');
+    writeLock(bp, K_LOCK);
+    commitAll(repo, 'blueprint arrives');
+    writeText(join(tests, 'k1-more.test.ts'), "test('BP:k1 refuses an empty name', () => {});\n");
+
+    const result = run([bp, tests, '--base', base]);
+
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lineOf(result.stdout, 'Moved'), `Moved: 0 (no lock at ${base}; nothing to compare)`);
+  });
+
+  test('a changed test carrying the fixture id BP:k1:happy: BP:k1 is Moved', () => {
+    const { base, bp, tests } = repoWithK('v6');
+    writeText(join(tests, 'k1-happy.test.ts'), "test('BP:k1:happy with a long name', () => {});\n");
+
+    const result = run([bp, tests, '--base', base]);
+
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.deepEqual(movedIds(result.stdout), ['BP:k1']);
+  });
+
+  test('a step new since the base, carried by a changed test: not Moved — the base has no hash to keep', () => {
+    const { repo, base, bp, tests } = repoWithK('v7');
+    writeLock(bp, { ids: [...K_LOCK.ids, 'BP:k3'], steps: { ...K_LOCK.steps, k3: { hash: '121212121212' } } });
+    commitAll(repo, 'new step');
+    writeText(join(tests, 'k3.test.ts'), "test('BP:k3 creates the thing', () => {});\n");
+
+    const result = run([bp, tests, '--base', base]);
+
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lineOf(result.stdout, 'Moved'), movedHeader(base, 0));
+    assert.deepEqual(movedIds(result.stdout), []);
   });
 });
 

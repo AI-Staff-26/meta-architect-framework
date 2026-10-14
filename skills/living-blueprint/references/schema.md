@@ -50,7 +50,7 @@ This file is copied into every agent view as `agent/SCHEMA.md`, so an agent read
 | `data/95-notes.yaml` | `notes` | free-form tabs |
 | `prompts/*.yaml` | `<prompt id>` | the prompt catalog |
 
-`blueprint.config.yaml` next to `src/` holds the build settings: `brand`, `page_title`, `html` (the output file name), and optionally `prompts_md` and `prompts_md_title` for a Markdown copy of the prompt catalog. `html` and `prompts_md` are relative to the blueprint directory, stay inside its parent and stay out of its `src/` and `agent/` — `../prompts/01-PROMPTS-v0.md` is fine; an absolute path, one that climbs higher, or one into `src/` or `agent/` is an L0 error. The build writes and deletes nothing through a symlink, whether at an output path or at a folder on the way to one.
+`blueprint.config.yaml` next to `src/` holds the build settings: `brand`, `page_title`, `html` (the output file name), and optionally `prompts_md` and `prompts_md_title` for a Markdown copy of the prompt catalog. `html` and `prompts_md` are relative to the blueprint directory, stay inside its parent and stay out of its `src/` and `agent/` — `../prompts/01-PROMPTS-v0.md` is fine; an absolute path, one that climbs higher, one into `src/` or `agent/`, `blueprint.config.yaml` itself, an existing folder, a path ending in `/`, or `html` and `prompts_md` naming the same file is an L0 error. The build writes and deletes nothing through a symlink, whether at an output path or at a folder on the way to one; a regular file or a symlink loop on the way to an output path, a folder where an output file goes, or a folder among the old generated files it clears from `agent/fixtures/`, `agent/calls/` and `agent/prompts/`, stops it too, before anything is written.
 
 Any key that is not listed in this schema fails the build (L0). Text fields use a small Markdown subset: paragraphs, `- ` and `1. ` lists (nested by two spaces), `**bold**`, `` `code` ``, `[label](#hash)`.
 
@@ -222,6 +222,8 @@ L15 was retired in v1.2: events are derived from transitions, so they cannot dis
 ## Reverse drift
 
 Tests in the codebase carry the ids from `ACCEPTANCE.md` in their names or docstrings: `BP:<step>`, `BP:<step>.<endpoint or callback id>`, `BP:<step>:<fixture>`, `SM:<entity>.<id>`, `SM:<entity>.<id>:<failure class>`. `blueprint-lock.json` lists them all under `ids`. CI fails when an id has no test, or when a hash changed and its test did not. A change of plan reaches the code instead of drifting away from it.
+
+The other direction is a warning, never a failure: with `--base`, drift-check lists as Moved each step, endpoint or transition whose hash is unchanged while a changed test file carries its id — the code moved, and the blueprint may have to follow (step 10). It works per file, so one changed test file counts for every id it carries: a renamed test file, or one that carries every id, lists them all, and `--only` narrows the list; a step and an endpoint with `id: null` share `BP:<step>`, so one token covers both.
 
 A token is `BP:` or `SM:` and then segments of `[A-Za-z0-9_]+` joined by `.` and `:` as above — the build refuses any id that would break one (L10), so every locked id is one drift-check can find.
 

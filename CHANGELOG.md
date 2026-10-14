@@ -10,6 +10,35 @@ All notable changes to the Meta-Architect Framework (MAF) are recorded here, new
 - **MINOR** — a new or extended skill, agent or rule that is backward compatible.
 - **PATCH** — wording or fixes with no change in behaviour.
 
+## [2.5.0] - 2026-10-14
+
+The blueprint stays living after the spec. The skill now says when to make one, and the implementation keeps it in step.
+
+### Added
+
+- `living-blueprint` step 10, «Keep it living»: every change to a described flow lands in the blueprint. A detail goes straight into the data; a change of design goes through the architect, with a decision. A change the person sees is listed for the owner when the lane is accepted.
+- `drift-check.mts` lists Moved entries: tests that changed since `--base` while the blueprint entry's hash did not. It is a warning, and the exit code is unchanged.
+
+### Changed
+
+- `living-blueprint` «When, and how much» replaces the size table:
+  - a 🔴 flow with model calls, money, provider jobs or callbacks gets both views before the spec, by default;
+  - a 🟡 new flow with a state machine or a paid call gets an offer with its cost;
+  - a change to a flow the blueprint already describes goes into the blueprint first.
+
+### Fixed
+
+- The build refuses, before it writes anything, every output target or old generated file that it cannot safely replace:
+  - a target that is a folder or names one (`out/`);
+  - the config file;
+  - `html` and `prompts_md` naming the same file;
+  - a folder where a generated `agent/` file goes, or a file where one of its folders goes;
+  - a folder or other non-file among the old generated files the build would remove;
+  - a symlink loop;
+  - a regular file in the middle of an output path.
+
+Rebuild each blueprint once after updating: `agent/SCHEMA.md` changes, so the stale check reports it until then.
+
 ## [2.4.0] - 2026-10-14
 
 A living blueprint of a product flow, proven on MusicXO. Fresh `code` agents stress-tested it round after round, and every generic gap they found became a lint rule. The TypeScript tool was verified byte-identical to the Python prototype when it was ported, and has been extended since.

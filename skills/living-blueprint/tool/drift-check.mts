@@ -5,13 +5,19 @@
 // Missing: a locked id (`ids` in agent/blueprint-lock.json) that no test token equals.
 // Stale (with --base): a step, endpoint or transition whose hash changed since <base>
 // while no changed test file carries its id, or an id extending it at `.` or `:`.
-// --only narrows both lists to the ids under one of its prefixes, so a lane that
+// Moved (with --base, a warning): the other direction — a step, endpoint or transition
+// whose hash is the same as at <base> while a changed test file carries its id, or an
+// id extending it: the code and its tests moved, the blueprint may not have. Both
+// read one set of changed test files: the diff against <base> plus untracked files
+// under the tests dir, deleted files skipped.
+// --only narrows all three lists to the ids under one of its prefixes, so a lane that
 // adopts the check one area at a time is not failed by areas outside its scope.
 // A prefix covers whole segments: `BP:s1` is BP:s1 and the ids extending it at `.`
 // or `:`, never BP:s10. A prefix ending in `:` or `.` (`SM:`, `SM:song.`) is a plain
 // string prefix.
 //
-// Exit 0: nothing found. Exit 1: drift found. Exit 2: the check could not run.
+// Exit 0: nothing missing or stale. Exit 1: drift found. Exit 2: the check could not
+// run. Moved never changes the exit code.
 //
 // No dependencies beyond `node:` modules and erasable TypeScript syntax only, so a
 // project can copy this single file into its CI and run it with plain Node (22.18+,
@@ -24,6 +30,8 @@ import { parseArgs } from 'node:util';
 
 const USAGE = 'usage: node drift-check.mts <blueprint-dir> <tests-dir> [--base <git-ref>] [--only <prefix,…>]';
 const LOCK_PATH = join('agent', 'blueprint-lock.json');
+// Printed after the Moved count when it is above zero; step 10 of the skill keeps the blueprint describing what is built.
+const MOVED_ADVICE = 'if the behaviour changed, update the blueprint (living-blueprint step 10)';
 
 const TEST_EXTENSIONS = new Set(['.py', '.ts', '.tsx', '.js', '.mjs', '.cjs', '.go', '.rb']);
 const SKIPPED_DIRS = new Set(['node_modules', '.git', 'dist', 'build']);
@@ -59,9 +67,10 @@ type HashedEntries = Map<string, Hashed>;
 
 type StaleEntry = Hashed & { baseHash: string };
 
-type StaleResult =
+/** Both directions against <base>: hashes that changed without a changed test, and changed tests on unchanged hashes. */
+type BaseResult =
   | { checked: false }
-  | { checked: true; base: string; baseLockFound: boolean; changed: number; stale: StaleEntry[] };
+  | { checked: true; base: string; baseLockFound: boolean; changed: number; stale: StaleEntry[]; moved: Hashed[] };
 
 // ---------------------------------------------------------------- arguments
 
@@ -249,7 +258,28 @@ function splitNul(output: string): string[] {
   return output.split('\0').filter((name) => name !== '');
 }
 
-function checkStale(lockFile: string, current: HashedEntries, testsDir: string, base: string): StaleResult {
+/**
+ * Every token carried by a test file changed since `commit`: the diff against it plus
+ * untracked files, kept to test files under the tests dir.
+ */
+function changedTestTokens(root: string, commit: string, testsDir: string): string[] {
+  if (!existsSync(testsDir)) return [];
+  const testsRoot = realpathSync(testsDir);
+  const names = [
+    ...splitNul(git(root, ['diff', '--name-only', '-z', commit, '--'])),
+    ...splitNul(git(root, ['ls-files', '--others', '--exclude-standard', '-z'])),
+  ];
+  const tokens = new Set<string>();
+  for (const name of new Set(names)) {
+    const file = join(root, name);
+    // A deleted test shows in the diff but carries nothing any more.
+    if (!isTestFileUnder(file, testsRoot) || !existsSync(file)) continue;
+    for (const token of tokensIn(file)) tokens.add(token);
+  }
+  return [...tokens];
+}
+
+function checkBase(lockFile: string, current: HashedEntries, testsDir: string, base: string): BaseResult {
   const lockDir = dirname(lockFile);
   const top = gitOrUndefined(lockDir, ['rev-parse', '--show-toplevel']);
   if (top === undefined) {
@@ -267,38 +297,27 @@ function checkStale(lockFile: string, current: HashedEntries, testsDir: string, 
   const lockRel = relative(root, realpathSync(lockFile)).split(sep).join('/');
   const blob = `${commit}:${lockRel}`;
   if (gitOrUndefined(root, ['cat-file', '-e', blob]) === undefined) {
-    // The lock is new in this change: nothing it locks can have changed yet.
-    return { checked: true, base, baseLockFound: false, changed: 0, stale: [] };
+    // The lock is new in this change: nothing it locks can have changed or stayed yet.
+    return { checked: true, base, baseLockFound: false, changed: 0, stale: [], moved: [] };
   }
   const previous = parseHashed(parseJson(git(root, ['show', blob]), `${lockRel} at ${base}`));
 
   const changed: StaleEntry[] = [];
+  const unchanged: Hashed[] = [];
   for (const [label, entry] of current) {
     const before = previous.get(label);
-    if (before !== undefined && before.hash !== entry.hash) changed.push({ ...entry, baseHash: before.hash });
-  }
-  if (changed.length === 0) {
-    return { checked: true, base, baseLockFound: true, changed: 0, stale: [] };
-  }
-
-  const changedTokens = new Set<string>();
-  if (existsSync(testsDir)) {
-    const testsRoot = realpathSync(testsDir);
-    const names = [
-      ...splitNul(git(root, ['diff', '--name-only', '-z', commit, '--'])),
-      ...splitNul(git(root, ['ls-files', '--others', '--exclude-standard', '-z'])),
-    ];
-    for (const name of new Set(names)) {
-      const file = join(root, name);
-      // A deleted test shows in the diff but carries nothing any more.
-      if (!isTestFileUnder(file, testsRoot) || !existsSync(file)) continue;
-      for (const token of tokensIn(file)) changedTokens.add(token);
-    }
+    if (before === undefined) continue;
+    if (before.hash !== entry.hash) changed.push({ ...entry, baseHash: before.hash });
+    else unchanged.push(entry);
   }
 
-  const tokens = [...changedTokens];
-  const stale = changed.filter((entry) => !tokens.some((token) => covers(token, entry.id)));
-  return { checked: true, base, baseLockFound: true, changed: changed.length, stale };
+  // One scan of the changed tests feeds both directions: Stale wants one on every
+  // changed hash, Moved reports one on an unchanged hash.
+  const tokens = changedTestTokens(root, commit, testsDir);
+  const touched = (entry: Hashed): boolean => tokens.some((token) => covers(token, entry.id));
+  const stale = changed.filter((entry) => !touched(entry));
+  const moved = unchanged.filter(touched);
+  return { checked: true, base, baseLockFound: true, changed: changed.length, stale, moved };
 }
 
 // --------------------------------------------------------------------- main
@@ -326,29 +345,37 @@ function main(argv: string[]): number {
   const hashedInScope: HashedEntries = new Map(
     [...parseHashed(lock)].filter(([, entry]) => inScope(entry.id, options.only)),
   );
-  const stale: StaleResult = options.base === undefined
+  const vsBase: BaseResult = options.base === undefined
     ? { checked: false }
-    : checkStale(lockFile, hashedInScope, options.testsDir, options.base);
+    : checkBase(lockFile, hashedInScope, options.testsDir, options.base);
 
   console.log(`Missing: ${missing.length} of ${wanted.length} ids have no test`);
   for (const id of missing) console.log(`  ${id}`);
 
-  if (!stale.checked) {
+  if (!vsBase.checked) {
     console.log('Stale: not checked (no --base)');
-  } else if (!stale.baseLockFound) {
-    console.log(`Stale: 0 (no lock at ${stale.base}; nothing to compare)`);
+    console.log('Moved: not checked (no --base)');
+  } else if (!vsBase.baseLockFound) {
+    console.log(`Stale: 0 (no lock at ${vsBase.base}; nothing to compare)`);
+    console.log(`Moved: 0 (no lock at ${vsBase.base}; nothing to compare)`);
   } else {
-    console.log(`Stale: ${stale.stale.length} of ${stale.changed} hashes changed since ${stale.base} have no changed test`);
-    for (const entry of stale.stale) {
+    console.log(`Stale: ${vsBase.stale.length} of ${vsBase.changed} hashes changed since ${vsBase.base} have no changed test`);
+    for (const entry of vsBase.stale) {
       console.log(`  ${entry.id}  ${entry.label}  ${entry.baseHash} -> ${entry.hash}`);
     }
+    const advice = vsBase.moved.length > 0 ? ` — ${MOVED_ADVICE}` : '';
+    console.log(`Moved: ${vsBase.moved.length} blueprint entries unchanged since ${vsBase.base} have changed tests${advice}`);
+    for (const entry of vsBase.moved) console.log(`  ${entry.id}  ${entry.label}`);
   }
 
-  const staleCount = stale.checked ? stale.stale.length : 0;
+  const staleCount = vsBase.checked ? vsBase.stale.length : 0;
+  // Moved is a warning: it is reported, and the verdict and exit code ignore it.
   const failed = missing.length > 0 || staleCount > 0;
+  const baseCounts = vsBase.checked
+    ? `${staleCount} stale, ${vsBase.moved.length} moved (warning)`
+    : 'stale not checked, moved not checked';
   console.log(
-    `drift-check: ${failed ? 'FAIL' : 'OK'}: ${missing.length} missing, ` +
-      `${stale.checked ? `${staleCount} stale` : 'stale not checked'}; ` +
+    `drift-check: ${failed ? 'FAIL' : 'OK'}: ${missing.length} missing, ${baseCounts}; ` +
       `${wanted.length} ids, ${testFiles.length} test files`,
   );
   return failed ? EXIT_DRIFT : EXIT_CLEAN;

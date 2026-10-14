@@ -29,13 +29,14 @@ So both views are generated from one set of data files:
 
 The build checks the data against itself — dangling references, states with no way out, waits with no deadline, failures nobody can recognise or retry. While any contradiction stands it writes nothing. That refusal is what keeps the blueprint *living*.
 
-## Size it to the work
+## When, and how much
 
-| Level | What to produce |
+| The work | What to do |
 |---|---|
-| 🟢 | Nothing here — at most a sequence diagram in `Plan.md` |
-| 🟡 | The agent view only: entities, step contracts, fixtures |
-| 🔴, or any flow the owner must approve before the spec | Both views |
+| A flow with model calls, money, provider jobs or callbacks at 🔴, or any flow the owner must approve before the spec | Both views, before the spec. This is the default; the owner may decline it |
+| A new flow with a state machine or a paid call at 🟡 | Offer it in one line, with its cost. Agreed → the agent view only: entities, step contracts, fixtures |
+| A change to a flow the project's blueprint already describes, at any level | The blueprint changes first, and the plan cites its ids — step 10 |
+| 🟢, on a flow no blueprint describes | Nothing here — at most a sequence diagram in `Plan.md` |
 
 ## Steps
 
@@ -120,10 +121,19 @@ Then record the outcome as `references/review.md` describes.
 - **Task prompts** from `architectural-planning` cite step ids (`agent/SPEC.md`, step `k3`), fixtures and transition ids. They do not restate them.
 - **Tests carry the ids** from `agent/ACCEPTANCE.md` — the id grammar is in `references/schema.md`, «Reverse drift».
 - **The tool goes into the project.** Copy the skill's `tool/` and `references/` folders side by side into the repository, without `node_modules`. CI runs `npm ci` in `tool/`, and the project builds with that copy from then on.
-- **The drift check** runs `node tool/drift-check.mts docs/blueprint <tests dir> --base <ref>`. It fails when a locked id has no test, or when a hash changed and its test did not. `--only <id,…>` narrows it to the areas a lane already covers; an id covers itself and the ids under it — `BP:k1` covers `BP:k1:happy`, not `BP:k10`; a prefix that ends in `:` or `.` (`SM:`, `SM:song.`) matches as plain text.
+- **The drift check** runs `node tool/drift-check.mts docs/blueprint <tests dir> --base <ref>`. It fails when a locked id has no test, or when a hash changed and its test did not. It lists as Moved, without failing, the entries whose tests changed while their hash did not — step 10 says what to do with them. `--only <id,…>` narrows it to the areas a lane already covers; an id covers itself and the ids under it — `BP:k1` covers `BP:k1:happy`, not `BP:k10`; a prefix that ends in `:` or `.` (`SM:`, `SM:song.`) matches as plain text.
 - **The stale check** runs `node tool/build.ts docs/blueprint --check`. It writes nothing. It fails when `agent/`, the HTML or the prompts document is not what a build of `src/` would write — the data changed without a rebuild.
 
 *Done when:* the drift check and the stale check run in CI and pass on the main branch.
+
+### 10. Keep it living
+The blueprint describes what is built, so every change to a described flow lands in it — a planned change before the plan, a departure found while building as soon as it is found:
+- a detail — an error code, a field, a line of copy — goes straight into `src/`;
+- a change of design — a state, a transition, money — goes to the architect, and into `src/` with the decision.
+
+Rebuild after each. A change the person sees — above the line of visibility — is listed for the owner when the lane is accepted. Each Moved line of the drift check is either brought into the blueprint or confirmed as no change of behaviour.
+
+*Done when:* every accepted lane's behaviour is in the blueprint, every Moved line is resolved, the visible changes are listed for the owner, `meta.version` names what changed, and the drift check and the stale check pass on the main branch.
 
 ## References
 
