@@ -1,0 +1,227 @@
+# State machines of the domain entities. Schema: agent/SCHEMA.md (v1.2)
+# "∅" — creation. to "same" — stays; "previous" — back to the state before the current activity (prev_<field>, written by saves_previous).
+# fired_by — what starts the transition: endpoint | event | timer (param) | callback (inbound). step "*" — cross-cutting.
+# The request commits its transition at once (local); the work after it lives in transitions fired by events, callbacks
+# and timers, and those carry the failures.
+entities:
+  document:
+    title: Документ
+    table: document
+    field: status
+    initial: uploaded
+    terminal: [deleted]
+    waiting: [summarizing]
+    required: [id, owner_user_id, status]
+    note: >-
+      Сводка — поле документа, а не отдельная машина: у документа одна сводка, новая заменяет прежнюю целиком.
+      Повторный заказ идёт и из summarized — прежняя сводка видна и скачивается, пока пишется новая.
+      Задача провайдера — поля job_id и callback_token: одна задача на заказ, отмены у провайдера нет.
+    fields:
+      id: uuid
+      owner_user_id: "uuid — владелец; документ видит только он"
+      title: "название — из запроса, иначе имя файла"
+      file_asset_id: исходный файл в хранилище
+      text_asset_id: текст, извлечённый при загрузке, — его читает сводка
+      pages: число страниц
+      textless_pages: "страницы без текстового слоя (сканы) — сводка их пропускает; пусто, если таких нет"
+      status: состояние документа (эта машина)
+      status_at: "когда документ вошёл в текущее состояние — от него считаются poll_interval и summary_deadline"
+      prev_status: "состояние до заказа сводки — пишет D02; читают сбои и дедлайн, уходящие в previous; не очищается"
+      summary_options: "jsonb {length: short или full, language: ru или en} — настройки последнего заказа; «Повторить» берёт их же"
+      job_id: "id задачи провайдера последнего заказа; коллбэк и опрос сверяются с ним"
+      callback_token: "хэш токена коллбэка; сам токен — только в callback_url"
+      summary: "jsonb {tldr, points, risks} — последняя готовая сводка"
+      summary_prompt_version: версия промпта, по которому написана сводка
+      error: код и текст последнего сбоя провайдера
+      has_summary: "вычисляется: summary не пусто — от него зависит «Скачать сводку»"
+    states:
+      uploaded: загружен
+      summarizing: пишется сводка
+      summarized: сводка готова
+      deleted: удалён
+    transitions:
+      - id: D01
+        from: "∅"
+        to: uploaded
+        step: u1
+        event: DocumentUploaded
+        fired_by: {kind: endpoint, ref: "POST /api/v1/documents"}
+        guard: "PDF или DOCX не больше max_upload_mb; текст извлечён хотя бы с одной страницы — иначе 422, документа нет"
+        unique: Idempotency-Key запроса
+        writes:
+          owner_user_id: вошедший пользователь
+          title: "из запроса, иначе имя файла без расширения"
+          file_asset_id: загруженный файл
+          text_asset_id: извлечённый текст
+          pages: число страниц
+        may_write:
+          textless_pages: "номера страниц без текста — если такие есть"
+        local: true
+      - id: D02
+        from: [uploaded, summarized]
+        to: summarizing
+        step: s1
+        event: SummaryRequested
+        fired_by:
+          - {kind: endpoint, ref: "POST /api/v1/documents/{id}/summary"}
+          - {kind: endpoint, ref: "POST /api/v1/documents/{id}/summary:retry"}
+        guard: "страниц не больше max_pages; баланс ≥ price.summary — под блокировкой счёта (SELECT … FOR UPDATE) в той же транзакции"
+        saves_previous: true
+        writes:
+          summary_options: "из запроса; у «Повторить» — прежние"
+          job_id: "пусто — задача нового заказа ещё не создана; поздний итог прежней задачи не совпадёт"
+        with: [hold.H01]
+        local: true
+      - id: D03
+        from: summarizing
+        to: same
+        step: s1
+        event: SummaryJobCreated
+        fired_by: {kind: event, ref: SummaryRequested}
+        guard: "код собрал запрос по промпту summary.write из текста и summary_options; провайдер принял задачу — job_id записан сразу"
+        writes:
+          job_id: id задачи провайдера
+          callback_token: хэш токена, выпущенного для этой задачи
+        failures:
+          - class: provider_error
+            detect: "createJob ответил 429 или 5xx — и после двух повторов"
+            to: previous
+            says: "Сводка не получилась: сервис не ответил. Кредиты вернулись — Повторить"
+            event: SummaryFailed
+            compensation: release hold
+            retry: worker
+            attempts: 2
+            backoff: 30 с
+            retry_via: "POST /api/v1/documents/{id}/summary:retry"
+            retry_note: "«Повторить» — новый заказ: новый ключ, новый холд"
+          - class: refusal
+            detect: "createJob ответил 400 с error.type = content_policy"
+            to: previous
+            says: Сервис отказался обрабатывать этот документ. Кредиты вернулись
+            event: SummaryFailed
+            compensation: release hold
+            retry: none
+      - id: D04
+        from: summarizing
+        to: summarized
+        step: s2
+        event: SummaryReady
+        fired_by:
+          - {kind: callback, ref: "POST /api/v1/callbacks/summary/{token}"}
+          - {kind: poll, ref: "param:poll_interval"}
+        guard: "итог задачи этого заказа (job_id совпадает); status = succeeded; output прошёл JSON-схему summary"
+        writes:
+          summary: "output задачи — заменяет прежнюю сводку целиком"
+          summary_prompt_version: версия summary.write этого заказа
+        with: [hold.H02]
+        failures:
+          - class: provider_error
+            detect: "коллбэк или опрос: status = failed (error.code и error.message — в журнал и в error)"
+            to: previous
+            says: Сводка не получилась. Кредиты вернулись — Повторить
+            event: SummaryFailed
+            compensation: release hold
+            retry: user
+            retry_via: "POST /api/v1/documents/{id}/summary:retry"
+          - class: invalid_response
+            detect: "status = succeeded, но output не прошёл JSON-схему summary"
+            to: previous
+            says: Сводка получилась нечитаемой. Кредиты вернулись — Повторить
+            event: SummaryFailed
+            compensation: release hold
+            retry: user
+            retry_via: "POST /api/v1/documents/{id}/summary:retry"
+      - id: D05
+        from: summarizing
+        to: previous
+        step: s2
+        event: SummaryFailed
+        fired_by: {kind: timer, ref: "param:summary_deadline"}
+        guard: "итога нет summary_deadline с входа в summarizing (status_at); задача у провайдера продолжается — её поздний итог ловит D06"
+        says: "Сводка пишется дольше обычного — кредиты вернулись. Если она всё же придёт, покажем её бесплатно"
+        compensation: release hold
+        local: true
+      - id: D06
+        from: [uploaded, summarized]
+        to: summarized
+        step: s2
+        event: LateSummaryApplied
+        fired_by: {kind: callback, ref: "POST /api/v1/callbacks/summary/{token}"}
+        guard: "успех задачи последнего заказа (job_id совпадает) после дедлайна D05; кредиты уже вернулись — сводка ставится бесплатно. Итог прежнего заказа — только в журнал"
+        late: true
+        writes:
+          summary: "output задачи — заменяет прежнюю сводку целиком"
+          summary_prompt_version: версия summary.write этого заказа
+        says: Сводка всё-таки пришла — бесплатно
+        local: true
+      - id: D07
+        from: [uploaded, summarizing, summarized]
+        to: deleted
+        step: "*"
+        event: DocumentDeleted
+        fired_by: {kind: event, ref: AccountDeleted}
+        guard: "аккаунт владельца удалён (событие модуля аккаунтов); файл, текст и сводка стираются из хранилища; итог задачи, пришедший потом, — только в журнал"
+        writes:
+          file_asset_id: "пусто — файл стёрт"
+          text_asset_id: пусто
+          summary: пусто
+        local: true
+
+  hold:
+    title: Холд кредитов
+    table: ledger_entry — только добавление
+    field: state
+    initial: held
+    terminal: [captured, released]
+    required: [ref, account_id, amount, state]
+    note: >-
+      Состояние не хранится, а выводится из записей ledger_entry с одним ref: только hold — held; capture — captured;
+      release — released. Второе срабатывание — no-op через уникальный индекс: на один ref не больше одной записи capture
+      и одной release. Один холд — на один заказ сводки.
+    fields:
+      id: "id записи hold — отдаётся как hold_id"
+      ref: "заказ сводки: document_id и Idempotency-Key запроса"
+      account_id: счёт кредитов пользователя
+      amount: "сумма холда — price.summary на момент заказа"
+      captured: "списано: запись capture"
+      released: "возвращено: запись release"
+      state: вычисляется из записей (эта машина)
+    states:
+      held: заморожено
+      captured: списано
+      released: возвращено
+    transitions:
+      - id: H01
+        from: "∅"
+        to: held
+        step: s1
+        event: HoldPlaced
+        fired_by:
+          - {kind: endpoint, ref: "POST /api/v1/documents/{id}/summary"}
+          - {kind: endpoint, ref: "POST /api/v1/documents/{id}/summary:retry"}
+        unique: ref — одна запись hold на заказ
+        writes:
+          amount: price.summary
+        local: true
+      - id: H02
+        from: held
+        to: captured
+        step: s2
+        event: HoldCaptured
+        fired_by:
+          - {kind: callback, ref: "POST /api/v1/callbacks/summary/{token}"}
+          - {kind: poll, ref: "param:poll_interval"}
+        guard: сводка этого заказа видна человеку
+        writes:
+          captured: amount
+        local: true
+      - id: H03
+        from: held
+        to: released
+        step: "*"
+        event: HoldReleased
+        fired_by: {kind: event, ref: "сбой с compensation «release hold»"}
+        guard: "сбой или дедлайн этого заказа (D03, D04, D05) — в транзакции сбоя, который объявил compensation"
+        writes:
+          released: amount
+        local: true

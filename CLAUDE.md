@@ -170,6 +170,7 @@ The plan holds if: its claims trace to memory or verified project state rather t
 | An unfamiliar codebase, no specific symptom | `workflow-legacy-analysis` |
 | Containers, CI/CD, deploy, secrets | `workflow-devops` |
 | Building UI | `checklist-ux-design` → `workflow-ui-build-order` → `checklist-ux-review` |
+| Showing a flow before the spec — the person's side and under the hood; state machines and step contracts agents build from | `living-blueprint` |
 | Writing tests | `tdd` |
 | How much to check: tiers, test runs, reviews, gates; slow or noisy checks | `verification-budget` |
 | Designing a module or seam | `codebase-design` |

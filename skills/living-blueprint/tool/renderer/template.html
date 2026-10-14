@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+__CSS__
+</style>
+</head>
+<body data-filter="all">
+<header class="top"><div class="top-inner">
+  <div class="brand-row"><span class="brand" id="brand"></span><h1 class="doc-title" id="doc-title"></h1><span id="doc-sub"></span></div>
+  <div class="controls">
+    <div class="seg" id="filter" role="group" aria-label="Что показывать">
+      <button data-f="all" aria-pressed="true">Всё</button><button data-f="user" aria-pressed="false">Только пользователь</button><button data-f="hood" aria-pressed="false">Только под капотом</button>
+    </div>
+    <label class="search"><input id="q" type="search" placeholder="Поиск по шагам и промптам" aria-label="Поиск"></label>
+  </div>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Разделы"></nav>
+</div></header>
+<main id="main"></main>
+<footer id="foot">Источник — <code>src/</code>; сборка — <code>__GENERATOR__</code>. Вид для агентов — <code>agent/</code>, схема — <code>agent/SCHEMA.md</code>.</footer>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" role="dialog" aria-labelledby="drawer-title">
+  <div class="drawer-head"><div><h3 id="drawer-title"></h3><div class="sub" id="drawer-sub"></div></div><button class="close" id="drawer-close" aria-label="Закрыть">Закрыть</button></div>
+  <div class="drawer-body" id="drawer-body"></div>
+</aside>
+<section class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-head"><div class="row"><div><h3 id="modal-title"></h3><div id="modal-sub"></div></div><button class="close" id="modal-close" aria-label="Закрыть">Закрыть</button></div>
+  <div class="modal-tabs" id="modal-tabs" role="tablist"></div></div>
+  <div class="modal-body" id="modal-body"></div>
+</section>
+<div class="toast" id="toast" role="status"></div>
+<script>
+window.BP = __DATA__;
+</script>
+<script>
+__APP__
+</script>
+</body>
+</html>

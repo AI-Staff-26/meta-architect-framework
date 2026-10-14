@@ -1,0 +1,22 @@
+{
+  "name": "living-blueprint-tool",
+  "version": "1.2.0",
+  "private": true,
+  "description": "Living blueprint build: one data source, a human view (HTML) and an agent view (agent/).",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "node --test \"test/**/*.test.ts\""
+  },
+  "dependencies": {
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "5.9.3"
+  }
+}

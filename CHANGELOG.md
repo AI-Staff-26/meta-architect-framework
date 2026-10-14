@@ -10,6 +10,28 @@ All notable changes to the Meta-Architect Framework (MAF) are recorded here, new
 - **MINOR** — a new or extended skill, agent or rule that is backward compatible.
 - **PATCH** — wording or fixes with no change in behaviour.
 
+## [2.4.0] - 2026-10-14
+
+A living blueprint of a product flow, proven on MusicXO. Fresh `code` agents stress-tested it round after round, and every generic gap they found became a lint rule. The TypeScript tool was verified byte-identical to the Python prototype when it was ported, and has been extended since.
+
+### Added
+
+- `living-blueprint` skill: one data source, two views.
+  - **The owner's view** is one HTML file: lanes with a line of visibility, screen sketches, raw model calls, prompts, state machines and divergences.
+  - **The agents' view** is `agent/`: step contracts, state machines, fixtures, provider payloads, prompts, a lock file, acceptance stubs and the schema. `SPEC.md` lists the questions still open with the owner.
+  - **The stress test stops by the trend**, not at zero: a round without [bug], a [bug] count that stopped falling with only retry, race and late-answer detail left, or three rounds per hard journey — a fourth is the owner's call.
+  - **The build refuses to write while a contradiction stands** — lint rules L0–L21. They catch unknown fields, unreachable or dead-end states, waits without a deadline, failures nobody can recognise or retry, money without compensation, a creation without a uniqueness key or with a failure that has no row to land on, transitions joined into one transaction yet ordered by an event, and fixtures that disagree with the machines.
+- `living-blueprint` references:
+  - `schema.md` — the data schema and the semantics every implementation follows (compare-and-set, `with`, `previous`, deadlines against polls, late results);
+  - `authoring.md` — patterns found by the stress tests;
+  - `review.md` — the stress-test prompt with [bug]/[text] tags, the four bins for its answers, the fold discipline (a fix reaches every twin; known classes are swept before the next round) and the owner-review protocol.
+- `living-blueprint` tool — TypeScript on Node ≥ 22.18, `yaml` and `zod`:
+  - `build.ts` with `--init` (a starter example), `--schema` and `--check` — the stale check: it writes nothing and fails when `agent/` or the HTML is not what `src/` builds;
+  - a dependency-free `drift-check.mts` for CI — it fails when a locked id has no test, or when a hash changed and its test did not;
+  - the build writes only where it should: generated files inside `agent/`, the HTML and the prompts document inside the blueprint directory's parent, checked on real paths so a symlinked folder cannot redirect a write. Ids that become file names follow a grammar (L10). The HTML escapes every data value and loads nothing from the network.
+- `CLAUDE.md` routing: a row for showing a flow before the spec.
+- `skills/README.md`: the skill in the index.
+
 ## [2.3.0] - 2026-10-14
 
 Package B of the October 2026 review (`docs/maf-review-2026-10/06-synthesis.md` §4–5), shaped by the experience of cc-telegram and MD Share.

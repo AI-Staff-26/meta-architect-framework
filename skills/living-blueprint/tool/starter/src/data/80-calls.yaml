@@ -1,0 +1,65 @@
+# Raw calls as they land in the call journal (llm_call). Schema: agent/SCHEMA.md (v1.2)
+# Key aliases only — never key values.
+calls:
+  c.summary.create:
+    title: "Заказ сводки: задача провайдера с коллбэком"
+    step: summary.write · create
+    model: summarizer
+    prompt: summary.write
+    when: Воркер по событию SummaryRequested (D03, шаг s1). Запись в журнале — до отправки, отдельной транзакцией.
+    params: temperature 0,2 · max_output_tokens 4000 · JSON-схема summary
+    latency: ≈ 0,5 с на создание задачи
+    cost: ≈ $0,01 за документ в 20 страниц
+    failure: "429 или 5xx — два повтора через 30 с, затем сбой provider_error и «Повторить»; 400 content_policy — сбой refusal без повтора"
+    request: |-
+      // POST https://api.llm-provider.example/v1/jobs · ключ: llm/docsum (псевдоним) · выход: egress
+      {
+        "model": "summarizer-large",
+        "temperature": 0.2,
+        "max_output_tokens": 4000,
+        "response_format": {"type": "json_schema", "json_schema": {"name": "summary", "strict": true}},
+        "callback_url": "https://app.example/api/v1/callbacks/summary/<token>",
+        "metadata": {"document_id": "doc_01", "hold_ref": "doc_01 · idem_01"},
+        "input": [
+          {"role": "system", "content": "Ты делаешь сводку деловых документов… (полностью — промпт summary.write)"},
+          {"role": "user", "content": "Документ: Договор аренды склада (14 стр.)\nДлина сводки: short\nЯзык сводки: ru\nСтраницы 13, 14 — сканы без текста…\nТекст документа:\nДОГОВОР АРЕНДЫ НЕЖИЛОГО ПОМЕЩЕНИЯ № 14/2026…"}
+        ]
+      }
+    response: |-
+      {
+        "id": "job_01",
+        "status": "queued",
+        "created_at": "2026-10-14T10:01:02Z"
+      }
+  c.summary.result:
+    title: "Итог задачи: коллбэк или опрос"
+    step: summary.write · result
+    model: summarizer
+    when: Коллбэк пишет обработчик `/api/v1/callbacks/summary/{token}` (запись callback в журнале); опрос раз в poll_interval — записи poll.
+    params: опрос — страховка; дедлайн summary_deadline — затем возврат кредитов
+    latency: 1–3 мин от создания
+    cost: "—"
+    requestNote: Коллбэк приходит с тем же телом, что и ответ опроса.
+    request: "// GET https://api.llm-provider.example/v1/jobs/job_01 · ключ: llm/docsum (псевдоним)"
+    response: |-
+      {
+        "id": "job_01",
+        "status": "succeeded",
+        "created_at": "2026-10-14T10:01:02Z",
+        "finished_at": "2026-10-14T10:02:31Z",
+        "output": {
+          "tldr": "Аренда склада 1 200 м² на 3 года с 1 ноября; ставка растёт на 5 % в год.",
+          "points": [
+            "Арендная плата — 540 000 ₽ в месяц, до 5-го числа.",
+            "Обеспечительный платёж — две месячные ставки.",
+            "Ремонт кровли и инженерных сетей — за арендодателем.",
+            "Досрочный выход — с уведомлением за 6 месяцев.",
+            "Страхование товара — за арендатором."
+          ],
+          "risks": [
+            {"clause": "п. 7.3", "why": "штраф 0,5 % в день за просрочку платежа без верхнего предела"},
+            {"clause": "п. 9.1", "why": "арендодатель может поднять ставку сверх 5 % при росте налога на имущество"}
+          ]
+        },
+        "usage": {"input_tokens": 18400, "output_tokens": 310}
+      }

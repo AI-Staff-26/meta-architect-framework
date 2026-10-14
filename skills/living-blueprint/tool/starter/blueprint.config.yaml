@@ -1,0 +1,4 @@
+# Build settings of the living blueprint. Data schema: agent/SCHEMA.md (written by the first build).
+brand: Docsum
+page_title: "Docsum · сервис-блюпринт: документ → сводка → скачивание"
+html: blueprint.html

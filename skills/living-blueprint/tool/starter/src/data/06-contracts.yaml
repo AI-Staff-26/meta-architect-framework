@@ -1,0 +1,281 @@
+# Agent contract of every step, keyed by step id. Schema: agent/SCHEMA.md (v1.2)
+# Transitions and events of a step are derived from the transitions' step field (05-entities.yaml).
+# Through-line: user u_01 · document doc_01 «Договор аренды склада», 14 pages, pages 13–14 are scans ·
+# first order: hold hold_01, job job_01 (short) · re-order: hold hold_02, job job_02 (full) — hits the deadline, arrives late.
+contracts:
+  u1:
+    trigger: "ui: «Загрузить»"
+    actor: [member]
+    endpoint:
+      method: POST
+      path: /api/v1/documents
+      idempotency: true
+      price: null
+      request: "multipart: file — PDF или DOCX до max_upload_mb; title — своё название, необязательно"
+      responses:
+        "200": повтор с тем же ключом и телом — исходный ответ
+        "201": "{document_id, status: uploaded, title, pages, textless_pages}"
+      errors:
+        "413": "file_too_large — «Файл больше {{max_upload_mb}} — сожмите его или разделите»"
+        "422": "unsupported_type — «Подойдут PDF и DOCX»; no_text_layer — «В файле нет текста — похоже, это скан»"
+    delivery: sync
+    ui:
+      empty: Перетащите PDF или DOCX — до {{max_upload_mb}}
+      loading: Загружаем и читаем файл…
+      success: Карточка документа с кнопкой «Сделать сводку»
+      error: Не получилось загрузить — Повторить
+    journal:
+      - "user_action: document_upload"
+    budget: ≤ 2 с для файла до 20 МБ
+    flag: documents.upload
+    params: [max_upload_mb]
+    fixtures:
+      - name: happy
+        entity: document
+        via: [document.D01]
+        mode: snapshot
+        before: null
+        after:
+          id: doc_01
+          owner_user_id: u_01
+          title: Договор аренды склада
+          file_asset_id: asset_file_01
+          text_asset_id: asset_text_01
+          pages: 14
+          textless_pages: [13, 14]
+          status: uploaded
+          status_at: "2026-10-14T10:00:00Z"
+          prev_status: null
+          summary_options: null
+          job_id: null
+          callback_token: null
+          summary: null
+          summary_prompt_version: null
+          error: null
+
+  s1:
+    trigger: "ui: «Сделать сводку · {{price}}»"
+    actor: [member]
+    endpoint:
+      method: POST
+      path: /api/v1/documents/{id}/summary
+      idempotency: true
+      price: price.summary
+      request: "{length: short | full, language: ru | en}"
+      responses:
+        "200": повтор с тем же ключом и телом — исходный ответ
+        "202": "{document_id, status: summarizing, hold_id, stream: /api/v1/stream/document:{id}}"
+      errors:
+        "402": "insufficient_credits — «Не хватает {{price}} · Пополнить»"
+        "409": "summary_in_progress — «Сводка уже пишется — дождитесь её»"
+        "422": "too_many_pages — «Документ длиннее {{max_pages}} — сводка пока недоступна»"
+    delivery: async_job
+    ui:
+      loading: Читаем документ…
+      conflict: Сводка уже пишется — дождитесь её
+      disabled_when:
+        - when: баланс меньше цены
+          says: Не хватает {{price}} · Пополнить
+        - when: сводка уже пишется
+          says: Сводка уже пишется — дождитесь её
+    journal:
+      - "user_action: summary_order"
+      - "llm_call: summary.write — createJob"
+    budget: ответ ≤ 300 мс, задача создана ≤ 5 с; 3 кредита
+    flag: summaries.order
+    params: [price.summary, max_pages]
+    fixtures:
+      - name: happy
+        entity: document
+        via: [document.D02, document.D03]
+        mode: patch
+        before:
+          id: doc_01
+          owner_user_id: u_01
+          status: uploaded
+        after:
+          id: doc_01
+          owner_user_id: u_01
+          status: summarizing
+          prev_status: uploaded
+          summary_options: {length: short, language: ru}
+          job_id: job_01
+          callback_token: <sha256 токена job_01>
+        provider_response: c.summary.create
+      - name: job_refused
+        entity: document
+        via: [document.D03]
+        mode: patch
+        failure: refusal
+        before:
+          id: doc_01
+          owner_user_id: u_01
+          status: summarizing
+          prev_status: uploaded
+          job_id: null
+        after:
+          id: doc_01
+          owner_user_id: u_01
+          status: uploaded
+          error: "content_policy — документ отклонён провайдером"
+      - name: hold_placed
+        entity: hold
+        via: [hold.H01]
+        mode: snapshot
+        before: null
+        after:
+          id: hold_01
+          ref: doc_01 · idem_01
+          account_id: acc_01
+          amount: 3
+          captured: null
+          released: null
+          state: held
+
+  s2:
+    trigger: "event: SummaryJobCreated — дальше документ ведут коллбэк, опрос и дедлайн"
+    actor: [system]
+    endpoint: null
+    also:
+      - id: retry
+        purpose: "«Повторить» после сбоя или дедлайна — новый заказ с прежними настройками: новый ключ, новый холд"
+        actor: [member]
+        method: POST
+        path: /api/v1/documents/{id}/summary:retry
+        idempotency: true
+        price: price.summary
+        request: "{} — длина и язык берутся из summary_options"
+        responses:
+          "200": повтор с тем же ключом и телом — исходный ответ
+          "202": "{document_id, status: summarizing, hold_id, stream: /api/v1/stream/document:{id}}"
+        errors:
+          "402": "insufficient_credits — «Не хватает {{price}} · Пополнить»"
+          "409": "summary_in_progress — «Сводка уже пишется — дождитесь её»; nothing_to_retry — «Сводку ещё не заказывали — нажмите „Сделать сводку“»"
+    inbound:
+      - id: provider_callback
+        method: POST
+        path: /api/v1/callbacks/summary/{token}
+        auth: "token — секрет задачи, выпущен в D03; сравнение постоянного времени с callback_token"
+        payload: "тело — как ответ опроса GET /v1/jobs/{id}, см. calls/c.summary.result.json"
+        dedupe: "job_id + status: повторный коллбэк — no-op (compare-and-set); итог задачи не последнего заказа — только в журнал"
+        answer: "200 {ok: true} на любой токен и тело — статус задач не раскрываем; неизвестный токен — запись в журнал. На любой другой ответ провайдер повторяет коллбэк до суток"
+    delivery: async_job
+    ui:
+      loading: Пишем сводку…
+      partial: "Сводка готова; страницы {{textless_pages}} — сканы без текста, их пропустили"
+      success: Сводка на карточке документа · Скачать сводку
+      error: Сводка не получилась. Кредиты вернулись · Повторить
+    journal:
+      - "llm_call: summary.write — опрос ×N, коллбэк"
+    budget: 1–3 мин p50, дедлайн 10 мин; ≈ $0,01 за 20 страниц
+    flag: summaries.order
+    params: [poll_interval, summary_deadline]
+    fixtures:
+      - name: happy
+        entity: document
+        via: [document.D04]
+        mode: patch
+        before:
+          id: doc_01
+          owner_user_id: u_01
+          status: summarizing
+          prev_status: uploaded
+          job_id: job_01
+        after:
+          id: doc_01
+          owner_user_id: u_01
+          status: summarized
+          summary:
+            tldr: Аренда склада 1 200 м² на 3 года с 1 ноября; ставка растёт на 5 % в год.
+            points:
+              - Арендная плата — 540 000 ₽ в месяц, до 5-го числа.
+              - Обеспечительный платёж — две месячные ставки.
+              - Ремонт кровли и инженерных сетей — за арендодателем.
+              - Досрочный выход — с уведомлением за 6 месяцев.
+              - Страхование товара — за арендатором.
+            risks:
+              - clause: п. 7.3
+                why: штраф 0,5 % в день за просрочку платежа без верхнего предела
+              - clause: п. 9.1
+                why: арендодатель может поднять ставку сверх 5 % при росте налога на имущество
+          summary_prompt_version: summary.write v0
+        provider_response: c.summary.result
+      - name: provider_failed
+        entity: document
+        via: [document.D04]
+        mode: patch
+        failure: provider_error
+        before:
+          id: doc_01
+          owner_user_id: u_01
+          status: summarizing
+          prev_status: uploaded
+          job_id: job_01
+        after:
+          id: doc_01
+          owner_user_id: u_01
+          status: uploaded
+          error: "job_failed — upstream_overloaded"
+      - name: deadline
+        entity: document
+        via: [document.D05]
+        mode: patch
+        before:
+          id: doc_01
+          owner_user_id: u_01
+          status: summarizing
+          prev_status: summarized
+          job_id: job_02
+        after:
+          id: doc_01
+          owner_user_id: u_01
+          status: summarized
+      - name: late
+        entity: document
+        via: [document.D06]
+        mode: patch
+        before:
+          id: doc_01
+          owner_user_id: u_01
+          status: summarized
+          job_id: job_02
+        after:
+          id: doc_01
+          owner_user_id: u_01
+          status: summarized
+          summary:
+            tldr: Аренда склада 1 200 м² на 3 года с 1 ноября; ставка растёт на 5 % в год.
+            points:
+              - "Предмет: склад класса B, 1 200 м², с пандусом и двумя воротами."
+              - "Срок: 3 года с 1 ноября, продление — по допсоглашению."
+              - "Деньги: 540 000 ₽ в месяц до 5-го числа; индексация 5 % в год; залог — две ставки."
+              - "Обязанности: кровля и сети — арендодатель; текущий ремонт и страхование товара — арендатор."
+              - "Выход: досрочно — с уведомлением за 6 месяцев, залог возвращается за вычетом долгов."
+            risks:
+              - clause: п. 7.3
+                why: штраф 0,5 % в день за просрочку платежа без верхнего предела
+              - clause: п. 9.1
+                why: арендодатель может поднять ставку сверх 5 % при росте налога на имущество
+          summary_prompt_version: summary.write v0
+
+  d1:
+    trigger: "ui: «Скачать сводку»"
+    actor: [member]
+    endpoint:
+      method: GET
+      path: /api/v1/documents/{id}/summary/file
+      idempotency: false
+      price: null
+      request: "?format=md | docx — по умолчанию md"
+      responses:
+        "200": "файл text/markdown или DOCX; имя в Content-Disposition — «<название> — сводка.md» или .docx"
+      errors:
+        "409": "no_summary — «Сводки ещё нет — сначала сделайте её»"
+    delivery: sync
+    ui:
+      disabled_when:
+        - when: сводки ещё нет (has_summary = false)
+          says: Сводки ещё нет — сначала сделайте её
+    journal:
+      - "user_action: summary_download"
+    budget: ≤ 500 мс
