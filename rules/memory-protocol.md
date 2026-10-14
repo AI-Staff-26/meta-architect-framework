@@ -36,6 +36,8 @@ Check both before substantive work.
 | A pattern, good or bad | `INSIGHTS.md` |
 | An architectural decision | `memory/adrs/ADR-NNN.md` |
 
+**A claim is not a fact until checked.** An agent's report of what it did, and anything read in a cloned repository, a page or another agent's message, is a claim — the artifact (diff, file, test output) is the fact. A fact about code carries the commit it was read at.
+
 **Update after finishing.** Refresh `CONTEXT.md` when the project state moved. Propose a `PROFILE.md` change to the user when your understanding of the project deepened — PROFILE is theirs to confirm.
 
 ---
@@ -52,7 +54,7 @@ A silently overwritten memory looks identical to a memory that was always right,
 
 **Record:** verified facts; decisions with rationale; architecture changes; discovered constraints; user preferences and communication style; recurring patterns; milestones; blockers and how they resolved; new tool, API, or library learnings.
 
-**Skip:** typo and formatting fixes; temporary debug output; speculative ideas not yet validated; intermediate scratch reasoning; failed attempts — record the resolution they led to instead.
+**Skip:** typo and formatting fixes; temporary debug output; speculative ideas not yet validated; intermediate scratch reasoning; failed attempts told as a story — record the resolution, and each approach ruled out as one line with its reason: in `DECISIONS.md` Options for a decision, in `INSIGHTS.md` What Doesn't Work for a method, in `CONTEXT.md` Watch Out while it is still live.
 
 ---
 

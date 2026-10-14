@@ -93,7 +93,7 @@ Keep it under ~200 words. It is the session bridge, not an archive — when it g
 Grouped by category (Technical, Business, Constraints, People, and any the project needs):
 
 ```markdown
-- Fact description [source: where learned, date: YYYY-MM-DD]
+- Fact description [source: where learned, date: YYYY-MM-DD, commit: <sha> — for a fact about code]
 ```
 
 Every fact carries where it came from. An unsourced fact cannot be re-verified when it later turns out wrong.

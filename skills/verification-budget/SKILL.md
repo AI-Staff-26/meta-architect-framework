@@ -21,9 +21,11 @@ Grade each change by what a defect in it would do. A stage about access control 
 
 | Tier | A defect here… | Examples | What it earns |
 |---|---|---|---|
-| **A — silent harm** | leaks, loses or corrupts, and nobody reports it | auth, access rules, money, migrations, secrets, sandbox, public API contract | Invariant tests, generated worlds, targeted mutations, a review that attacks a running instance |
+| **A — silent harm** | leaks, loses or corrupts, and nobody reports it | auth, access rules, money, migrations, secrets, sandbox, public API contract, agent configuration the harness executes — hooks, scripts it runs, MCP and harness settings, permissions | Invariant tests, generated worlds, targeted mutations, a review that attacks a running instance |
 | **B — visible behaviour** | breaks a flow someone will notice | business rules, state, async continuations, error handling | Tests at the seam, a regression test red on the old code, one end-to-end path |
 | **C — presentation** | looks or reads wrong | layout, styles, copy, docs | Look at it: screenshots at the widths that matter, the owner's eye; a test only where the regression is likely and cheap to pin |
+
+Framework text — `CLAUDE.md`, skills, agent definitions — is reviewed as `authoring-skills` (Reviewing a change) says, whatever tier its prose would suggest.
 
 Write the tier into the plan next to each item. **A tier is a claim about consequences**, not about diff size — a two-line change to a guard can be the worst defect of the year:
 
@@ -62,7 +64,7 @@ Agents are readers with a finite window. A check designed for them:
 - **saves the full log** to a known path and prints that path;
 - **exits non-zero** on failure, so the verdict is machine-checkable;
 - **waits safely** — a lock or an isolated database, so two runs do not corrupt each other;
-- **writes nowhere but its scratch** — where the code under test also runs live from the same tree or host (`memory/PROFILE.md` → *Runtime*), the run is fenced: live paths read-only for its duration, so a forgotten override fails loudly instead of writing into production. Path defaults in the code resolve per call, not at import, or no test can redirect them. Fence mechanisms per platform: `references/agent-friendly-tooling.md`.
+- **writes nowhere but its scratch** — where the code under test also runs live from the same tree or host (`memory/PROFILE.md` → *Runtime*), the run is fenced: live paths read-only for its duration, so a forgotten override fails loudly instead of writing into production. Path defaults in the code resolve per call, not at import, or no test can redirect them. A probe of a real tool — a scratch session of an agent CLI, a smoke run of a daemon — goes through a wrapper that gives it its own state directory and switches off self-update before it starts. Fence mechanisms per platform: `references/agent-friendly-tooling.md`.
 
 The agent reads the verdict. It opens the full log only to diagnose a named failure, by searching for that failure's name — a log is a reference, not reading material.
 

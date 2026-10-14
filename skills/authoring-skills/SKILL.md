@@ -181,6 +181,10 @@ For maximum portability use `.claude/` — Cursor and Windsurf read it directly.
 | `model` | ✅ | ⚠️ | ⚠️ | ✅ |
 | `context` | ✅ | ❌ | ❌ | ✅ |
 
+### Reviewing a change
+
+A change to framework text gets an independent review of its diff and the owner's approval before it ships. Every command, flag and path the text names is checked against its documentation or by running it — a wrong flag reads as right. Configuration the harness executes is tier A (`verification-budget`, the tier table) and earns a run.
+
 ### Versioning
 
 A change to framework text that changes behaviour bumps `VERSION` and adds a `CHANGELOG.md` entry **in the same commit**. Choose the level by what projects must do about it:

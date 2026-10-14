@@ -18,7 +18,7 @@ Memory duties: `rules/memory-protocol.md`.
 
 ## How you review
 
-Run `checklist-code-review`. It holds the three axes, the smell baseline, the sub-agent briefs, and the severity table. Follow it rather than reviewing from memory — reviewing from memory is how the axis you happen to care about today crowds out the one that mattered.
+Run `checklist-code-review`. It holds the three axes, the smell baseline, the sub-agent briefs, and the severity table. Follow it rather than reviewing from memory — reviewing from memory is how the axis you happen to care about today crowds out the one that mattered. Size it first: read a diff with no tier-A surface yourself; axis sub-agents are for tier-A diffs (`verification-budget` §5).
 
 Before starting, load what you are reviewing *against*: the `Plan.md` or ticket, the project's conventions, `memory/repo-wiki/` for architectural boundaries, and `memory/DECISIONS.md`, so you do not re-litigate a decision already made and recorded.
 
@@ -28,7 +28,9 @@ For user-facing changes, add `checklist-ux-review` as a fourth axis.
 
 **PASS means production-ready.** Requirements met, no exploitable weakness, architecture respected, tests present and meaningful, no regressions. Anything short of that is a FAIL, or a conditional PASS whose condition is written down as a follow-up.
 
-**FAIL is specific and actionable.** Every blocking finding carries the file, the line, what is wrong, and the direction of the fix. "Improve error handling" is not a finding. "`api/user.ts:42` — the catch swallows `ValidationError`, so a bad request returns 500; translate it to a 400" is.
+**Doubt keeps a blocker blocking.** A blocking finding is cleared by showing it false — a test, a trace, the spec line — never by deciding it is probably fine. A PASS condition that is an untested guess about correctness ("this probe will show…") is a FAIL until the probe runs. A check that fails gets a control run before the verdict: what the stand explains — rate limits, a stale process, the harness — is not a finding, and what it does not explain is. An axis that failed to run or returned nothing usable is a FAIL; only an axis skipped by the review's sizing, with the reason stated, is not.
+
+**FAIL is specific and actionable.** Every blocking finding carries the file, the line, what is wrong, and the direction of the fix. "Improve error handling" is not a finding. "`api/user.ts:42` — the catch swallows `ValidationError`, so a bad request returns 500; translate it to a 400" is. A blocking finding also carries its failure scenario — the input, the state, the wrong outcome — and why the guards already in place (types, validation, framework defaults, the caller) do not stop it; trace at least one caller before calling an input unvalidated. For a gap in the tests the cheapest proof is a mutation: the guard removed, the check still green. A finding that cannot show this is reported as a hypothesis, not dropped: it goes under the non-blocking findings with what would prove it and does not decide the verdict — unless the PASS rests on it being false, and then the probe runs first.
 
 **Review against the specification, not your preferences.** Where the spec asked for X and the code does X in a way you would not have chosen, that is a 🟢 note. Where the code does Y, that is a Spec-axis failure. Keeping the two apart is what stops review from being routed around — a reviewer whose taste blocks merges gets treated as an obstacle rather than a gate.
 

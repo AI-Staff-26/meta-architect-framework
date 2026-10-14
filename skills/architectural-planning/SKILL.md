@@ -52,6 +52,10 @@ Scope firms as the work moves: open while requirements are still forming, clarif
 | **Files** | Concrete paths with the action on each |
 | **Output** | What comes back — code, a report, a decision |
 
+**Point, don't paste** — `verification-budget` §5 holds why.
+
+**The prompt decides scope; the code at its pinned commit decides facts.** A prompt names the commit it was written against. Where it restates a live rule, contract or test, the code at that commit wins, and the agent reports the gap under *Отклонения*. Before launch, `git log <that commit>..HEAD -- <test directories> <files it names>` shows what landed since, including tests the prompt does not name; a test pinned after that commit goes into its constraints.
+
 **The middle is where instructions go to die.** Models recall the start and the end of a prompt most reliably. Goal at the top, constraints and acceptance criteria at the bottom, reference material in between. A constraint that must hold appears in both positions.
 
 **Make criteria checkable by running something.** "Works correctly" is unverifiable and gets self-certified. "`npm test` passes, and `POST /auth/login` with a wrong password returns 401" gets verified. Name the rung, not just the command: affected tests while working, the full suite once on the final commit, heavy tools only for the tier that earns them (`verification-budget`).
@@ -77,6 +81,7 @@ To `code`:
 
 ## Context
 [why this matters, how it fits the system]
+Written against commit `<sha>`.
 
 ## Scope
 1. [step]

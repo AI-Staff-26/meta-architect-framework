@@ -80,6 +80,7 @@ Where the project's linter enforces something, let it — do not restate its rul
 ```bash
 npm test && npm run lint
 ```
+Время на проверки: [минут], полных прогонов: [N]
 
 ### Отклонения
 - [where the prompt was read one way rather than another, a test's setup changed, an assumption made — and why]

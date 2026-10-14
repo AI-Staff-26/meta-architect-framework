@@ -39,7 +39,7 @@ A stand is a running instance of the product for checks that need a live server:
 
 - **The architect merges lanes**, in dependency order, and resolves conflicts — the lane agents do not merge each other.
 - **Ship only a commit whose every line passed review.** A merge of a reviewed commit with an unreviewed branch is unreviewed.
-- **After a lane lands, the next prompt re-checks its pinned tests** against `git log <prompt approval>..HEAD -- <tests>` — the other lane may have pinned behaviour the next prompt changes.
+- **After a lane lands, the next prompt runs its pinned-commit check** (`SKILL.md`, Write the prompt) — the other lane may have pinned behaviour the next prompt changes.
 
 ## 5. Cleanup belongs to the delegation
 
