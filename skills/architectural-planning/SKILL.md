@@ -45,6 +45,7 @@ Scope firms as the work moves: open while requirements are still forming, clarif
 |---|---|
 | **Task** | One line naming the change |
 | **Context** | Why it matters and where it fits — enough for a cold reader |
+| **Workspace** | Where to work, what may be written and what stays untouched — stated in this task, never by reference to an earlier one, since a process that changed since would carry the old place along; trees and stands: `references/agent-workspaces.md` |
 | **Scope** | The exact steps, numbered |
 | **Requirements** | What must be true when it works |
 | **Constraints** | The boundary of allowed change |
@@ -52,7 +53,7 @@ Scope firms as the work moves: open while requirements are still forming, clarif
 | **Files** | Concrete paths with the action on each |
 | **Output** | What comes back — code, a report, a decision |
 
-**Point, don't paste** — `verification-budget` §5 holds why.
+**Point, don't paste** — `verification-budget` §5 holds why. Where the project has a blueprint, a task names the step and transition ids it implements (`living-blueprint`, step 9).
 
 **The prompt decides scope; the code at its pinned commit decides facts.** A prompt names the commit it was written against. Where it restates a live rule, contract or test, the code at that commit wins, and the agent reports the gap under *Отклонения*. Before launch, `git log <that commit>..HEAD -- <test directories> <files it names>` shows what landed since, including tests the prompt does not name; a test pinned after that commit goes into its constraints.
 
@@ -82,6 +83,11 @@ To `code`:
 ## Context
 [why this matters, how it fits the system]
 Written against commit `<sha>`.
+
+## Workspace
+- Work in: [tree or path]
+- May write: [paths]
+- Untouched: [paths, services, shared files]
 
 ## Scope
 1. [step]
@@ -169,6 +175,8 @@ Re-delegation to a new agent is where context is lost most often — the replace
 Without *what already works*, the next agent rebuilds it. Without *why this iteration exists*, it repeats the failure. Without the *discovered constraints*, it rediscovers them at the same cost.
 
 **A quiet background agent is looked at, not waited on.** When one runs past the time its task should take, check its last activity — its transcript, a permission prompt it waits on, its process — before assuming it is still working. **After a session restart**, list the delegations with no completion report; resume each by message, or re-delegate after checking its branch and tree. A run that came back «stopped» left its result in its tree, to be collected by hand.
+
+**Read what came back beyond the task before the next step.** The implementer's *Отклонения* and *Замечено (вне скоупа)* are triaged — fix now, put in the backlog, or leave on purpose with the reason — before review or the next delegation. A finding that later blocks a review is often already listed there.
 
 ## Completion criterion
 

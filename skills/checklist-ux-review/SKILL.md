@@ -21,6 +21,7 @@ Each state gets reached on purpose. Reaching it is the inconvenient part, which 
 | State | How to reach it | What passes |
 |---|---|---|
 | **Default** | Open the screen with ordinary fixture data | Matches the recorded design decision |
+| **Every control** | Press each button, link and control in a real browser | It does what its label says — a control that does nothing passes every row that only looks at it |
 | **Hover** | Point at each interactive element | Visibly distinct, and only on things that are actually interactive |
 | **Focus** | Tab to it — never click it | Ring visible against whatever background it lands on |
 | **Active** | Hold the press | Something changes while held |

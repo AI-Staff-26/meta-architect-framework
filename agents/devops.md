@@ -73,7 +73,7 @@ git checkout -- docker-compose.yml && docker compose up -d
 ### Память
 - [порт, переменная окружения, цель выкатки, грабли] → `FACTS.md` — [источник]
 
-Изменение машины devops записывает в `rules/host.md` сам, строкой-указателем.
+Изменение машины devops записывает в `~/.claude/rules/host.md` сам, строкой-указателем.
 ```
 
 For a 🔴 operation, output the affected systems, whether it is reversible, and the dry-run — then **"🛑 STOP — жду подтверждения"**. When blocked, state the problem, what is missing, and what you need to proceed.

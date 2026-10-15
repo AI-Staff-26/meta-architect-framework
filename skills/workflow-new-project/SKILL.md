@@ -19,6 +19,8 @@ Before any technology is named: what the thing does, for whom, and what it is ex
 
 Where the request is a sentence and the project is a month, run `grilling`; `workflow-requirements-interview` supplies the territory the questions have to cover and the `Requirements.md` it produces.
 
+When the core journeys carry money, model calls or background jobs, `living-blueprint` («When, and how much») says whether their blueprint is the first spec.
+
 Name the first user-visible thing that would count as working. That sentence becomes the target for step 3, and it is the only requirement that must be settled before the stack is chosen — the rest can firm up while it is built.
 
 ## 2. Choose the stack, and defend it

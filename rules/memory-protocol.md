@@ -38,7 +38,7 @@ Check these before substantive work.
 | A pattern, good or bad | `INSIGHTS.md` |
 | An architectural decision | `memory/adrs/ADR-NNN.md` |
 | A change to a flow the project's blueprint describes | the blueprint — «Blueprint» below |
-| A change to this machine, or where something on it lives | `rules/host.md`, one pointer line — «Host map» below |
+| A change to this machine, or where something on it lives | `~/.claude/rules/host.md`, one pointer line — «Host map» below |
 
 **Shared files have one writer.** `FACTS.md`, `DECISIONS.md`, `CONTEXT.md`, `INSIGHTS.md` and the summaries are written by the top-level session — normally the architect, who also runs the weekly rotation. A delegated agent reads any instruction to write one of these files — record, update, refresh, write, append; here, in its own definition or in a skill — as: put it under *Память* in its report, naming the file it belongs in, and keep that block current as it works, so a run that stops loses nothing; the architect carries it over. The chronicle is append-only: anyone adds an entry, nobody edits one, and in a git repository `.gitattributes` carries `**/memory/weeks/**/CHRONICLE.md merge=union` (add it where it is missing), so parallel lanes merge without a conflict.
 
@@ -97,7 +97,7 @@ A project with `docs/blueprint/` keeps it living: a change to a flow it describe
 
 ## Host map
 
-`rules/host.md` is the map of this machine, loaded on every task. It holds pointers, one line each: what an agent here would otherwise rediscover, and where to read about it. The detail lives where the line points — a skill, a README next to the thing, a project's docs. The file stays out of git, because it describes one machine; the first host record on a machine without the file creates it. If the machine already has a map — server docs, a skill, an admin's notes; ask the user when unsure — the file's first line points there.
+`~/.claude/rules/host.md` is the map of this machine, loaded on every task. It lives at user scope, never inside a project: user rules load in every session on the machine, and the map stays out of every project's repository. It holds pointers, one line each: what an agent here would otherwise rediscover, and where to read about it. The detail lives where the line points — a skill, a README next to the thing, a project's docs. The file stays out of git, because it describes one machine, and it exists on every machine MAF runs on: the first onboarding or the first host record there, whichever comes first, creates it. It stays short, since it loads on every task; the full description of the machine lives outside `rules/`. If the machine already has one — server docs, a skill, an admin's notes; ask the user when unsure — the file's first lines point there. If it has none, a machine-local skill `~/.claude/skills/host-map/` holds it, loaded only when a task needs the machine, and the file points to the skill.
 
 Whoever does one of these adds or fixes the line:
 - changes the machine — a service, site, certificate, DNS record, scheduled job, proxy or port, a machine-local skill;

@@ -59,7 +59,7 @@ Six laws. Each states the condition and the route.
 3. **Review is sized to the blast radius — `verification-budget`.** A change touching auth, access, money, stored data, or a public contract routes to `review` on its own; the rest of a 🟡🔴 plan is reviewed once per milestone. 🟢 work is self-checked against its one-sentence criterion — unless it touched one of those surfaces, which makes it 🟡 by signal whatever it looked like at the start.
 4. **Two failed cycles stop the loop.** Repeating regressions, accumulating patches, or fifteen turns without progress → stop, route to `debug`, revise the plan from what it finds, restart clean. A third attempt at the same approach produces a third failure.
 5. **A FAIL gets diagnosed before it gets retried.** Classify the findings, decide whether the fault is in the plan or in the prompt, fix that, then re-delegate. Two critical failures route to `debug`.
-6. **A 🟡🔴 plan passes the vibe-mentor checkpoint** before reaching `code` — atomic scope, LLM-feasibility, production-readiness gaps. Iterate until it approves.
+6. **A 🟡🔴 plan passes the vibe-mentor checkpoint** before reaching `code` — atomic scope, LLM-feasibility, production-readiness gaps. Iterate until it approves; when `vibe-mentor` itself marks every fix as exact text to insert and says no second check is needed, the fixes are applied without another round.
 
 ### Self-fix
 
@@ -77,7 +77,7 @@ A new agent starts empty — invoke a role by its `subagent_type`. A fork (Claud
 
 A STOP is a checkpoint, not a suggestion. Output the artifact, state **"🛑 STOP — жду подтверждения"**, and wait for explicit approval.
 
-Silence is not approval. A question is not approval — answer it, then STOP again.
+Silence is not approval. A question is not approval — answer it, then STOP again. What a STOP gates starts only after approval. Work it does not gate — a parallel round of agents, a long run — also waits for the approval, or goes ahead with a line to the owner saying what it costs, when it means any agent launch or a run longer than the project's routine test command.
 
 STOP after: a 🟡 plan; a 🔴 investigation, plan, and ADR; hitting a blocker; discovering that scope or requirements conflict; **and whenever the approved plan changes materially afterwards** — a FAIL that revises it, or a vibe-mentor rejection that reshapes it. What the user approved is a specific plan, and code written against a later revision they never saw is unapproved work wearing an approval.
 

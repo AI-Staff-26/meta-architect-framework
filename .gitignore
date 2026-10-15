@@ -23,4 +23,5 @@
 # но к фреймворку не относятся. Правила стоят после !skills/** и !rules/** — побеждает последнее.
 skills/telegram-send-file/
 skills/cc-telegram-bridge/
+skills/host-map/
 rules/host.md

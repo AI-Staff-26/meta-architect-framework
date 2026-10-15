@@ -51,6 +51,8 @@ Escalate the moment the feature touches an auth boundary, changes the schema, al
 
 **Sequence the slices so the first one runs end to end.** The thinnest possible path through every layer the feature touches — one field, one route, one screen — proves the attachment before any breadth is built on top of it. Widen from there. Slices cut per layer hide the integration risk until the last one lands, which is exactly when it is most expensive.
 
+A flow with model calls, money, provider jobs or callbacks, or a change to a flow the project's blueprint describes, goes through `living-blueprint` («When, and how much») before `Plan.md`.
+
 Then STOP for approval, and pass the plan through the `vibe-mentor` checkpoint before it reaches `code`.
 
 ## 5. Build

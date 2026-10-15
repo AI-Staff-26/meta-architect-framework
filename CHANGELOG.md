@@ -10,6 +10,31 @@ All notable changes to the Meta-Architect Framework (MAF) are recorded here, new
 - **MINOR** — a new or extended skill, agent or rule that is backward compatible.
 - **PATCH** — wording or fixes with no change in behaviour.
 
+## [2.8.0] - 2026-10-15
+
+Process: loops of checks get a budget and a stop, expensive work waits while a STOP waits, and what an implementer flags beyond the task is read before the next step. From the October 2026 review — the experience of MusicXO (≈40 stress-test rounds of a spec, three review rounds per release) and MD Share — and the agents scan (`docs/maf-review-2026-10/08-agents-scan.md`, G1, E1).
+
+### Added
+
+- `verification-budget` §5: **a loop of checks has a budget and a stop.** The budget is named before the first round, findings are tagged [bug] or [text] (defined there), and the loop stops by the trend, not at zero — a round with no [bug], or one that found no fewer than the one before. A stopped loop is not a PASS: the remainder becomes acceptance checks. Where the owner also reviews, the owner sees the findings after two or three rounds. A round beyond the budget is the owner's call. `living-blueprint` keeps its own rule (step 7).
+- `verification-budget` §5: **the fixer carries each fix to every twin** of the value and sweeps known classes before the next round. The `checklist-code-review` re-review control checks the same.
+- `CLAUDE.md` STOP gates: what a STOP gates starts only after approval; parallel work it does not gate — any agent launch, or a run longer than the project's routine test command — waits too, or goes ahead with a line to the owner saying what it costs.
+- `architectural-planning`: the implementer's *Отклонения* and *Замечено (вне скоупа)* are triaged before review or the next delegation.
+- `architectural-planning`: every task states its **workspace** — where to work, what may be written, what stays untouched — and never takes it by reference to an earlier task.
+- `architectural-planning`: a task names the blueprint step and transition ids it implements.
+- `living-blueprint` pointers:
+  - `workflow-feature` routes a flow with money, model calls, provider jobs or callbacks through it before `Plan.md`;
+  - `workflow-new-project` asks it whether such journeys start from a blueprint;
+  - `checklist-phase-completion` closes a phase that changed a described flow only when the blueprint is up to date;
+  - `workflow-new-project` defers to its «When, and how much».
+- `checklist-ux-review`: every control is pressed in a real browser.
+- `checklist-code-review` smell baseline: **Silenced Error** — an error turned into an empty success.
+- `memory-protocol` «Host map»: `~/.claude/rules/host.md` exists on every machine, at user scope and never inside a project — the first onboarding or host record creates it — and stays short. The full description of the machine lives outside `rules/`: an existing one is pointed to; on a machine with none, a machine-local `~/.claude/skills/host-map/` holds it, out of git. `onboarding` creates the file where it is missing.
+
+### Changed
+
+- `CLAUDE.md` law 6: when `vibe-mentor` itself marks every fix as exact text to insert and says no second check is needed, the fixes are applied without another round; its verdict format carries that line.
+
 ## [2.7.0] - 2026-10-15
 
 Memory and sessions: one writer for the shared memory files, a context that knows how old it is, and nothing lost when a session or a background agent stops. From the October 2026 review (`docs/maf-review-2026-10/`, N4–N6, N8, P5) and the experience of cc-telegram, MD Share and MusicXO.
