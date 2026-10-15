@@ -10,6 +10,49 @@ All notable changes to the Meta-Architect Framework (MAF) are recorded here, new
 - **MINOR** — a new or extended skill, agent or rule that is backward compatible.
 - **PATCH** — wording or fixes with no change in behaviour.
 
+## [2.11.0] - 2026-10-15
+
+The companion's skills now carry the moves themselves, not only their names. The first reported use of the raw prompting research — someone else's agent applying it to a real advertising plan — found ten changes, and the value came from concrete requests in a fixed order. 2.10.0 had compressed that research into six types of failure and dropped most of those requests. This release restores them from the raw research files (`llm-prompting-research` 00–05 and `prompts/`), with a source where one exists, and marks what is measured and what is practice. None of it is tested on our tasks yet.
+
+### Added
+
+- `plan-critique`: «Second pass — before an expensive decision». It is a deeper single critique, not a second round.
+  - It runs on its own when the plan commits money or a client relationship, or when the owner asks for «второй проход».
+  - For weeks of work or something hard to undo, it is offered in one line and runs on the owner's yes.
+  - The steps, in the order that worked, each finding numbered by its step:
+    1. a blind answer — the blind question written for a new session and put at the top of the output, the in-session answer marked provisional, the new session's answer compared with the plan when the owner brings it back;
+    2. assumptions, each with what happens if it is false;
+    3. the premortem;
+    4. the case against, and how each party the plan touches responds;
+    5. the plan at its strongest beside the case against, to find the real question;
+    6. numbers recomputed, and external facts checked by open questions that do not state the claimed value, so a promise becomes a range;
+    7. a last sweep for holes still open — «none» is a valid answer;
+    8. what was not asked.
+  - Steps with no finding are listed with the reason, so a skipped step shows.
+- `plan-critique`: every critique says where the plan holds, and the owner acts on [bug] findings and on what can be confirmed — a critique asked for holes reports some even in a sound plan.
+- `thinking-moves`: each move X1–X6 gets the requests that carry it, handed to the owner in the owner's language:
+  - the assumptions list and the one-question interview;
+  - options with probabilities, the answers that are not templates, six hats, SCAMPER, other eyes, the step back;
+  - one defect a turn, numbered items, a score on criteria, a stop line for the loop;
+  - open questions for facts, numbers recomputed;
+  - distance, the ladder of strictness, both sides;
+  - long material above the question, quotes first, the task restated.
+- `thinking-moves`: what is measured on models, what is measured on people and carried over (the premortem), and what is practice.
+  - Sharma et al. 2023: stated authorship or liking shifts feedback either way. Saying nothing about whose the work is is the neutral case; «a colleague's work» draws harsher feedback and is listed as practice.
+
+### Changed
+
+- `plan-critique`: «Read it cold» judges the plan as work whose author is unknown. The premortem names the cheapest change now.
+- `thinking-moves`, the intro: the second pass follows one outside use; nothing is tested on our tasks yet.
+- `thinking-moves`, the pipelines:
+  - P1 runs the favourite through the second pass in a fresh session, not in the session that built the options.
+  - P4 adds the second pass when a decision rests on the work.
+  - P6 goes one level deeper at a time; P7 widens with the new requests.
+- `prompt-shaping`:
+  - Material the session can open goes in by its path.
+  - Material only the owner has goes above the request, in a labelled block the request names as material. On long input that order answers better (Anthropic's long-context tips), and an instruction inside the material reads as data, not as the owner's words.
+- `prompt-engineer`'s table and the skills index name the second pass; the index says `thinking-moves` carries ready requests.
+
 ## [2.10.0] - 2026-10-15
 
 A companion for the owner: a read-only role, run as its own session, that shapes what the owner sends to a working session and critiques what comes back. It grew from the owner's prompt-enhancer drafts — the fourth, which asks instead of inventing, is its core — and from the prompting research in Hermes (`llm-prompting-research`).

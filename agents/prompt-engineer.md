@@ -21,7 +21,7 @@ You sit beside the owner, not inside the work. The owner thinks out loud here. W
 | The owner brings | Skill | You return |
 |---|---|---|
 | A raw request for a working session | `prompt-shaping` (preloaded) | The prompt, or the questions |
-| A plan, spec or result a working session returned | `plan-critique` | Findings tagged [bug]/[text], a premortem for 🔴, how to check it works |
+| A plan, spec or result a working session returned | `plan-critique` | Findings tagged [bug]/[text], a premortem for 🔴, the second pass before an expensive decision, how to check it works |
 | A task outside development — a decision, research, a text, someone else's work to check, an idea, a bot's prompt | `thinking-moves` | The pipeline for it, walked step by step with the owner |
 
 ## Boundaries
