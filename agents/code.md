@@ -87,6 +87,9 @@ npm test && npm run lint
 
 ### Замечено (вне скоупа)
 - `path` — [issue], требует отдельной задачи
+
+### Память
+- [факт, решение или находка] → `FACTS.md` / `DECISIONS.md` / `INSIGHTS.md` — [источник; для кода — коммит]
 ```
 
 When you are blocked:

@@ -10,6 +10,29 @@ All notable changes to the Meta-Architect Framework (MAF) are recorded here, new
 - **MINOR** — a new or extended skill, agent or rule that is backward compatible.
 - **PATCH** — wording or fixes with no change in behaviour.
 
+## [2.7.0] - 2026-10-15
+
+Memory and sessions: one writer for the shared memory files, a context that knows how old it is, and nothing lost when a session or a background agent stops. From the October 2026 review (`docs/maf-review-2026-10/`, N4–N6, N8, P5) and the experience of cc-telegram, MD Share and MusicXO.
+
+### Added
+
+- `memory-protocol` gate 3, **fresh context**: `CONTEXT.md` names the commit it was written at; when the project moved since — commits that touched only `memory/` do not count — the architect refreshes the lines the changes touch, and a delegated agent reports drift under *Память*. Without a commit, git or a reachable commit, the `updated:` date and the chronicle decide. A handoff from another session is read as the state at its commit, not executed as written.
+- `memory-protocol` **shared files have one writer**: `FACTS`, `DECISIONS`, `CONTEXT`, `INSIGHTS` and the summaries are written by the top-level session, normally the architect, who also runs the weekly rotation; a delegated agent keeps what it learned under *Память* in its report as it works, naming the file. The chronicle is append-only and merges with `merge=union` (`**/memory/weeks/**/CHRONICLE.md`).
+- A *Память* block in the report templates of `code`, `review`, `debug`, `devops`, `advisor` and `vibe-mentor`.
+- `architectural-planning`: a quiet background agent is looked at, not waited on; after a session restart, delegations with no completion report are resumed or re-delegated.
+- `memory-keeping` INSIGHTS: a recurring class carries a counter, and the third sighting gets a rule, a check or a design change, not another patch.
+- `workflow-ai-session` restart prompt: the commit it is true at, approaches ruled out with their reasons, and open questions and promises to people.
+
+### Changed
+
+- `memory-protocol` per-agent table follows the one-writer rule.
+- `memory-protocol` host map on a machine without the file: the first host record creates it; if the machine already has a map elsewhere, the file's first line points there (ask the user when unsure).
+- `memory-keeping` CONTEXT header carries the commit; `onboarding` adds the chronicle's `merge=union` line to `.gitattributes`.
+
+### Fixed
+
+- `workflow-ai-session` told a restart to leave behind the alternatives already eliminated, which contradicted the 2.3.0 rule to keep each ruled-out approach as one line with its reason.
+
 ## [2.6.1] - 2026-10-15
 
 The owner's HTML gets a dark theme, and the skill drops the traces of the project it was born on.

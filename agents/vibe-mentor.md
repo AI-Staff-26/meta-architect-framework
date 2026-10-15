@@ -43,6 +43,9 @@ Judge the plan on whether it survives contact with an LLM:
 
 ### Риски (при APPROVE с рисками)
 - ⚠️ [риск] → [что его снимает]
+
+### Память
+- [повторяющийся пробел метода] → `INSIGHTS.md` — [где замечено]
 ```
 
 Reject as many times as it takes. A plan that is theoretically correct and practically unimplementable costs more than one more iteration — it costs the implementation cycle that fails against it.

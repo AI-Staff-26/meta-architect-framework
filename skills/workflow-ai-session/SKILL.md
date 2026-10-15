@@ -52,14 +52,15 @@ That last row matters. Restarting a session whose *prompt* was the problem repro
 
 **1. Stop.** No further attempts at the current step — each one adds to what the restart must sort through.
 
-**2. Update `memory/CONTEXT.md`** to the state a fresh session would need. The schema and the ~200-word ceiling are in `memory-keeping`. Anything larger belongs in `FACTS.md`, `DECISIONS.md`, or the chronicle, which is where a fresh session would look for it anyway.
+**2. Update `memory/CONTEXT.md`** (the architect; a delegated agent reports it under *Память*) to the state a fresh session would need. The schema and the ~200-word ceiling are in `memory-keeping`. Anything larger belongs in `FACTS.md`, `DECISIONS.md`, or the chronicle, which is where a fresh session would look for it anyway.
 
 **3. Decide what crosses over.** This is the whole skill in one step:
 
 | Carries over | Stays behind |
 |---|---|
 | The goal, in one sentence | The narrative of how it was arrived at |
-| Decisions, each with the reason it was made | The alternatives already eliminated |
+| Decisions, each with the reason it was made | The debate that produced them |
+| Approaches ruled out, one line each with its reason | How each one was tried |
 | What is built and verified, by path | Failed attempts, retold |
 | Constraints still live, including any that were violated | File contents that can be read again on demand |
 | The single next step | Everything after it |
@@ -70,6 +71,7 @@ A decision without its reason is re-litigated. A reason without its decision is 
 
 ```markdown
 # [Task] — продолжение с чистым контекстом
+Верно на: YYYY-MM-DD, commit `<sha>`
 
 ## Цель
 [one sentence: what works when this is done]
@@ -80,9 +82,15 @@ A decision without its reason is re-litigated. A reason without its decision is 
 ## Принятые решения
 - [decision] — [why]
 
+## Отброшено
+- [approach] — [why it was ruled out]
+
 ## Ограничения
 - [constraint]
 - [constraint that was violated earlier, restated]
+
+## Открыто
+- [question still unresolved, or a promise made to a person — not the next steps of the plan]
 
 ## Следующий шаг
 [one concrete action]
@@ -97,7 +105,7 @@ It refers to no earlier session. If the new agent would have to ask "what happen
 
 ## Completion criterion
 
-Recovered when: `CONTEXT.md` reflects the current state within its ceiling; the restart prompt carries goal, verified state, decisions with reasons, live constraints, and one next step; nothing in it points back at the old session; and work resumes from the next step rather than from re-establishing where things stand.
+Recovered when: `CONTEXT.md` reflects the current state within its ceiling; the restart prompt names the commit it is true at and carries goal, verified state, decisions with reasons, approaches ruled out, live constraints, what is still open, and one next step; nothing in it points back at the old session; and work resumes from the next step rather than from re-establishing where things stand.
 
 ## Related
 

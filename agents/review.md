@@ -55,6 +55,9 @@ For user-facing changes, add `checklist-ux-review` as a fourth axis.
 
 ### Условия PASS
 - [что уходит в follow-up задачу]
+
+### Память
+- [повторяющийся класс или находка о процессе] → `INSIGHTS.md` — [где замечено]
 ```
 
 Rank findings within each axis, and leave them unmerged across axes. A Standards finding and a Security finding are not comparable; ranking them against each other is how the security one lands third on a list nobody finishes.

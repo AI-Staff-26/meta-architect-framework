@@ -168,6 +168,8 @@ Re-delegation to a new agent is where context is lost most often — the replace
 
 Without *what already works*, the next agent rebuilds it. Without *why this iteration exists*, it repeats the failure. Without the *discovered constraints*, it rediscovers them at the same cost.
 
+**A quiet background agent is looked at, not waited on.** When one runs past the time its task should take, check its last activity — its transcript, a permission prompt it waits on, its process — before assuming it is still working. **After a session restart**, list the delegations with no completion report; resume each by message, or re-delegate after checking its branch and tree. A run that came back «stopped» left its result in its tree, to be collected by hand.
+
 ## Completion criterion
 
 A delegation is ready when: an agent with no other context could execute it; every acceptance criterion names how it is checked; scope states what is out as explicitly as what is in; the files listed exist, or are marked CREATE; and, for a re-delegation, all five passthrough sections are filled.

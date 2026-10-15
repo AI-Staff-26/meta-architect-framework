@@ -70,7 +70,7 @@ memory/
 
 Two of these are not empty at birth. `FACTS.md` takes what discovery verified — the stack you read out of the manifest, the deadline the user named — each with where it came from. `DECISIONS.md` takes the decisions the project already made before you arrived, when the user can state them; a decision recorded now is one nobody re-litigates in month three.
 
-Use today's date and the current ISO week.
+Use today's date and the current ISO week. In a git repository, add the chronicle's `merge=union` line to `.gitattributes` (`rules/memory-protocol.md`, shared files).
 
 Where a codebase already exists, `workflow-legacy-analysis` maps it and writes the first `repo-wiki` entries. Do not attempt that mapping here — it is a different job with its own reading order, and doing it badly during setup produces a wiki nobody trusts.
 

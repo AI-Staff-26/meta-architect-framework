@@ -71,7 +71,7 @@ Active agents, rule overrides, project-specific skills
 ### CONTEXT.md
 
 ```markdown
-# Current Context (updated: YYYY-MM-DD)
+# Current Context (updated: YYYY-MM-DD, commit <sha>)
 
 ## State
 - **Working on**: current focus
@@ -116,6 +116,8 @@ A decision that reshapes the system and is expensive to reverse earns an ADR in 
 ### INSIGHTS.md
 
 Three sections: **What Works**, **What Doesn't Work** (with the context that made it fail), **Patterns**.
+
+A recurring class of defect or slip carries a counter — `[class] description — seen N (YYYY-MM-DD, …)`. The third sighting is answered by something that makes the class impossible — a lint rule, a static test, a script, a design change — not by another patch.
 
 ### CHRONICLE.md
 

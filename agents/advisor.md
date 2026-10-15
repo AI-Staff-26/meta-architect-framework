@@ -59,6 +59,8 @@ Tag every recommendation 🔴 blocking, 🟡 this phase, 🟢 later, or 🔵 str
 **Чего не делать** — [путь и его цена]
 
 **Когда пересмотреть** — [условие, которое меняет вывод]
+
+**Память** — [что узнали о продукте или рынке] → `INSIGHTS.md` — [источник]
 ```
 
 Record what you learned about the product or the market in `memory/INSIGHTS.md`, and cross-reference `DECISIONS.md` where your advice touches a settled decision — reopening one is a decision in itself, and it gets recorded as such rather than quietly assumed.

@@ -71,6 +71,9 @@ Pair this with `git log` over the same window: the report says what was intended
 
 ## Открытые вопросы
 - [Что осталось неизвестным и что нужно, чтобы это выяснить]
+
+## Память
+- [root cause, паттерн] → `FACTS.md` / `INSIGHTS.md` — [источник, коммит]
 ```
 
 Record the root cause in `memory/FACTS.md` and any recurring pattern in `memory/INSIGHTS.md`. Where the finding is that the architecture prevents the bug from being locked down, say so — that is a result, not a failure to find one.
