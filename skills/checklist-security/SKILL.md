@@ -8,260 +8,265 @@ description: |
   Security axis of `checklist-code-review`.
 ---
 
-# Проверка безопасности
+# Security verification
 
-**Начинай с того, что изменение открывает наружу.** Полный список ниже прочитывается за минуту и подтверждается за минуту — так проверка превращается в ритуал. Работает она иначе: сначала назови новую поверхность — какой ввод стал достижим извне, какие данные стали доступнее, кто теперь может дотянуться до чего, — и от неё иди по разделам, которые эту поверхность закрывают.
+**Start from what the change opens to the outside.** The full list below is read in a minute and ticked in a minute — that is how a check turns into a ritual. It works the other way round: first name the new surface — which input became reachable from outside, which data became easier to reach, who can now reach what — and from there walk the sections that close that surface.
 
-Разделы, которых изменение не касается, отмечаются как неприменимые с причиной. Раздел, помеченный «ок» без проверки, хуже пропущенного: он выглядит проверенным.
+Sections the change does not touch are marked not applicable, with the reason. A section marked «ok» without a check is worse than a skipped one: it looks checked.
 
-Уязвимость ищется на пути данных: откуда пришло → кому доверяем → что с этим делаем → куда попало. Каждый переход — место, где проверка либо есть, либо её нет.
-
----
-
-## 🧭 Соседние пути и доверие
-
-Главный путь проверяют все; дыра обычно на **соседнем** — там, где тот же результат достигается другим входом. Для каждого действия, которое изменение защищает, ответь:
-
-- [ ] **Сколько путей ведут к тому же результату** — задать пароль, создать или продлить сессию, дать доступ, выпустить токен, отправить письмо, потратить общий ресурс? У каждого те же проверки: Origin, сессия, лимит, правило, авторизация, журнал?
-- [ ] **Кто пишет атрибут, которому потом доверяют** — флаг «адрес подтверждён», роль, область токена? Может ли его записать путь слабее того, кто его потребляет? Запись идёт через одну функцию, и тест ловит обход?
-- [ ] **Что будет при N параллельных запросах** к лимитам, одноразовым токенам, правилу «последний владелец», резервам счётчиков?
-- [ ] **Лимит «на пользователя» при размножаемых пользователях** — не обходится ли заведением новых аккаунтов, ссылок, токенов?
-- [ ] **Запись, после которой ответ упал**, — остаётся ли она, и кто её проверяет?
-
-Когда на эти вопросы не ответить без перебора кода, область не размечена — нужна карта путей: `forensic-investigation/references/path-map-template.md`. Приёмы, которыми вопросы проверяются запуском, — `references/attack-techniques.md`.
+A weakness is found along the path of the data: where it came from → whom we trust → what we do with it → where it ended up. Each hop is a place where a check either exists or does not.
 
 ---
 
-## 🔐 Аутентификация
+## 🧭 Neighbouring paths and trust
 
-### Механизмы аутентификации
+Everyone checks the main path; the hole is usually on a **neighbouring** one — where the same result is reached through another entrance. For every action the change protects, answer:
 
-- [ ] Пароли хешируются (bcrypt/argon2, не MD5/SHA1)
-- [ ] Нет хранения паролей в открытом виде
-- [ ] Session tokens достаточно длинные и случайные
-- [ ] JWT подписаны надёжным алгоритмом (RS256, не none)
-- [ ] JWT имеют разумный TTL
+- [ ] **How many paths lead to the same result** — set a password, create or extend a session, grant access, issue a token, send an email, spend a shared resource? Does each have the same checks: Origin, session, limit, rule, authorisation, log?
+- [ ] **Who writes an attribute that is trusted later** — an «email confirmed» flag, a role, a token's scope? Can a path weaker than its consumer write it? Does the write go through one function, and does a test catch a bypass?
+- [ ] **What happens under N parallel requests** to limits, one-time tokens, the «last owner» rule, counter reservations?
+- [ ] **A per-user limit when users multiply** — can it be bypassed by creating new accounts, links or tokens?
+- [ ] **A write after which the response failed** — does it stay, and who checks it?
 
-### Session Management
-
-- [ ] Session invalidation при logout
-- [ ] Session timeout реализован
-- [ ] Защита от session fixation
-- [ ] Secure и HttpOnly флаги для cookies
-- [ ] SameSite атрибут установлен
-- [ ] Свойства сессии, отданные библиотеке (срок, продление, гашение при смене пароля), подтверждены тестом против её поведения, а не чтением настроек
-- [ ] Вход не создаёт сессию, пережившую смену или сброс пароля, случившуюся во время проверки пароля
-
-### Multi-Factor
-
-- [ ] MFA доступен для критических операций (если требуется)
-- [ ] MFA bypass невозможен
-- [ ] Recovery codes защищены
+When these questions cannot be answered without combing the code, the area is unmapped — it needs a path map: `forensic-investigation/references/path-map-template.md`. Techniques that check these questions by running: `references/attack-techniques.md`.
 
 ---
 
-## 🛡️ Авторизация
+## 🔐 Authentication
 
-### Проверки доступа
+### Mechanisms
 
-- [ ] Авторизация проверяется на каждом уровне (API, service, data)
-- [ ] Нет доступа к чужим ресурсам (IDOR protection)
-- [ ] Принцип наименьших привилегий соблюдён
-- [ ] Default deny — доступ запрещён по умолчанию
+- [ ] Passwords are hashed (bcrypt/argon2, not MD5/SHA1)
+- [ ] No passwords stored in plain text
+- [ ] Session tokens are long and random enough
+- [ ] JWTs are signed with a strong algorithm (RS256, never `none`)
+- [ ] JWTs have a reasonable TTL
 
-### RBAC / Permissions
+### Session management
 
-- [ ] Роли и права определены корректно
-- [ ] Нет privilege escalation
-- [ ] Admin функции защищены
-- [ ] Tenant isolation (для multi-tenant)
+- [ ] The session is invalidated on logout
+- [ ] Session timeout is implemented
+- [ ] Session fixation is prevented
+- [ ] Cookies carry the Secure and HttpOnly flags
+- [ ] The SameSite attribute is set
+- [ ] Session properties handed to a library (lifetime, renewal, revocation on password change) are confirmed by a test against its behaviour, not by reading its settings
+- [ ] A login does not create a session that outlives a password change or reset that happened while the password was being checked
 
-### API Authorization
+### Multi-factor
 
-- [ ] Все endpoints требуют аутентификацию (кроме явно публичных)
-- [ ] Rate limiting реализован
-- [ ] Нет массового доступа к данным (batch enumeration)
-
----
-
-## ✅ Валидация Входных Данных
-
-### Input Validation
-
-- [ ] Все входные данные валидируются на сервере
-- [ ] Whitelist подход (разрешено явно, остальное запрещено)
-- [ ] Валидация типов и форматов
-- [ ] Лимиты на размер входных данных
-- [ ] Валидация file uploads (тип, размер, содержимое)
-
-### Sanitization
-
-- [ ] HTML entities экранируются
-- [ ] Специальные символы обрабатываются
-- [ ] Нет доверия к Content-Type от клиента
-
-### Injection Prevention
-
-- [ ] Prepared statements / parameterized queries (SQL)
-- [ ] ORM используется правильно (нет raw SQL с user input)
-- [ ] Command arguments экранируются
-- [ ] LDAP injection предотвращён
-- [ ] XML/XXE атаки предотвращены
+- [ ] MFA is available for critical operations (where required)
+- [ ] MFA cannot be bypassed
+- [ ] Recovery codes are protected
 
 ---
 
-## 🌐 API Security
+## 🛡️ Authorisation
+
+### Access checks
+
+- [ ] Authorisation is checked at every level (API, service, data)
+- [ ] No access to other users' resources (IDOR protection)
+- [ ] Least privilege holds
+- [ ] Default deny — access is refused unless granted
+
+### RBAC / permissions
+
+- [ ] Roles and permissions are defined correctly
+- [ ] No privilege escalation
+- [ ] Admin functions are protected
+- [ ] Tenant isolation (for multi-tenant)
+
+### API authorisation
+
+- [ ] Every endpoint requires authentication (except the explicitly public ones)
+- [ ] Rate limiting is implemented
+- [ ] No bulk access to data (batch enumeration)
+
+---
+
+## ✅ Input validation
+
+### Validation
+
+- [ ] All input is validated on the server
+- [ ] Allow-list approach: what is allowed is explicit, the rest is refused
+- [ ] Types and formats are validated
+- [ ] Input size is limited
+- [ ] File uploads are validated (type, size, content)
+
+### Sanitisation
+
+- [ ] HTML entities are escaped
+- [ ] Special characters are handled
+- [ ] The client's Content-Type is not trusted
+
+### Injection prevention
+
+- [ ] Prepared statements / parameterised queries (SQL)
+- [ ] The ORM is used correctly (no raw SQL with user input)
+- [ ] Command arguments are escaped
+- [ ] LDAP injection is prevented
+- [ ] XML/XXE attacks are prevented
+
+---
+
+## 🌐 API security
 
 ### Transport
 
-- [ ] HTTPS обязателен (HTTP редиректит)
-- [ ] TLS 1.2+ (не SSL, не TLS 1.0/1.1)
-- [ ] HSTS header установлен
-- [ ] Certificate validation включён
+- [ ] HTTPS is mandatory (HTTP redirects)
+- [ ] TLS 1.2+ (not SSL, not TLS 1.0/1.1)
+- [ ] The HSTS header is set
+- [ ] Certificate validation is on
 
 ### Headers
 
-- [ ] Content-Security-Policy установлен
+- [ ] Content-Security-Policy is set
 - [ ] X-Content-Type-Options: nosniff
-- [ ] X-Frame-Options: DENY или SAMEORIGIN
-- [ ] Referrer-Policy установлен
-- [ ] CORS настроен корректно (не wildcard для authenticated)
+- [ ] X-Frame-Options: DENY or SAMEORIGIN
+- [ ] Referrer-Policy is set
+- [ ] CORS is configured correctly (no wildcard for authenticated requests)
 
-### API Design
+### API design
 
-- [ ] Нет чувствительных данных в URL
-- [ ] Нет secrets в query parameters
-- [ ] Нет verbose error messages с internal details
-- [ ] API versioning реализован
+- [ ] No sensitive data in URLs
+- [ ] No secrets in query parameters
+- [ ] No verbose error messages with internal details
+- [ ] API versioning is implemented
 
 ---
 
-## 💾 Данные
+## 💾 Data
 
 ### Storage
 
-- [ ] Чувствительные данные зашифрованы (at rest)
-- [ ] Ключи шифрования защищены
-- [ ] Backups зашифрованы
-- [ ] Нет чувствительных данных в логах
+- [ ] Sensitive data is encrypted at rest
+- [ ] Encryption keys are protected
+- [ ] Backups are encrypted
+- [ ] No sensitive data in logs
 
 ### Transmission
 
-- [ ] Данные зашифрованы при передаче (TLS)
-- [ ] Нет чувствительных данных в query strings
-- [ ] Безопасные каналы для inter-service communication
+- [ ] Data is encrypted in transit (TLS)
+- [ ] No sensitive data in query strings
+- [ ] Secure channels between services
 
 ### Retention
 
-- [ ] Политика хранения определена
-- [ ] Механизм удаления данных реализован (GDPR)
-- [ ] Нет избыточного сбора данных
+- [ ] A retention policy is defined
+- [ ] A deletion mechanism is implemented (GDPR)
+- [ ] No excess data is collected
 
 ---
 
-## 🔑 Секреты и Конфигурация
+## 🔑 Secrets and configuration
 
-### Secrets Management
+### Secrets management
 
-- [ ] Нет hardcoded credentials в коде
-- [ ] Нет secrets в git history
-- [ ] Secrets хранятся в vault / env variables
-- [ ] Secrets ротируются регулярно
-- [ ] Разные secrets для разных окружений
-- [ ] Секреты не передаются аргументами команд (argv виден в `ps`) — только окружение или файл 600
-- [ ] Секрет, который агент получил или породил сам (ключ, вставленный в чат; пароль от `--generate`; учётные данные в файле знаний), лежит в хранилище или файле 600; документы называют его только по имени
+- [ ] No hardcoded credentials in code
+- [ ] No secrets in git history
+- [ ] Secrets live in a vault or environment variables
+- [ ] Secrets are rotated regularly
+- [ ] Different secrets for different environments
+- [ ] Secrets are never passed as command arguments (argv is visible in `ps`) — only the environment or a 0600 file
+- [ ] A secret the agent received or generated itself — a key pasted into chat, a password from `--generate`, credentials in a knowledge file — lives in a vault or a 0600 file; documents name it only by reference
 
 ### Configuration
 
-- [ ] Нет debug mode в production
-- [ ] Нет default passwords
-- [ ] Конфигурация не экспоузится публично
-- [ ] Безопасные default значения
+- [ ] No debug mode in production
+- [ ] No default passwords
+- [ ] Configuration is not publicly exposed
+- [ ] Defaults are safe
 
 ---
 
-## 📝 Logging и Monitoring
+## 📝 Logging and monitoring
 
 ### Logging
 
-- [ ] Аутентификация/авторизация логируется
-- [ ] Подозрительные события логируются
-- [ ] Нет PII в логах
-- [ ] Нет secrets в логах
-- [ ] Нет stack traces в production logs для клиентов
-- [ ] Доказано прогоном: путь исполняется с контрольным секретом (sentinel), включая принудительный сбой на каждом пути записи (ограничение БД, ошибка библиотеки), и секрета нет ни в одном канале — журнал приложения, stderr библиотек, журнал обратного прокси, тела ошибок, ответы
+- [ ] Authentication and authorisation are logged
+- [ ] Suspicious events are logged
+- [ ] No PII in logs
+- [ ] No secrets in logs
+- [ ] No stack traces in production responses to clients
+- [ ] Proven by a run: the path executes with a sentinel secret, including a forced failure on every write path (a database constraint, a library error), and the sentinel appears in no channel — the application log, a library's stderr, the reverse proxy's log, error bodies, responses
 
 ### Monitoring
 
-- [ ] Алерты на брутфорс попытки
-- [ ] Алерты на аномальную активность
-- [ ] Audit trail для критических операций
+- [ ] Alerts on brute-force attempts
+- [ ] Alerts on anomalous activity
+- [ ] Audit trail for critical operations
 
 ---
 
-## 🤖 LLM и агентные функции
+## 🤖 LLM and agent features
 
-Когда продукт сам вызывает модель или агентов.
+When the product itself calls a model or agents.
 
-- [ ] Ответ модели, извлечённый контент, вывод инструментов, память и сообщения между агентами валидируются как пользовательский ввод
-- [ ] Каждый инвариант, сказанный в промпте («никогда не отправлять на внешние адреса»), держит и код — непосредственно перед побочным эффектом; тест подаёт ответ модели, который его нарушает
-- [ ] Необратимое действие, которое может вызвать модель, требует авторизации на эту операцию и этот ресурс плюс подтверждения или заранее выданного ограниченного разрешения
-- [ ] Вывод инструментов читается с лимитом размера; неразбираемый вывод — типизированная ошибка, а не пустой успех
-- [ ] Читатель чужого интерфейса (экран, панель, чужой формат) сверен с живой популяцией только на чтение, прежде чем «незнакомое — редкость» станет основанием пропускать (fail-open)
+- [ ] Model output, retrieved content, tool output, memory and messages between agents are validated like user input
+- [ ] Every invariant a prompt states («never send to external addresses») is also enforced in code, right before the side effect, and a test feeds a model response that violates it
+- [ ] An irreversible action the model can trigger requires authorisation for that operation and that resource, plus confirmation or a scoped pre-approval
+- [ ] **Rule of two:** within one session an agent has at most two of — processing untrusted input; access to sensitive systems or private data; the ability to change state or communicate externally. A task that needs all three splits, so the step needing the third starts a fresh session that carries none of the untrusted input — or it runs under human approval or another reliable validation
+- [ ] Each agent gets only the tools and data its role needs; credentials and tokens are not passed between agents
+- [ ] Context that does not fit is never truncated silently: the pipeline stops and reports what it could not carry
+- [ ] Each model call and agent step is logged with a shared trace id, so a wrong answer can be traced to the step that produced it
+- [ ] A changed agent or prompt is checked against a recorded set of cases — ordinary, edge and adversarial — before it ships
+- [ ] Tool output is read with a size limit; unparseable output is a typed failure, never an empty success
+- [ ] Code that reads another system's screen, panel, page or format is checked against what that system really shows now — its live population, or a sample that covers it, read-only — before «an unfamiliar shape is rare» becomes a reason to let it through unchecked (fail-open)
 
 ---
 
 ## 🧪 Testing
 
-### Security Testing
+### Security testing
 
-- [ ] Security unit tests написаны
-- [ ] Negative tests (что НЕ должно работать)
-- [ ] Boundary tests для валидации
-- [ ] Тесты на injection (если применимо)
-- [ ] Конкурентные сценарии: N параллельных запросов к лимитам, одноразовым токенам, «последнему владельцу»
-- [ ] После полного сценария в журнале нет ни одного выданного токена
+- [ ] Security unit tests are written
+- [ ] Negative tests (what must NOT work)
+- [ ] Boundary tests for validation
+- [ ] Injection tests (where applicable)
+- [ ] Concurrent scenarios: N parallel requests to limits, one-time tokens, «last owner»
+- [ ] After a full scenario, the log holds not a single issued token
 
 ### Review
 
-- [ ] Код проверен на security issues
-- [ ] Dependencies проверены на уязвимости
-- [ ] Static analysis пройден
+- [ ] The code is reviewed for security issues
+- [ ] Dependencies are checked for vulnerabilities
+- [ ] Static analysis passes
 
 ---
 
-## Severity Classification
+## Severity classification
 
-| Level | Примеры | Действие |
+| Level | Examples | Action |
 |-------|---------|----------|
-| 🔴 Critical | RCE, Auth bypass, SQLi, Data leak | STOP — немедленное исправление |
-| 🟠 High | XSS, CSRF, Privilege escalation | Исправить перед deploy |
-| 🟡 Medium | Information disclosure, Weak crypto | Исправить в ближайшем спринте |
-| 🟢 Low | Missing headers, Verbose errors | Track and fix |
+| 🔴 Critical | RCE, auth bypass, SQLi, data leak | STOP — fix immediately |
+| 🟠 High | XSS, CSRF, privilege escalation | Fix before deploy |
+| 🟡 Medium | Information disclosure, weak crypto | Fix in the next iteration |
+| 🟢 Low | Missing headers, verbose errors | Track and fix |
 
 ---
 
-## Формат находки
+## Finding format
 
-Каждая находка — это место, воздействие и исправление, а не название класса уязвимости:
+Each finding is a place, an impact and a fix — not the name of a vulnerability class:
 
 ```markdown
-🔴 IDOR в `GET /api/orders/:id` — `src/api/orders.ts:42`
-Проверяется аутентификация, но не принадлежность заказа пользователю.
-Любой авторизованный клиент читает чужие заказы по перебору id.
-Исправление: проверка `order.userId === session.userId` в сервисном слое.
+🔴 IDOR in `GET /api/orders/:id` — `src/api/orders.ts:42`
+Authentication is checked, but not that the order belongs to the user.
+Any signed-in client reads other users' orders by enumerating ids.
+Fix: check `order.userId === session.userId` in the service layer.
 ```
 
-Пять типовых мест, где находки концентрируются: пользовательский ввод, дошедший до SQL или командной строки без параметризации; эндпоинт без проверки прав рядом с эндпоинтами, где она есть; секрет в коде, логе или истории git; подробная внутренняя ошибка, отданная клиенту; данные, ушедшие по HTTP.
+Five places where findings cluster: user input reaching SQL or a command line without parameters; an endpoint without a permission check next to endpoints that have one; a secret in code, a log or git history; a detailed internal error returned to the client; data sent over plain HTTP.
 
-## Критерий завершения
+## Completion criterion
 
-Проверка закончена, когда: поверхность, которую открыло изменение, названа; каждый раздел либо пройден с указанием, где именно проверено, либо помечен неприменимым с причиной; каждая находка имеет место, воздействие и исправление; для 🔴 и 🟠 названо, что происходит при эксплуатации; и для нового поведения написан негативный тест — тот, что падает, если защиту убрать.
+The check is done when: the surface the change opened is named; every section is either walked, saying where exactly it was checked, or marked not applicable with the reason; every finding has a place, an impact and a fix; for 🔴 and 🟠 it is stated what happens when it is exploited; and the new behaviour has a negative test — one that fails when the protection is removed.
 
-## Связанные скилы
+## Related skills
 
-- `checklist-infra` — секреты и доступы на стороне развёртывания: CI, контейнеры, окружения
-- `checklist-code-review` — общее ревью, ось Security которого это углубляет
-- `checklist-release` — предрелизный гейт, вызывающий эту проверку
-- `pattern-rbac`, `pattern-multi-tenant` — когда права и изоляция арендаторов проектируются, а не проверяются
-- `references/attack-techniques.md` — приёмы проверки запуском: CSRF-матрица, параллельные запросы, подделка заголовков, обходы пути, соседние пути, цепочки
+- `checklist-infra` — secrets and access on the deployment side: CI, containers, environments
+- `checklist-code-review` — the general review whose Security axis this deepens
+- `checklist-release` — the pre-release gate that calls this check
+- `pattern-rbac`, `pattern-multi-tenant` — when permissions and tenant isolation are being designed rather than checked
+- `references/attack-techniques.md` — techniques for checking by running: the CSRF matrix, parallel requests, forged headers, path bypasses, neighbouring paths, chains

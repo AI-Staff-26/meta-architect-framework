@@ -4,7 +4,8 @@ description: |
   Diagnose a bug, regression, flake, or slowness — feedback loop first, then
   reproduce, hypothesise, fix, lock down with a regression test. Triggers:
   "баг", "не работает", "сломалось", "почему падает", "тормозит", "debug
-  this". No specific symptom → `workflow-legacy-analysis`.
+  this". No specific symptom → `workflow-legacy-analysis`; production down
+  right now → `workflow-incident`.
 ---
 
 # Diagnosing Bugs

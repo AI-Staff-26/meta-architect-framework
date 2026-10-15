@@ -10,6 +10,32 @@ All notable changes to the Meta-Architect Framework (MAF) are recorded here, new
 - **MINOR** — a new or extended skill, agent or rule that is backward compatible.
 - **PATCH** — wording or fixes with no change in behaviour.
 
+## [2.9.0] - 2026-10-15
+
+Security checklist in the language agents read it in, with the rules for products that run agents; and a procedure for production that is down right now.
+
+### Added
+
+- Skill `workflow-incident`: restore first, understand second.
+  - Declare it to the owner; keep a timed timeline in an incident file next to the work reports, with one `[issue]` chronicle entry pointing to it.
+  - Stabilise with the reversible, known step — roll back, restart, contain. A step waits for the owner by its effect: it crosses a data or schema change, is a host change, touches a shared service, or destroys something.
+  - Time-box each hypothesis, sized to the harm users take.
+  - Confirm recovery through the real interface.
+  - Review without blame: what the system allowed, follow-ups with owners, the class counter, the host map.
+  - Routed from `CLAUDE.md`; `workflow-debugging` points to it.
+  - `memory-keeping` names the incident file next to the work reports.
+- `checklist-security` «LLM and agent features»:
+  - **the rule of two** (Meta, «Agents Rule of Two», 2025-10-31): within one session an agent has at most two of untrusted input, access to sensitive systems or private data, and the ability to change state or communicate externally; all three → split into a fresh session without the untrusted input, or human approval or another reliable validation;
+  - least privilege per agent;
+  - no silent truncation of context;
+  - a trace id across model calls and agent steps;
+  - a recorded set of cases before a changed agent or prompt ships.
+
+### Changed
+
+- `checklist-security` is now in English, as `CLAUDE.md` asks of text agents read as instruction. Items keep their meaning; one ambiguous item is read as «no stack traces in production responses to clients».
+- Two items are rewritten to be readable without project history: the prompt invariant that is also enforced in code, and code that reads another system's screen or format.
+
 ## [2.8.0] - 2026-10-15
 
 Process: loops of checks get a budget and a stop, expensive work waits while a STOP waits, and what an implementer flags beyond the task is read before the next step. From the October 2026 review — the experience of MusicXO (≈40 stress-test rounds of a spec, three review rounds per release) and MD Share — and the agents scan (`docs/maf-review-2026-10/08-agents-scan.md`, G1, E1).

@@ -164,6 +164,7 @@ The plan holds if: its claims trace to memory or verified project state rather t
 | Solved before in one of our projects | `/opt/hermes-paperclip/profiles/ai-staff/pipelines/AGENTS.md` — proven methods with examples |
 | Building a feature | `workflow-feature` |
 | Something is broken | `workflow-debugging` (feedback loop first) |
+| Production is down or degraded right now | `workflow-incident` (restore first) |
 | The agent is looping, not the code | `forensic-investigation`, `workflow-ai-session` |
 | Structure changes, behaviour does not | `workflow-refactoring` |
 | Layers, contracts, or stored data move | `workflow-architecture-change` |

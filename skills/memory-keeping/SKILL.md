@@ -244,6 +244,8 @@ Every completed 🟡 or 🔴 task produces one, written **before** the completio
 
 **Path:** `memory/weeks/YYYY-WNN/YYYY-MM-DD/work-report-<slug>.md`
 
+An incident's timeline and review sit beside them as `incident-<slug>.md` — `workflow-incident`.
+
 ```markdown
 # Work Report: [Title]
 *Date: YYYY-MM-DD*
