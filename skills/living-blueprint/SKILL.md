@@ -120,7 +120,7 @@ Then record the outcome as `references/review.md` describes.
 ### 9. Hand it to the agents
 - **Task prompts** from `architectural-planning` cite step ids (`agent/SPEC.md`, step `k3`), fixtures and transition ids. They do not restate them.
 - **Tests carry the ids** from `agent/ACCEPTANCE.md` — the id grammar is in `references/schema.md`, «Reverse drift».
-- **The tool goes into the project.** Copy the skill's `tool/` and `references/` folders side by side into the repository, without `node_modules`. CI runs `npm ci` in `tool/`, and the project builds with that copy from then on.
+- **The tool goes into the project.** Copy the skill's `tool/` and `references/` folders side by side into the repository, without `node_modules`, `test/` and `starter/` — those serve the skill itself. CI runs `npm ci` in `tool/`, and the project builds with that copy from then on.
 - **The drift check** runs `node tool/drift-check.mts docs/blueprint <tests dir> --base <ref>`. It fails when a locked id has no test, or when a hash changed and its test did not. It lists as Moved, without failing, the entries whose tests changed while their hash did not — step 10 says what to do with them. `--only <id,…>` narrows it to the areas a lane already covers; an id covers itself and the ids under it — `BP:k1` covers `BP:k1:happy`, not `BP:k10`; a prefix that ends in `:` or `.` (`SM:`, `SM:song.`) matches as plain text.
 - **The stale check** runs `node tool/build.ts docs/blueprint --check`. It writes nothing. It fails when `agent/`, the HTML or the prompts document is not what a build of `src/` would write — the data changed without a rebuild.
 
@@ -141,7 +141,7 @@ Rebuild after each. A change the person sees — above the line of visibility �
 - `references/authoring.md` — patterns for entities, money, provider jobs, failures and fixtures, and what each lint message usually means.
 - `references/review.md` — the stress-test prompt and how to fold its answers back; the owner-review protocol.
 - `tool/` — the build, the drift check, the renderer and the starter.
-- **Worked examples:** `tool/starter/`, the one `--init` copies; and MusicXO — 7 journeys, 45 contracts, 11 state machines, at `/opt/musicxo/docs/blueprint` on the host where the skill was built.
+- **Worked example:** `tool/starter/`, the one `--init` copies.
 
 ## Related
 

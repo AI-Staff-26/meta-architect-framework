@@ -1,5 +1,8 @@
-/* MusicXO blueprint — design tokens follow docs/tz/05 §1.1 (ink/paper, OKLCH accents, motion tokens) */
+/* Living blueprint — the page's stylesheet. Design tokens in two themes: light in :root, dark in the one
+ * :root[data-theme="dark"] block, which the head script switches on (template.html). OKLCH accents, motion tokens,
+ * system fonts only. */
 :root {
+  color-scheme: light;
   --ink: #15171c;
   --paper: #f6f7f9;
   --card: #ffffff;
@@ -22,10 +25,26 @@
   --p-image: oklch(0.58 0.17 350);
   --p-code: oklch(0.45 0.02 260);
   --p-human: oklch(0.55 0.14 255);
+  --p-llm: oklch(0.52 0.16 280);
+  --p-audio: oklch(0.55 0.13 100);
+  --p-video: oklch(0.55 0.15 330);
+  --p-search: oklch(0.55 0.12 225);
 
   --warn: oklch(0.62 0.16 65);
   --bad: oklch(0.55 0.19 25);
   --ok: oklch(0.55 0.13 150);
+  --err: #b5463a;
+
+  /* Code blocks are dark in both themes; in the dark one a step darker than --card, with a --line border. */
+  --code-bg: #101217;
+  --code-ink: #e8eaee;
+  --code-line: transparent;
+  --code-key: #8fd3ff;
+  --code-val: #ffd479;
+  --code-val-bg: rgb(255 212 121 / 12%);
+  --code-comment: #8b93a3;
+  --mark-bg: oklch(0.93 0.09 95);
+  --scrim: rgb(21 23 28 / 32%);
 
   --motion-fast: 120ms;
   --motion-base: 220ms;
@@ -39,6 +58,94 @@
 
   --radius: 10px;
   --shadow: 0 1px 2px rgb(21 23 28 / 6%), 0 8px 24px rgb(21 23 28 / 8%);
+}
+
+/* Dark: the same tokens, with lightness raised for a dark ground; lane, provider and state accents keep their hue and
+ * chroma. The one dark block in this file — every colour below reads a token, so nothing else needs a dark copy. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #e7e9ee;
+  --paper: #0f1115;
+  --card: #171a21;
+  --line: #262b34;
+  --line-strong: #394150;
+  --muted: #a2aab8;
+  --soft: #1c2028;
+  --focus: oklch(0.74 0.13 255);
+
+  --lane-user: oklch(0.72 0.15 255);
+  --lane-screen: oklch(0.72 0.11 205);
+  --lane-engine: oklch(0.72 0.03 260);
+  --lane-models: oklch(0.72 0.17 305);
+  --lane-data: oklch(0.72 0.12 150);
+
+  --p-anthropic: oklch(0.72 0.16 300);
+  --p-google: oklch(0.72 0.12 190);
+  --p-gemma: oklch(0.72 0.13 145);
+  --p-kie: oklch(0.74 0.15 55);
+  --p-image: oklch(0.72 0.17 350);
+  --p-code: oklch(0.72 0.02 260);
+  --p-human: oklch(0.72 0.14 255);
+  --p-llm: oklch(0.72 0.16 280);
+  --p-audio: oklch(0.74 0.13 100);
+  --p-video: oklch(0.72 0.15 330);
+  --p-search: oklch(0.72 0.12 225);
+
+  --warn: oklch(0.75 0.16 65);
+  --bad: oklch(0.7 0.19 25);
+  --ok: oklch(0.72 0.13 150);
+  --err: oklch(0.72 0.14 30);
+
+  --code-bg: #0b0d11;
+  --code-line: var(--line);
+  --mark-bg: oklch(0.42 0.08 95);
+  --scrim: rgb(0 0 0 / 55%);
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 45%);
+}
+
+/* Print is light whatever the theme. CSS only: print events in JS fire unreliably across browsers. This repeats the
+ * light value of every declaration the dark block overrides; test/human-view.test.ts keeps the two lists equal. */
+@media print {
+  :root[data-theme="dark"] {
+    color-scheme: light;
+    --ink: #15171c;
+    --paper: #f6f7f9;
+    --card: #ffffff;
+    --line: #e3e6eb;
+    --line-strong: #c9ced6;
+    --muted: #5b6270;
+    --soft: #eef0f3;
+    --focus: oklch(0.58 0.17 255);
+
+    --lane-user: oklch(0.58 0.15 255);
+    --lane-screen: oklch(0.6 0.11 205);
+    --lane-engine: oklch(0.5 0.03 260);
+    --lane-models: oklch(0.55 0.17 305);
+    --lane-data: oklch(0.56 0.12 150);
+
+    --p-anthropic: oklch(0.5 0.16 300);
+    --p-google: oklch(0.55 0.12 190);
+    --p-gemma: oklch(0.55 0.13 145);
+    --p-kie: oklch(0.6 0.15 55);
+    --p-image: oklch(0.58 0.17 350);
+    --p-code: oklch(0.45 0.02 260);
+    --p-human: oklch(0.55 0.14 255);
+    --p-llm: oklch(0.52 0.16 280);
+    --p-audio: oklch(0.55 0.13 100);
+    --p-video: oklch(0.55 0.15 330);
+    --p-search: oklch(0.55 0.12 225);
+
+    --warn: oklch(0.62 0.16 65);
+    --bad: oklch(0.55 0.19 25);
+    --ok: oklch(0.55 0.13 150);
+    --err: #b5463a;
+
+    --code-bg: #101217;
+    --code-line: transparent;
+    --mark-bg: oklch(0.93 0.09 95);
+    --scrim: rgb(21 23 28 / 32%);
+    --shadow: 0 1px 2px rgb(21 23 28 / 6%), 0 8px 24px rgb(21 23 28 / 8%);
+  }
 }
 
 * { box-sizing: border-box; }
@@ -70,12 +177,17 @@ code, pre, .mono { font-family: var(--font-mono); font-size: 12.5px; }
   font-size: 12px; line-height: 1; padding: 5px 8px; border-radius: 999px;
   border: 1px solid var(--line-strong); color: var(--muted); background: var(--card);
 }
-.badge.warn { border-color: color-mix(in oklab, var(--warn) 50%, white); color: color-mix(in oklab, var(--warn) 80%, black); }
+.badge.warn { border-color: color-mix(in oklab, var(--warn) 50%, var(--card)); color: color-mix(in oklab, var(--warn) 80%, var(--ink)); }
 .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 12px 0 0; }
 .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; background: var(--card); }
 .seg button { border: 0; background: none; padding: 7px 12px; cursor: pointer; font-size: 13px; }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
 .search { flex: 1 1 220px; max-width: 360px; }
+/* The theme switch: a secondary control, drawn like a segment of the filter. No transition — the switch is instant. */
+.theme-toggle {
+  border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card);
+  padding: 7px 12px; cursor: pointer; font-size: 13px; white-space: nowrap;
+}
 .search input {
   width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line-strong);
   background: var(--card); font: inherit; font-size: 14px;
@@ -141,7 +253,7 @@ main { max-width: 1480px; margin: 0 auto; padding: 24px; }
   display: flex; flex-direction: column; gap: 6px; align-items: flex-start;
   transition: background var(--motion-fast) var(--curve);
 }
-.cell:hover { background: color-mix(in oklab, var(--lane-color, var(--muted)) 6%, white); }
+.cell:hover { background: color-mix(in oklab, var(--lane-color, var(--muted)) 6%, var(--card)); }
 .cell.empty { cursor: default; color: var(--line-strong); }
 .cell.empty:hover { background: none; }
 .visibility {
@@ -155,14 +267,16 @@ main { max-width: 1480px; margin: 0 auto; padding: 24px; }
 body[data-filter="user"] .lane-engine, body[data-filter="user"] .lane-models, body[data-filter="user"] .lane-data { display: none; }
 body[data-filter="hood"] .lane-user, body[data-filter="hood"] .lane-screen { display: none; }
 body[data-filter="user"] .visibility, body[data-filter="hood"] .visibility { display: none; }
-.cell mark, .md mark { background: oklch(0.93 0.09 95); padding: 0 2px; border-radius: 3px; }
+/* Every search highlight, wherever it lands (cells, text, titles, the stepper, column heads). color: inherit — the
+ * user-agent style gives mark a dark text colour, unreadable on the dark theme's --mark-bg. */
+mark { background: var(--mark-bg); color: inherit; padding: 0 2px; border-radius: 3px; }
 
 /* ---------- chips ---------- */
 .chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .chip {
   display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; line-height: 1; padding: 4px 7px; border-radius: 6px;
-  background: color-mix(in oklab, var(--c, var(--muted)) 12%, white); color: color-mix(in oklab, var(--c, var(--muted)) 75%, black);
-  border: 1px solid color-mix(in oklab, var(--c, var(--muted)) 28%, white); white-space: nowrap;
+  background: color-mix(in oklab, var(--c, var(--muted)) 12%, var(--card)); color: color-mix(in oklab, var(--c, var(--muted)) 75%, var(--ink));
+  border: 1px solid color-mix(in oklab, var(--c, var(--muted)) 28%, var(--card)); white-space: nowrap;
 }
 .chip.dot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--muted)); }
 .chip.prompt { --c: var(--ink); cursor: pointer; }
@@ -180,9 +294,18 @@ body[data-filter="user"] .visibility, body[data-filter="hood"] .visibility { dis
 .seq-scroll { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; }
 .seq-scroll svg { display: block; }
 .seq-scroll text { font-family: var(--font-ui); }
+/* Diagram colours. An SVG presentation attribute cannot take var(), so app.js marks the SVG elements with these classes;
+ * an actor box's own colour comes from the data, in its style attribute. */
+.dg-line { stroke: var(--ink); }
+.dg-text, .dg-head { fill: var(--ink); }
+.dg-line.err { stroke: var(--err); }
+.dg-text.err, .dg-head.err { fill: var(--err); }
+.dg-muted { fill: var(--muted); }
+.dg-box { fill: var(--card); stroke: var(--ink); }
+.dg-life { stroke: var(--line-strong); }
 
 /* ---------- drawer & modal ---------- */
-.scrim { position: fixed; inset: 0; background: rgb(21 23 28 / 32%); z-index: 40; opacity: 0; pointer-events: none; transition: opacity var(--motion-base) var(--curve); }
+.scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 40; opacity: 0; pointer-events: none; transition: opacity var(--motion-base) var(--curve); }
 .scrim.open { opacity: 1; pointer-events: auto; }
 .drawer {
   position: fixed; top: 0; right: 0; bottom: 0; width: min(760px, 96vw); z-index: 50; background: var(--paper);
@@ -211,12 +334,13 @@ body[data-filter="user"] .visibility, body[data-filter="hood"] .visibility { dis
 details.code { margin-top: 8px; }
 details.code summary { cursor: pointer; font-size: 13px; color: var(--muted); }
 pre {
-  margin: 8px 0 0; background: #101217; color: #e8eaee; padding: 12px 14px; border-radius: 8px; overflow: auto; max-height: 60vh;
+  margin: 8px 0 0; background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--code-line);
+  padding: 12px 14px; border-radius: 8px; overflow: auto; max-height: 60vh;
   white-space: pre-wrap; word-break: break-word; line-height: 1.5;
 }
-pre .v { color: #ffd479; background: rgb(255 212 121 / 12%); border-radius: 3px; padding: 0 2px; }
-pre .k { color: #8fd3ff; }
-pre .c { color: #8b93a3; }
+pre .v { color: var(--code-val); background: var(--code-val-bg); border-radius: 3px; padding: 0 2px; }
+pre .k { color: var(--code-key); }
+pre .c { color: var(--code-comment); }
 .mock {
   background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; padding: 14px; font-size: 13px;
   box-shadow: inset 0 0 0 4px var(--soft);
@@ -247,7 +371,7 @@ table.t th, table.t td { text-align: left; vertical-align: top; padding: 10px 12
 table.t th { background: var(--soft); font-weight: 600; font-size: 12.5px; color: var(--muted); }
 table.t tr:last-child td { border-bottom: 0; }
 table.t tr.clickable { cursor: pointer; }
-table.t tr.clickable:hover td { background: color-mix(in oklab, var(--focus) 5%, white); }
+table.t tr.clickable:hover td { background: color-mix(in oklab, var(--focus) 5%, var(--card)); }
 .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
 .card h4 { margin: 0 0 6px; font: 600 15px/1.3 var(--font-head); }
@@ -273,7 +397,7 @@ table.kv { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.kv th { text-align: left; font-weight: 500; color: var(--muted); padding: 4px 10px 4px 0; width: 120px; vertical-align: top; }
 table.kv td { padding: 4px 0; vertical-align: top; }
 .tcard { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--lane-data); border-radius: 8px; padding: 10px 12px; }
-.err-line { color: color-mix(in oklab, var(--bad) 80%, black); }
-.sec.lock { border-color: color-mix(in oklab, var(--warn) 45%, white); background: color-mix(in oklab, var(--warn) 6%, white); }
+.err-line { color: color-mix(in oklab, var(--bad) 80%, var(--ink)); }
+.sec.lock { border-color: color-mix(in oklab, var(--warn) 45%, var(--card)); background: color-mix(in oklab, var(--warn) 6%, var(--card)); }
 .ent { margin: 26px 0 34px; scroll-margin-top: 180px; }
 .ent h3 { font: 600 18px/1.3 var(--font-head); margin: 0 0 10px; }

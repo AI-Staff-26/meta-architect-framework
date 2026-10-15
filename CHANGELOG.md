@@ -10,6 +10,30 @@ All notable changes to the Meta-Architect Framework (MAF) are recorded here, new
 - **MINOR** — a new or extended skill, agent or rule that is backward compatible.
 - **PATCH** — wording or fixes with no change in behaviour.
 
+## [2.6.1] - 2026-10-15
+
+The owner's HTML gets a dark theme, and the skill drops the traces of the project it was born on.
+
+### Added
+
+- **Dark theme for the `living-blueprint` HTML.**
+  - Auto follows the system.
+  - The «Тема» button in the header switches auto → light → dark, and the device remembers the choice.
+  - Every colour goes through a token, the state-machine and sequence diagrams included.
+  - Print stays light.
+- Provider colours for generic kinds — `llm`, `audio`, `video`, `search` — next to `image`, `code` and `human`.
+
+### Changed
+
+- `living-blueprint` `SKILL.md`: the worked example is the starter. A project copies `tool/` without `test/` and `starter/`.
+- Comments, a test label and the hints in the agent tab no longer name the project the skill was born on.
+
+### Fixed
+
+- The «Скопировать» buttons in the HTML copy the code block again. They failed on click: the button looked for the block inside its own header.
+
+Rebuild each blueprint once after updating: the HTML changes.
+
 ## [2.6.0] - 2026-10-14
 
 A map of the machine in always-on context, kept as pointers. Living documents get the same discipline as the repo wiki.

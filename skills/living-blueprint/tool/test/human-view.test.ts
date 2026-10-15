@@ -276,19 +276,30 @@ class StubElement {
   scrollIntoView(): void {}
 }
 
-/** Runs the page's scripts, opens every view, drawer, prompt and call, and returns what reached the DOM. */
-function renderEverything(page: string): string[] {
-  const sinks: string[] = [];
+/** A window for the page's scripts: the DOM stub, a location and a history. It has no localStorage and no matchMedia —
+ * a browser that offers neither — unless a test adds them to `context`. */
+interface PageWindow {
+  context: vm.Context;
+  /** <html>: the head script puts the theme on its dataset. */
+  root: { dataset: Record<string, string> };
+  element: (selector: string) => StubElement;
+  /** Sets the hash and fires hashchange, as following a link does. */
+  go: (hash: string) => void;
+}
+
+function pageWindow(sinks: string[]): PageWindow {
   const elements = new Map<string, StubElement>();
   const element = (selector: string) => {
     const found = elements.get(selector) ?? new StubElement(sinks);
     elements.set(selector, found);
     return found;
   };
+  const root = { dataset: {} };
   const location = { hash: "" };
   let onHashChange = () => {};
   const context = vm.createContext({
     document: {
+      documentElement: root,
       body: new StubElement(sinks), activeElement: null, querySelector: element, querySelectorAll: () => [],
       getElementById: (id: string) => element(`#${id}`), createElement: () => new StubElement(sinks), addEventListener: () => {},
     },
@@ -299,14 +310,29 @@ function renderEverything(page: string): string[] {
     addEventListener: (type: string, fn: () => void) => { if (type === "hashchange") onHashChange = fn; },
   });
   context.window = context;
-  const { data, app } = scriptsOf(page);
-  vm.runInContext(`window.BP = ${data}`, context);
-  vm.runInContext(app, context);
-
   const go = (hash: string) => {
     location.hash = hash;
     onHashChange();
   };
+  return { context, root, element, go };
+}
+
+/** Runs the page's data and app scripts in `win` — not the head script. */
+function runApp(page: string, win: PageWindow): void {
+  const { data, app } = scriptsOf(page);
+  vm.runInContext(`window.BP = ${data}`, win.context);
+  vm.runInContext(app, win.context);
+}
+
+/** Runs the page's scripts, opens every view, drawer, prompt and call, and returns what reached the DOM. */
+function renderEverything(page: string): string[] {
+  const sinks: string[] = [];
+  const win = pageWindow(sinks);
+  const { context, element, go } = win;
+  runApp(page, win);
+  // No head script ran, so there is no window.LB_THEME: the theme button takes a click and nothing throws.
+  element("#theme").click();
+
   const id = (x: unknown) => encodeURIComponent(String(x));
   const bp = context.BP as Blueprint;
   for (const j of bp.journeys) {
@@ -347,9 +373,252 @@ test("no data value reaches the DOM unescaped: text and ids are escaped, colours
     ["divergences tab caption", `>Расхождения${ESCAPED_MARK}`],
     ["lane id in a class", `class="lane-label lane-lane${ESCAPED_MARK}`],
     ["lane colour falls back", "--lane-color:var(--muted)"],
-    ["seq actor colour falls back", 'stroke="#15171c"'],
+    ["seq actor colour falls back", 'style="stroke:var(--ink)"'],
     ["provider colour falls back", "--c:var(--p-code)"],
   ] as const) {
     assert.ok(all.includes(expected), `${where}: ${expected}`);
   }
+});
+
+// ---------------------------------------------------------------- the theme
+
+const THEME_KEY = "living-blueprint:theme";
+
+/** The page's script in <head>, the one that runs before the stylesheet applies. */
+function headScriptOf(page: string): string {
+  const head = page.slice(0, page.indexOf("<style>"));
+  const start = head.indexOf(SCRIPT_OPEN);
+  assert.ok(start >= 0, "a script in <head>, before <style>");
+  return head.slice(start + SCRIPT_OPEN.length, head.toLowerCase().indexOf(SCRIPT_CLOSE, start));
+}
+
+/** A system that prefers dark, as matchMedia answers it. */
+function darkSystem(query: string): { matches: boolean; addEventListener: () => void; removeEventListener: () => void } {
+  return { matches: query === "(prefers-color-scheme: dark)", addEventListener: () => {}, removeEventListener: () => {} };
+}
+
+/** A system whose colour scheme the test switches: matchMedia's answer to the dark query, and the change listeners the
+ * page holds on it. */
+function switchableSystem(): { matchMedia: (query: string) => unknown; listeners: Set<() => void>; prefer: (dark: boolean) => void } {
+  const listeners = new Set<() => void>();
+  const darkQuery = {
+    matches: false,
+    addEventListener: (_type: string, listener: () => void) => listeners.add(listener),
+    removeEventListener: (_type: string, listener: () => void) => listeners.delete(listener),
+  };
+  return {
+    matchMedia: (query: string) => (query === "(prefers-color-scheme: dark)" ? darkQuery : darkSystem(query)),
+    listeners,
+    prefer: (dark: boolean) => {
+      darkQuery.matches = dark;
+      for (const listener of listeners) listener();
+    },
+  };
+}
+
+/** Opens the page as a browser does — the head script, then the data and the app — with `storage` read on every access
+ * to window.localStorage, on a system that prefers dark unless `matchMedia` says otherwise. `read()` gives the theme on
+ * <html> and the button's caption. */
+function openThemed(
+  page: string, storage: () => unknown, matchMedia: (query: string) => unknown = darkSystem,
+): { read: () => { theme?: string; caption: string }; click: () => void } {
+  const win = pageWindow([]);
+  Object.defineProperty(win.context, "localStorage", { get: storage });
+  win.context.matchMedia = matchMedia;
+  vm.runInContext(headScriptOf(page), win.context);
+  runApp(page, win);
+  const button = win.element("#theme");
+  return {
+    read: () => ({ theme: win.root.dataset.theme, caption: button.textContent }),
+    click: () => button.click(),
+  };
+}
+
+test("storage that throws on access: the page opens without an error, in auto, and the mode still cycles for the session", () => {
+  const { bp, cfg } = loaded();
+  const page = humanView(bp, cfg, RENDERER);
+  const view = openThemed(page, () => {
+    throw new DOMException("The operation is insecure.", "SecurityError");
+  });
+  assert.deepEqual(view.read(), { theme: "dark", caption: "Тема: авто" }, "auto resolves to the system's dark");
+  view.click();
+  assert.deepEqual(view.read(), { theme: "light", caption: "Тема: светлая" });
+  view.click();
+  assert.deepEqual(view.read(), { theme: "dark", caption: "Тема: тёмная" });
+});
+
+test("a stored value other than light or dark counts as auto and never reaches data-theme", () => {
+  const { bp, cfg } = loaded();
+  const page = humanView(bp, cfg, RENDERER);
+  const asked = new Set<string>();
+  const storage = {
+    getItem: (key: string) => {
+      asked.add(key);
+      return "evil";
+    },
+    setItem: () => {},
+    removeItem: () => {},
+  };
+  const view = openThemed(page, () => storage);
+  assert.deepEqual([...asked], [THEME_KEY]);
+  assert.deepEqual(view.read(), { theme: "dark", caption: "Тема: авто" });
+});
+
+test("an explicit mode does not follow the system; auto follows it, and only auto listens", () => {
+  const { bp, cfg } = loaded();
+  const page = humanView(bp, cfg, RENDERER);
+  const stored = new Map([[THEME_KEY, "light"]]);
+  const storage = {
+    getItem: (key: string) => stored.get(key) ?? null,
+    setItem: (key: string, value: string) => stored.set(key, value),
+    removeItem: (key: string) => stored.delete(key),
+  };
+  const system = switchableSystem();
+  const view = openThemed(page, () => storage, system.matchMedia);
+
+  // Light is stored: the system turning dark changes nothing, and nothing listens to it.
+  system.prefer(true);
+  assert.deepEqual(view.read(), { theme: "light", caption: "Тема: светлая" });
+  assert.equal(system.listeners.size, 0, "no change listener while a mode is stored");
+
+  // light → dark → auto: the key goes, the page listens, and it follows the system both ways.
+  view.click();
+  view.click();
+  assert.equal(stored.has(THEME_KEY), false);
+  assert.equal(system.listeners.size, 1, "one change listener in auto");
+  assert.deepEqual(view.read(), { theme: "dark", caption: "Тема: авто" });
+  system.prefer(false);
+  assert.equal(view.read().theme, "light");
+
+  // auto → light: explicit again, so it stops listening, and the system turning dark leaves it light.
+  view.click();
+  assert.equal(system.listeners.size, 0, "the listener goes with auto");
+  system.prefer(true);
+  assert.deepEqual(view.read(), { theme: "light", caption: "Тема: светлая" });
+});
+
+/** The declarations of the first rule `opener` finds in `css`, by property. Values hold no braces, so the rule ends at
+ * the first "}". */
+function declarationsAfter(css: string, opener: RegExp): Map<string, string> {
+  const found = opener.exec(css);
+  assert.ok(found, `a rule matching ${opener}`);
+  const start = found.index + found[0].length;
+  const body = css.slice(start, css.indexOf("}", start)).replace(/\/\*[\s\S]*?\*\//g, "");
+  return new Map(body.split(";").map((d) => d.trim()).filter(Boolean).map((d) => {
+    const colon = d.indexOf(":");
+    return [d.slice(0, colon).trim(), d.slice(colon + 1).trim()] as const;
+  }));
+}
+
+test("print is light in either theme: the print copy restores every declaration the dark block overrides, to its light value", () => {
+  const css = RENDERER.css;
+  // JS resolves auto, so the stylesheet holds one dark block and no prefers-color-scheme copy of it.
+  assert.doesNotMatch(css, /prefers-color-scheme/);
+  const light = declarationsAfter(css, /^:root \{/m);
+  const dark = declarationsAfter(css, /^:root\[data-theme="dark"\] \{/m);
+  const print = declarationsAfter(css, /@media print \{\s*:root\[data-theme="dark"\] \{/);
+  assert.ok(dark.size > 0);
+  assert.deepEqual([...print.keys()].sort(), [...dark.keys()].sort(), "the same declarations in the dark block and its print copy");
+  for (const [name, value] of print) assert.equal(value, light.get(name), `${name} in print is its light value`);
+});
+
+test("app.js writes no literal colour outside its comments: SVG colours come from classes, data colours pass cssColor", () => {
+  // app.js has a block comment at the top and whole-line // comments; the only "//" inside code is the SVG namespace.
+  const code = RENDERER.app.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const LITERAL_COLOUR =
+    /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(|(?<![\w-])(?:white|black)(?![\w-])/gi;
+  assert.deepEqual(code.match(LITERAL_COLOUR) ?? [], []);
+});
+
+// ---------------------------------------------------------------- the copy button
+
+/** Enough of a DOM for the copy button: the element tree app.js wrote, closest(), querySelector() and textContent. */
+class ParsedElement {
+  readonly tagName: string;
+  readonly attributes: ReadonlyMap<string, string>;
+  readonly parentElement: ParsedElement | null;
+  readonly nodes: (ParsedElement | string)[] = [];
+  onclick: (() => void) | null = null;
+
+  constructor(tagName: string, attributes: ReadonlyMap<string, string>, parentElement: ParsedElement | null) {
+    this.tagName = tagName;
+    this.attributes = attributes;
+    this.parentElement = parentElement;
+  }
+
+  /** A tag name or an attribute selector, "[name]" — the two kinds app.js asks for here. */
+  matches(selector: string): boolean {
+    const attribute = /^\[([\w-]+)\]$/.exec(selector)?.[1];
+    return attribute === undefined ? this.tagName === selector : this.attributes.has(attribute);
+  }
+
+  closest(selector: string): ParsedElement | null {
+    return this.matches(selector) ? this : (this.parentElement?.closest(selector) ?? null);
+  }
+
+  querySelectorAll(selector: string): ParsedElement[] {
+    return this.nodes.flatMap((node) =>
+      typeof node === "string" ? [] : [...(node.matches(selector) ? [node] : []), ...node.querySelectorAll(selector)]);
+  }
+
+  querySelector(selector: string): ParsedElement | null {
+    return this.querySelectorAll(selector)[0] ?? null;
+  }
+
+  get textContent(): string {
+    return this.nodes.map((node) => (typeof node === "string" ? node : node.textContent)).join("");
+  }
+}
+
+const VOID_TAGS = new Set(["br", "hr", "img", "input"]);
+const ENTITIES: Readonly<Record<string, string>> = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'" };
+
+/** Parses the markup app.js writes, which is well-formed: tags, double-quoted attributes, and text whose only entities
+ * are the five esc() makes. */
+function parseHtml(html: string): ParsedElement {
+  const root = new ParsedElement("#root", new Map(), null);
+  let open = root;
+  for (const [token] of html.matchAll(/<\/?[a-z][^>]*>|[^<]+/gi)) {
+    if (token.startsWith("</")) {
+      open = open.parentElement ?? root;
+    } else if (!token.startsWith("<")) {
+      open.nodes.push(token.replace(/&(?:amp|lt|gt|quot|#39);/g, (entity) => ENTITIES[entity] ?? entity));
+    } else {
+      const [, tag = "", rest = ""] = /^<([a-z0-9]+)([^>]*?)\/?>$/i.exec(token) ?? [];
+      const attributes = new Map([...rest.matchAll(/([\w-]+)(?:="([^"]*)")?/g)].map((m) => [m[1] ?? "", m[2] ?? ""] as const));
+      const element = new ParsedElement(tag.toLowerCase(), attributes, open);
+      open.nodes.push(element);
+      if (!VOID_TAGS.has(element.tagName) && !token.endsWith("/>")) open = element;
+    }
+  }
+  return root;
+}
+
+test("«Скопировать» copies the text of its own block and says so", () => {
+  const b = baseBlueprint();
+  const system = "Кратко перескажи {{doc}}\n// без оценок";
+  const user = 'Документ <{{doc}}> & "кавычки"';
+  Object.assign(b.prompts.p1 ?? {}, { system, user });
+  const { bp, cfg } = loaded(b);
+  const win = pageWindow([]);
+  const copied: string[] = [];
+  win.context.navigator = {
+    clipboard: {
+      writeText: (text: string) => {
+        copied.push(text);
+        return { then: (done: () => void) => done() };
+      },
+    },
+  };
+  // bindCopy() looks for the buttons in the document, right after the modal body is written: they come from that body.
+  let buttons: ParsedElement[] = [];
+  win.context.document.querySelectorAll = (selector: string) =>
+    (buttons = parseHtml(win.element("#modal-body").innerHTML).querySelectorAll(selector));
+  runApp(humanView(bp, cfg, RENDERER), win);
+  win.go("#p=p1");
+
+  assert.equal(buttons.length, 2, "a button for System and one for User");
+  for (const button of buttons) button.onclick?.();
+  assert.deepEqual(copied, [system, user]);
+  assert.equal(win.element("#toast").textContent, "Скопировано");
 });

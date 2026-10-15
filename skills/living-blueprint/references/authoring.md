@@ -58,7 +58,7 @@ When a job yields several pieces — two takes, a batch of covers — the owner 
 
 ### Late results
 
-A provider can answer after the deadline gave up on it. Decide per subject: apply the result (`late: true` — a master the job already paid for, an image the person still wants), or log it and drop it (a cover whose notes were already refunded). Say which in the transition or in a project rule.
+A provider can answer after the deadline gave up on it. Decide per subject: apply the result (`late: true` — a master the job already paid for, an image the person still wants), or log it and drop it (a cover whose credits were already refunded). Say which in the transition or in a project rule.
 
 ### Batches queue
 
@@ -93,7 +93,7 @@ Split by guard rather than overloading one transition. When a provider succeeds,
 
 - **`detect` is a provider signal**, not an adjective: a status code, a response field and its value, `stop_reason`, a timeout parameter. If the signal has not been verified against the live provider yet, say what will be checked and when.
 - **Retry by who can fix it.** A transient fault is retried by the `worker` with `attempts` and `backoff`. A fault the person must act on goes to the `user`, through `retry_via`.
-- **`says` is final copy.** It names what was given back ("Ноты вернулись"). A failure the person never sees still says so — `— (не показывается: …)` — so the choice is visible to the reviewer.
+- **`says` is final copy.** It names what was given back ("Кредиты вернулись"). A failure the person never sees still says so — `— (не показывается: …)` — so the choice is visible to the reviewer.
 
 ## Fixtures
 

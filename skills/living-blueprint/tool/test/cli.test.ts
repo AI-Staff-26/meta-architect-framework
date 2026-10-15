@@ -324,7 +324,7 @@ test("prompts_md through a symlinked sibling folder (../prompts → elsewhere) i
   withDir(() => {
     const prompts = join(dir, "docs", "prompts");
     mkdirSync(prompts);
-    assert.equal(run(blueprint).status, 0, "MusicXO's layout: a real docs/prompts next to the blueprint");
+    assert.equal(run(blueprint).status, 0, "a real docs/prompts next to the blueprint");
     assert.ok(existsSync(join(prompts, "01-PROMPTS.md")));
     rmSync(prompts, { recursive: true });
     rmSync(join(blueprint, "agent"), { recursive: true });

@@ -101,10 +101,12 @@
       return "<div>" + inline(x) + "</div>";
     }).join("") + "</div>";
   }
-  // A colour from the data lands in a style or SVG attribute: only a hex colour, var(--name) or a colour keyword passes,
-  // so no value can close the attribute or pull in url(). The build checks the same grammar (L0, src/schema.ts).
+  // A colour from the data lands in a style attribute — a custom property, or the stroke of an SVG actor box, kept in
+  // style because an SVG presentation attribute cannot take var(): only a hex colour, var(--name) or a colour keyword
+  // passes, so no value can end the declaration, close the attribute or pull in url(). The build checks the same grammar
+  // (L0, src/schema.ts).
   var CSS_COLOR = /^(#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|var\(--[A-Za-z0-9_-]+\)|[A-Za-z]+)$/;
-  var DEFAULT_LANE_COLOR = "var(--muted)", DEFAULT_ACTOR_COLOR = "#15171c", DEFAULT_PROVIDER_COLOR = "var(--p-code)";
+  var DEFAULT_LANE_COLOR = "var(--muted)", DEFAULT_ACTOR_COLOR = "var(--ink)", DEFAULT_PROVIDER_COLOR = "var(--p-code)";
   function cssColor(value, fallback) { return typeof value === "string" && CSS_COLOR.test(value) ? value : fallback; }
   function el(html) { var d = document.createElement("div"); d.innerHTML = html; return d.firstElementChild; }
   function modelByKey(k) { return (BP.models || []).filter(function (m) { return m.key === k; })[0]; }
@@ -292,12 +294,12 @@
     var maxCol = Math.max.apply(null, Object.keys(cols).map(Number)), maxRows = Math.max.apply(null, Object.keys(cols).map(function (k) { return cols[k]; }));
     var SW = PAD * 2 + (maxCol + 1) * (W + GX), SH = PAD * 2 + 56 + maxRows * (H + GY) + 40;
     var sv = ['<svg xmlns="http://www.w3.org/2000/svg" width="' + SW + '" height="' + SH + '" viewBox="0 0 ' + SW + " " + SH + '" role="img" aria-label="Машина состояний ' + esc(name) + '">',
-      '<defs><marker id="sa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#15171c"/></marker>' +
-      '<marker id="se" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b5463a"/></marker></defs>'];
+      '<defs><marker id="sa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-head" d="M0,0 L10,5 L0,10 z"/></marker>' +
+      '<marker id="se" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-head err" d="M0,0 L10,5 L0,10 z"/></marker></defs>'];
     var selfN = {};
     function edge(a, b, label, err, k) {
       var A = pos[a], B = pos[b]; if (!A || !B) return;
-      var col = err ? "#b5463a" : "#15171c", dash = err ? ' stroke-dasharray="5 4"' : "", mk = err ? "url(#se)" : "url(#sa)", d, lx, ly;
+      var tone = err ? " err" : "", dash = err ? ' stroke-dasharray="5 4"' : "", mk = err ? "url(#se)" : "url(#sa)", d, lx, ly;
       if (a === b) {
         var n = selfN[a] = (selfN[a] || 0) + 1, off = (n - 1) * 22, hgt = 30 + (n - 1) * 10;
         var sx = A.x + 18 + off;
@@ -312,8 +314,8 @@
         d = "M" + (A.x + W / 2 + 10) + "," + (A.y + H) + " C" + (A.x + W / 2 + 10) + "," + bx + " " + (B.x + W / 2 - 10) + "," + bx + " " + (B.x + W / 2 - 10) + "," + (B.y + H);
         lx = (A.x + B.x + W) / 2; ly = bx - 4;
       }
-      sv.push('<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="1.3" marker-end="' + mk + '"' + dash + "/>");
-      sv.push('<text x="' + lx + '" y="' + ly + '" text-anchor="middle" font-size="11" fill="' + col + '" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">' + esc(label) + "</text>");
+      sv.push('<path class="dg-line' + tone + '" d="' + d + '" fill="none" stroke-width="1.3" marker-end="' + mk + '"' + dash + "/>");
+      sv.push('<text x="' + lx + '" y="' + ly + '" text-anchor="middle" font-size="11" class="dg-text' + tone + '" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">' + esc(label) + "</text>");
     }
     // One arrow per (from, to, kind): parallel transitions share it and list their ids. Exits to "previous" become a ↩ note.
     var groups = {}, gorder = [], prevOut = {};
@@ -339,14 +341,14 @@
     var k = 0;
     gorder.forEach(function (key) { var g = groups[key]; edge(g.a, g.b, (g.err ? "✗ " : "") + g.labels.join(", "), g.err, k++); });
     var init = pos[e.initial];
-    if (init) sv.push('<circle cx="' + (init.x - 14) + '" cy="' + (init.y + H / 2) + '" r="6" fill="#15171c"/><line x1="' + (init.x - 8) + '" y1="' + (init.y + H / 2) + '" x2="' + init.x + '" y2="' + (init.y + H / 2) + '" stroke="#15171c" stroke-width="1.3" marker-end="url(#sa)"/>');
+    if (init) sv.push('<circle cx="' + (init.x - 14) + '" cy="' + (init.y + H / 2) + '" r="6" class="dg-head"/><line class="dg-line" x1="' + (init.x - 8) + '" y1="' + (init.y + H / 2) + '" x2="' + init.x + '" y2="' + (init.y + H / 2) + '" stroke-width="1.3" marker-end="url(#sa)"/>');
     states.forEach(function (st) {
       var P = pos[st], term = list(e.terminal).indexOf(st) >= 0;
-      sv.push('<rect x="' + P.x + '" y="' + P.y + '" width="' + W + '" height="' + H + '" rx="10" fill="#fff" stroke="#15171c" stroke-width="' + (term ? 2.4 : 1.2) + '"/>');
-      sv.push('<text x="' + (P.x + W / 2) + '" y="' + (P.y + 19) + '" text-anchor="middle" font-size="12.5" font-weight="600" fill="#15171c" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">' + esc(st) + "</text>");
-      sv.push('<text x="' + (P.x + W / 2) + '" y="' + (P.y + 35) + '" text-anchor="middle" font-size="11" fill="#5b6270">' + esc(String((e.states || {})[st] || "").slice(0, 26)) + "</text>");
-      if (prevOut[st]) sv.push('<text x="' + (P.x + W / 2) + '" y="' + (P.y + H + 13) + '" text-anchor="middle" font-size="10.5" fill="#b5463a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">↩ прежнее: ' + esc(prevOut[st].join(", ")) + "</text>");
-      if (bornFailed[st]) sv.push('<text x="' + (P.x + W / 2) + '" y="' + (P.y - 6) + '" text-anchor="middle" font-size="10.5" fill="#b5463a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">✗ при создании: ' + esc(bornFailed[st].join(", ")) + "</text>");
+      sv.push('<rect x="' + P.x + '" y="' + P.y + '" width="' + W + '" height="' + H + '" rx="10" class="dg-box" stroke-width="' + (term ? 2.4 : 1.2) + '"/>');
+      sv.push('<text x="' + (P.x + W / 2) + '" y="' + (P.y + 19) + '" text-anchor="middle" font-size="12.5" font-weight="600" class="dg-text" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">' + esc(st) + "</text>");
+      sv.push('<text x="' + (P.x + W / 2) + '" y="' + (P.y + 35) + '" text-anchor="middle" font-size="11" class="dg-muted">' + esc(String((e.states || {})[st] || "").slice(0, 26)) + "</text>");
+      if (prevOut[st]) sv.push('<text x="' + (P.x + W / 2) + '" y="' + (P.y + H + 13) + '" text-anchor="middle" font-size="10.5" class="dg-text err" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">↩ прежнее: ' + esc(prevOut[st].join(", ")) + "</text>");
+      if (bornFailed[st]) sv.push('<text x="' + (P.x + W / 2) + '" y="' + (P.y - 6) + '" text-anchor="middle" font-size="10.5" class="dg-text err" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">✗ при создании: ' + esc(bornFailed[st].join(", ")) + "</text>");
     });
     sv.push("</svg>");
     return sv.join("");
@@ -383,7 +385,7 @@
       ["agent/STATE-MACHINES.md", "машины состояний (Mermaid stateDiagram) и таблицы переходов"],
       ["agent/fixtures/<шаг>.json", "фикстуры: сущность до и после шага, ответ провайдера — моки для экранов, заглушек и тестов"],
       ["agent/blueprint-lock.json", "id и хэши шагов, переходов, эндпоинтов, событий, версии промптов"],
-      ["agent/ACCEPTANCE.md", "заготовки тестов: шаг (BP:k1), доп. эндпоинт (BP:k1.takes), фикстура (BP:k1:happy), переход (SM:song.S08) и его сбой"],
+      ["agent/ACCEPTANCE.md", "заготовки тестов: шаг (BP:k1), доп. эндпоинт (BP:k1.retry), фикстура (BP:k1:happy), переход (SM:order.S08) и его сбой"],
       ["agent/prompts/<id>.md", "каждый промпт целиком: system, user, формат ответа, переменные, пример"],
       ["agent/SCHEMA.md", "как читать вид для агентов: поля схемы v1.2 и правила проверки"]
     ];
@@ -424,6 +426,20 @@
       Array.prototype.forEach.call($("#filter").children, function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
     });
     $("#q").addEventListener("input", function (e) { state.query = e.target.value.trim(); renderView(); });
+  }
+  // The theme logic lives in the head script (template.html), which sets data-theme before the page paints and exposes
+  // window.LB_THEME; this only wires the header button to it. Without it the button stays on «авто» and a click does
+  // nothing. The caption comes from this fixed map, never from the mode's own text.
+  var THEME_CAPTION = { auto: "Тема: авто", light: "Тема: светлая", dark: "Тема: тёмная" };
+  function bindTheme() {
+    var button = $("#theme"), theme = window.LB_THEME;
+    if (!button) return;
+    function show() {
+      var mode = theme ? theme.get() : "auto";
+      button.textContent = Object.prototype.hasOwnProperty.call(THEME_CAPTION, mode) ? THEME_CAPTION[mode] : THEME_CAPTION.auto;
+    }
+    button.addEventListener("click", function () { if (theme) theme.cycle(); show(); });
+    show();
   }
   function selectTab(key) {
     Array.prototype.forEach.call($("#tabs").querySelectorAll("button[data-view]"), function (b) {
@@ -492,15 +508,15 @@
     var W = padX * 2 + colW * (seq.actors.length - 1);
     var H = top + 30 + seq.msgs.length * rowH + 20;
     var s = ['<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Диаграмма последовательности">'];
-    s.push('<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#15171c"/></marker></defs>');
+    s.push('<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-head" d="M0,0 L10,5 L0,10 z"/></marker></defs>');
     seq.actors.forEach(function (a, i) {
       var x = padX + i * colW;
-      s.push('<line x1="' + x + '" y1="' + (top + 14) + '" x2="' + x + '" y2="' + (H - 6) + '" stroke="#c9ced6" stroke-dasharray="3 4"/>');
+      s.push('<line x1="' + x + '" y1="' + (top + 14) + '" x2="' + x + '" y2="' + (H - 6) + '" class="dg-life" stroke-dasharray="3 4"/>');
       var lines = wrap(a.label, 18);
       var bw = 150, bh = 16 + lines.length * 15;
-      s.push('<rect x="' + (x - bw / 2) + '" y="4" width="' + bw + '" height="' + bh + '" rx="8" fill="#fff" stroke="' + cssColor(a.color, DEFAULT_ACTOR_COLOR) + '" stroke-width="1.5"/>');
+      s.push('<rect x="' + (x - bw / 2) + '" y="4" width="' + bw + '" height="' + bh + '" rx="8" class="dg-box" style="stroke:' + cssColor(a.color, DEFAULT_ACTOR_COLOR) + '" stroke-width="1.5"/>');
       lines.forEach(function (l, k) {
-        s.push('<text x="' + x + '" y="' + (22 + k * 15) + '" text-anchor="middle" font-size="12.5" font-weight="600" fill="#15171c">' + esc(l) + "</text>");
+        s.push('<text x="' + x + '" y="' + (22 + k * 15) + '" text-anchor="middle" font-size="12.5" font-weight="600" class="dg-text">' + esc(l) + "</text>");
       });
     });
     seq.msgs.forEach(function (m, i) {
@@ -510,16 +526,16 @@
       var x1 = padX + a * colW, x2 = padX + b * colW;
       var dash = m.dashed ? ' stroke-dasharray="5 4"' : "";
       if (a === b) {
-        s.push('<path d="M' + x1 + "," + (y - 10) + " h36 v18 h-34" + '" fill="none" stroke="#15171c" stroke-width="1.3" marker-end="url(#ah)"' + dash + "/>");
+        s.push('<path d="M' + x1 + "," + (y - 10) + " h36 v18 h-34" + '" class="dg-line" fill="none" stroke-width="1.3" marker-end="url(#ah)"' + dash + "/>");
         wrap(m.text, 30).forEach(function (l, k) {
-          s.push('<text x="' + (x1 + 44) + '" y="' + (y - 6 + k * 13) + '" font-size="12" fill="#15171c">' + esc(l) + "</text>");
+          s.push('<text x="' + (x1 + 44) + '" y="' + (y - 6 + k * 13) + '" font-size="12" class="dg-text">' + esc(l) + "</text>");
         });
       } else {
-        s.push('<line x1="' + x1 + '" y1="' + y + '" x2="' + (x2 + (x2 > x1 ? -2 : 2)) + '" y2="' + y + '" stroke="#15171c" stroke-width="1.3" marker-end="url(#ah)"' + dash + "/>");
+        s.push('<line class="dg-line" x1="' + x1 + '" y1="' + y + '" x2="' + (x2 + (x2 > x1 ? -2 : 2)) + '" y2="' + y + '" stroke-width="1.3" marker-end="url(#ah)"' + dash + "/>");
         var mid = (x1 + x2) / 2;
         var lines = wrap(m.text, Math.max(22, Math.floor(Math.abs(x2 - x1) / 7)));
         lines.forEach(function (l, k) {
-          s.push('<text x="' + mid + '" y="' + (y - 8 - (lines.length - 1 - k) * 13) + '" text-anchor="middle" font-size="12" fill="#15171c">' + esc(l) + "</text>");
+          s.push('<text x="' + mid + '" y="' + (y - 8 - (lines.length - 1 - k) * 13) + '" text-anchor="middle" font-size="12" class="dg-text">' + esc(l) + "</text>");
         });
       }
     });
@@ -604,9 +620,10 @@
     $("#modal").classList.remove("open");
     if (!$("#drawer").classList.contains("open")) $("#scrim").classList.remove("open");
   }
+  // preBlock puts the button in the block's heading row and the <pre> beside that row: both sit in the block's <section>.
   function bindCopy() {
     Array.prototype.forEach.call(document.querySelectorAll("[data-copy]"), function (b) {
-      b.onclick = function () { copy(b.parentElement.querySelector("pre").textContent); };
+      b.onclick = function () { copy(b.closest("section").querySelector("pre").textContent); };
     });
   }
   function preBlock(label, text, kind) {
@@ -764,5 +781,6 @@
   window.addEventListener("hashchange", route);
 
   renderHeader();
+  bindTheme();
   route();
 })();

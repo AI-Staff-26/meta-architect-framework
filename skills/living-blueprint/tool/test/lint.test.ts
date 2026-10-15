@@ -408,7 +408,7 @@ test("L21 c: the carrier's event is allowed when another transition fired by it 
   transitionOf(b, "hold", "H01").fired_by = [
     { kind: "endpoint", ref: "POST /orders/{id}:pay" }, { kind: "event", ref: "PaymentStarted" },
   ];
-  // The order's own reaction to PaymentStarted carries the hold too, as lyrics.V02 carries hold.H02 on LyricsWritten.
+  // The order's own reaction to PaymentStarted, order.O05, carries hold.H01 too.
   const react = { id: "O05", from: "paying", to: "same", step: "s2", fired_by: { kind: "event", ref: "PaymentStarted" }, local: true };
   b.entities.order?.transitions?.push({ ...react, with: ["hold.H01"] });
   assert.deepEqual(lintBlueprint(b), { errors: [], warnings: [] });

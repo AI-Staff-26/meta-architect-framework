@@ -2,6 +2,43 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<script>
+/* The theme, resolved before the page paints: data-theme on <html> is the one source the stylesheet reads. The mode is
+ * auto (follow the system), light or dark. localStorage keeps light or dark, and auto removes the key; any other stored
+ * value counts as auto, so data-theme only ever holds light or dark. Storage can be blocked (file:// in some browsers,
+ * private mode): every access is guarded, and the mode then lasts for the session. app.js wires the header button to
+ * window.LB_THEME and holds no theme logic of its own. */
+(function () {
+  "use strict";
+  var KEY = "living-blueprint:theme", NEXT = { auto: "light", light: "dark", dark: "auto" };
+  var root = document.documentElement, system = null, following = false, mode = "auto";
+  function valid(value) { return value === "light" || value === "dark" ? value : "auto"; }
+  try { system = window.matchMedia("(prefers-color-scheme: dark)"); } catch (e) { system = null; }
+  try { mode = valid(window.localStorage.getItem(KEY)); } catch (e) { mode = "auto"; }
+  function apply() { root.dataset.theme = mode === "auto" ? (system && system.matches ? "dark" : "light") : mode; }
+  function onSystemChange() { if (mode === "auto") apply(); }
+  // The system's choice is followed only in auto; an explicit light or dark ignores it.
+  function follow() {
+    if (!system || following === (mode === "auto")) return;
+    following = mode === "auto";
+    try {
+      if (following) system.addEventListener("change", onSystemChange); else system.removeEventListener("change", onSystemChange);
+    } catch (e) { following = false; }
+  }
+  function set(next) {
+    mode = valid(next);
+    try { if (mode === "auto") window.localStorage.removeItem(KEY); else window.localStorage.setItem(KEY, mode); } catch (e) { /* kept for the session */ }
+    apply(); follow();
+    return mode;
+  }
+  window.LB_THEME = {
+    get: function () { return mode; },
+    set: set,
+    cycle: function () { return set(NEXT[mode]); }
+  };
+  apply(); follow();
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__TITLE__</title>
 <style>
@@ -16,6 +53,7 @@ __CSS__
       <button data-f="all" aria-pressed="true">Всё</button><button data-f="user" aria-pressed="false">Только пользователь</button><button data-f="hood" aria-pressed="false">Только под капотом</button>
     </div>
     <label class="search"><input id="q" type="search" placeholder="Поиск по шагам и промптам" aria-label="Поиск"></label>
+    <button class="theme-toggle" id="theme" title="Переключить тему: авто → светлая → тёмная">Тема: авто</button>
   </div>
   <nav class="tabs" id="tabs" role="tablist" aria-label="Разделы"></nav>
 </div></header>

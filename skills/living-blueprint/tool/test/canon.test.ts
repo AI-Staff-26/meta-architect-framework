@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { canonicalJson, shortHash } from "../src/canon.ts";
 
-// Expected values were computed once by the prototype at port time (see build.ts; MusicXO, schema 1.2) and pasted
+// Expected values were computed once by the prototype at port time (see build.ts; schema 1.2) and pasted
 // here; the tests never call Python. The canonical text is pasted too, so a mismatch says where the two serialisers part.
 
 interface Vector {

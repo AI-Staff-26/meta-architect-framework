@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Living blueprint build, schema v1.2. One data source, two views: the human view (one HTML file) and the agent view
-// (agent/). It began as a port of MusicXO's Python prototype, build.py, which the skill does not ship; output parity
-// with the prototype was checked at port time, and the tool has grown since. Where a comment speaks of Python
-// semantics (str(), json.dumps(), truthiness), it means the output the prototype printed.
+// (agent/). It began as a port of a Python prototype; output parity was verified at port time, and the tool has grown
+// since. Where a comment speaks of Python semantics (str(), json.dumps(), truthiness), it means the output the
+// prototype printed.
 //
 //   node build.ts <blueprint-dir>   lint, then write <config.html>, agent/ and <config.prompts_md>; on any error
 //                                   print the findings, write nothing and exit 1
