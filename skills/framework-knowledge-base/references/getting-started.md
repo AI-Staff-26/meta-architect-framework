@@ -17,7 +17,7 @@ IDE с поддержкой скилов и субагентов — Claude Code
 ├── CLAUDE.md              # всегда включённый слой: язык, сложность, роли, ворота
 ├── rules/
 │   └── memory-protocol.md # подключается из CLAUDE.md через @import
-├── agents/                # роли: code, review, debug, devops, advisor, consilium, vibe-mentor
+├── agents/                # роли: code, review, debug, devops, advisor, consilium, vibe-mentor, prompt-engineer
 └── skills/                # методы: workflow-*, checklist-*, pattern-* и остальные
 ```
 

@@ -10,6 +10,30 @@ All notable changes to the Meta-Architect Framework (MAF) are recorded here, new
 - **MINOR** — a new or extended skill, agent or rule that is backward compatible.
 - **PATCH** — wording or fixes with no change in behaviour.
 
+## [2.10.0] - 2026-10-15
+
+A companion for the owner: a read-only role, run as its own session, that shapes what the owner sends to a working session and critiques what comes back. It grew from the owner's prompt-enhancer drafts — the fourth, which asks instead of inventing, is its core — and from the prompting research in Hermes (`llm-prompting-research`).
+
+### Added
+
+- Agent `prompt-engineer`.
+  - It runs as its own session: `claude --agent prompt-engineer`. Model sonnet, effort high.
+  - It has read-only tools plus `Skill`.
+  - It follows the `[all agents]` sections of `CLAUDE.md`; the `[architect]` sections and the memory gates belong to the working session.
+  - The owner's meaning is the owner's: it adds no goal or requirement the owner did not state, and it changes position for a reason, not for pressure.
+  - A smoke run (`claude -p --agent prompt-engineer`, in a scratch directory with no `memory/`) answered «добавь авторизацию» with three questions and their defaults. It did not try to onboard, and it wrote nothing.
+  - **The role as a whole is not yet trialled on our tasks.** The owner chose to ship it now and try it on real requests in use; the plan's trial of 10–15 requests becomes that.
+- Skill `prompt-shaping`, preloaded by the agent: read just enough, find what is missing — goal, scope, how to tell it is done, an example — then ask with defaults or write the prompt with `Допущение` lines. It cuts a large task into stages and leaves out personas, «think step by step» and MAF's process.
+- Skill `plan-critique`: read the artifact cold; tag findings [bug]/[text] as `verification-budget` §5 defines them; a premortem for 🔴 work; for each thing the plan delivers, the check that shows it works; rounds stop by the trend.
+- Skill `thinking-moves`: six measured failure modes of a model in conversation and the move that answers each; pipelines for a decision, research, a text, checking someone's work, a long piece of work, learning, ideas, and a bot's prompt. Marked as not yet trialled on our tasks.
+
+### Changed
+
+- `CLAUDE.md`: a row in Roles and a route in Skills; `prompt-engineer` is the one role the architect does not run. «Language» names the exception: a prompt shaped for the owner's own message is in the owner's language.
+- `authoring-skills`: an exception to an always-on rule is written in that rule, not only on the side of the role or skill that needs it.
+- `rules/memory-protocol.md`: `prompt-engineer` skips the memory gates and appears in the per-agent table as read-only.
+- `vibe-mentor`'s description routes a prompt or a plan critique for the owner to `prompt-engineer`. The skills index and the roles list in `framework-knowledge-base` name the new role.
+
 ## [2.9.0] - 2026-10-15
 
 Security checklist in the language agents read it in, with the rules for products that run agents; and a procedure for production that is down right now.

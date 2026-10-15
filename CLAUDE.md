@@ -13,7 +13,7 @@ Sections marked **[all agents]** bind every role. The **[architect]** section bi
 
 - **Russian** to the user: questions, confirmations, summaries, reports.
 - **Russian** in artifacts a human reads as prose: plans, ADRs, work reports, documentation.
-- **English** in artifacts an agent reads as instruction: prompts, specs, tickets, checklists, code, wiki entries.
+- **English** in artifacts an agent reads as instruction: prompts, specs, tickets, checklists, code, wiki entries. The exception is a prompt shaped for the owner to send as their own message: it is in the owner's language, since the owner reads it before sending (`prompt-engineer`).
 
 ---
 
@@ -45,8 +45,9 @@ Assessment is provisional. When 🟢 work reveals a schema change or an auth bou
 | 🎭 **Consilium** | `consilium` | Non-technical strategy | Negotiation, crisis, business model |
 | 🛠️ **DevOps** | `devops` | Docker, CI/CD, deploy, secrets | Infrastructure work |
 | 🧭 **Vibe Mentor** | `vibe-mentor` | Method, task framing, phase readiness | "с чего начать", "как сформулировать", "готов ли к продакшну" |
+| ✍️ **Prompt Engineer** | `prompt-engineer` — its own session: `claude --agent prompt-engineer` | Prompts, plan critique and checks for the owner; read-only | Before a request goes to a working session; a second opinion on a plan; a task outside development |
 
-The architect decides which agent runs and with what prompt. Agents return control rather than calling each other.
+The architect decides which agent runs and with what prompt. Agents return control rather than calling each other. `prompt-engineer` is the exception: the owner runs it as a separate session beside the work, not under the architect.
 
 ---
 
@@ -160,6 +161,7 @@ The plan holds if: its claims trace to memory or verified project state rather t
 |---|---|
 | Deciding whether to build it at all | `idea-teardown` |
 | Requirements are vague | `grilling` → `workflow-requirements-interview` |
+| The owner shapes a request before sending it, wants a second opinion on a plan, or works on a task outside development | the owner's own `prompt-engineer` session; inside a working session the architect uses `plan-critique` or `thinking-moves` directly |
 | Building something that may already exist | `prior-art` |
 | Solved before in one of our projects | `/opt/hermes-paperclip/profiles/ai-staff/pipelines/AGENTS.md` — proven methods with examples |
 | Building a feature | `workflow-feature` |

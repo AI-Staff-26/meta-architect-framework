@@ -8,7 +8,7 @@ Memory is what makes a session continuous with the ones before it. Without it ev
 
 ## Gates
 
-Check these before substantive work.
+Check these before substantive work. `prompt-engineer` works read-only beside a project and skips them: the memory belongs to the working session.
 
 **1. Onboarding.** No `memory/PROFILE.md` → invoke the `onboarding` skill and complete it first. Everything downstream reads PROFILE; work started without it is work built on guesses.
 
@@ -76,6 +76,7 @@ A silently overwritten memory looks identical to a memory that was always right,
 | **advisor** | PROFILE, FACTS, DECISIONS, INSIGHTS | Product and market insights | CHRONICLE; INSIGHTS via *Память* |
 | **consilium** | PROFILE, FACTS, DECISIONS, INSIGHTS | Strategic decisions, business insights | CHRONICLE; DECISIONS, INSIGHTS via *Память* |
 | **vibe-mentor** | PROFILE, CONTEXT, INSIGHTS | Method observations, recurring gaps | CHRONICLE; INSIGHTS via *Память* |
+| **prompt-engineer** | PROFILE, CONTEXT | — | — (read-only, a separate session) |
 
 ---
 

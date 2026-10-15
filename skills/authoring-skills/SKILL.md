@@ -60,7 +60,7 @@ Keep a prohibition only as a hard guardrail you cannot phrase positively — and
 
 ## Single source of truth
 
-Each meaning lives in exactly one place, so changing the behaviour is a one-place edit. When two files need the same rule, one states it and the other points at it by name.
+Each meaning lives in exactly one place, so changing the behaviour is a one-place edit. When two files need the same rule, one states it and the other points at it by name. An exception to an always-on rule is written in that rule: a role or skill that states its own exception alone leaves the rule unconditional for every other reader, and the agent sees two rules that disagree.
 
 Duplication costs more than tokens: it inflates a meaning's apparent rank on the hierarchy past its real one, and it rots — copies drift until they contradict each other, and the agent obeys whichever it read last.
 
