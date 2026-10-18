@@ -26,7 +26,7 @@ Check these before substantive work. `prompt-engineer` works read-only beside a 
 
 ## The cycle
 
-**Read before acting.** Always: `PROFILE.md`, `CONTEXT.md`, `repo-wiki/meta.json`. When relevant: `FACTS.md`, `DECISIONS.md`, the current `CHRONICLE.md`.
+**Read before acting** — what, and when: `CLAUDE.md`, «Working with context».
 
 **Record while working**, at the moment knowledge appears rather than in a batch at the end — batched memory is reconstructed memory, and reconstruction loses exactly the detail worth keeping.
 
@@ -77,6 +77,8 @@ A silently overwritten memory looks identical to a memory that was always right,
 | **consilium** | PROFILE, FACTS, DECISIONS, INSIGHTS | Strategic decisions, business insights | CHRONICLE; DECISIONS, INSIGHTS via *Память* |
 | **vibe-mentor** | PROFILE, CONTEXT, INSIGHTS | Method observations, recurring gaps | CHRONICLE; INSIGHTS via *Память* |
 | **prompt-engineer** | PROFILE, CONTEXT | — | — (read-only, a separate session) |
+
+«All» means what the task needs; `FACTS.md`, `DECISIONS.md` and `INSIGHTS.md` are searched, not read whole — `CLAUDE.md`, «Working with context».
 
 ---
 

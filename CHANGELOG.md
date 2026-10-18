@@ -10,6 +10,16 @@ All notable changes to the Meta-Architect Framework (MAF) are recorded here, new
 - **MINOR** — a new or extended skill, agent or rule that is backward compatible.
 - **PATCH** — wording or fixes with no change in behaviour.
 
+## [2.12.0] - 2026-10-18
+
+What a session reads before a task, in one place, and again after compaction.
+
+### Changed
+
+- `CLAUDE.md`, «Working with context»: after the session is compacted, `PROFILE.md`, `CONTEXT.md`, `repo-wiki/meta.json` and the files the next step relies on are read again. Claude Code's compaction re-injects `CLAUDE.md`, unscoped rules and auto memory from disk, but of the files Claude read or edited only up to five come back, the most recently modified first, and a file over 5,000 tokens returns as a path only (Claude Code docs, «What survives compaction»). `PROFILE.md` changes rarely, so it rarely returns. The spec or `Plan.md` being executed is named as an example; for the session's own work the summary is newer than `CONTEXT.md`.
+- `CLAUDE.md`, «Working with context»: `FACTS.md`, `DECISIONS.md` and `INSIGHTS.md` are searched for the task's topic rather than read whole, and each match is read as a whole entry with its status, so a superseded decision is not taken as active. On this server's projects they reach 80–330 KB each, so reading them whole would fill the context window.
+- The general list of what to read lives only in `CLAUDE.md`; the per-agent «Reads» table notes that «All» means by task, with those three files by search. `rules/memory-protocol.md` «Read before acting» held a second, slightly different copy, and is now a pointer; its «when relevant» files moved into the list.
+
 ## [2.11.0] - 2026-10-15
 
 The companion's skills now carry the moves themselves, not only their names. The first reported use of the raw prompting research — someone else's agent applying it to a real advertising plan — found ten changes, and the value came from concrete requests in a fixed order. 2.10.0 had compressed that research into six types of failure and dropped most of those requests. This release restores them from the raw research files (`llm-prompting-research` 00–05 and `prompts/`), with a source where one exists, and marks what is measured and what is practice. None of it is tested on our tasks yet.
